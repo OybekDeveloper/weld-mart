@@ -2,20 +2,138 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+.input-phone > * {
+  background-color: transparent;
+  border: 2px solid hsl(var(--input));
+  height: 40px;
+  border-radius: 5px;
+  padding: 6px;
+}
+
+.input-phone > *:focus {
+  outline: none;
+  border: 2px solid #cdc5c5;
+}
+.input-phone select {
+  background: hsl(var(--primary));
+}
+
+/* Default: Scrollbar ko‘rinmaydi */
+.sidebar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hover bo‘lganda ko‘rinadigan scrollbar */
+.sidebar:hover::-webkit-scrollbar {
+  display: block;
+}
+
+.sidebar:hover {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--primary)) hsl(var(--secondary));
+}
+
+.empty-icons > * {
+  display: inline-block !important;
+}
+.filled-icons > * {
+  display: inline-block !important;
+}
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 3.9%;
+    --primary: 354, 43%, 52%, 1;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 0 0% 96.1%;
+    --secondary-foreground: 0 0% 9%;
+    --muted: 0 0% 96.1%;
+    --muted-foreground: 0 0% 45.1%;
+    --accent: 0 0% 96.1%;
+    --accent-foreground: 0 0% 9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 89.8%;
+    --input: 0 0% 89.8%;
+    --ring: 0 0% 3.9%;
+    --radius: 0.5rem;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --thin: 0, 0%, 94%, 1;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  .textSmall {
+    font-size: clamp(8px, 1vw, 12px);
+  }
+  .textSmall1 {
+    font-size: clamp(10px, 0.8vw, 13px);
+  }
+  .textSmall {
+    font-size: clamp(10px, 1vw, 12px);
+  }
+  .textSmall2 {
+    font-size: clamp(11px, 1.5vw, 14px);
+  }
+  .textSmall3 {
+    font-size: clamp(12px, 1.8vw, 16px);
+  }
+  .textNormal {
+    font-size: clamp(11px, 2vw, 21px);
+  }
+  .textNormal2 {
+    font-size: clamp(14px, 2.5vw, 18px);
+  }
+  .textNormal3 {
+    font-size: clamp(14px, 2.8vw, 22px);
+  }
+  .textNormal4 {
+    font-size: clamp(19px, 2.8vw, 24px);
+  }
+  .textNormal5 {
+    font-size: clamp(22px, 3vw, 32px);
+  }
+  .textBig {
+    font-size: clamp(22px, 3vw, 40px);
+  }
+  .textBig2 {
+    font-size: clamp(30px, 3.5vw, 40px);
+  }
+  .textBig3 {
+    font-size: clamp(50px, 3.5vw, 59px);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
 }
