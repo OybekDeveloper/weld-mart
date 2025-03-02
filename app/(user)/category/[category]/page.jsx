@@ -12,7 +12,7 @@ export default async function CategoryPage({ searchParams, params }) {
   const skip = (page - 1) * limit; // Correct skip calculation (page 1 = skip 0)
 
   const response = await fetch(
-    `https://dummyjson.com/products?limit=${limit}&skip=${skip}&select=title,price,thumbnail`
+    `https://dummyjson.com/products/category/${category}?limit=${limit}&skip=${skip}`
   );
 
   const categoryResponse = await fetch(
@@ -26,12 +26,16 @@ export default async function CategoryPage({ searchParams, params }) {
   const categoriesData = await categoryResponse.json();
 
   return (
-    <Container className="font-montserrat w-full flex-col lg:px-5 relative pt-[112px] flex justify-start items-start gap-3">
-      <div className="w-full sticky top-[112px] bg-white z-20">
+    <Container className="font-montserrat w-full flex-col relative pt-[112px] flex justify-start items-start gap-3">
+      <div className="w-11/12 mx-auto lg:sticky top-[112px] bg-white z-20">
         <BreadcrumbBar />
       </div>
-      <div className="relative w-full h-full flex justify-start items-start">
-        <Sidebar categoriesData={categoriesData} className="top-[145px]" />
+      <div className="relative w-11/12 mx-auto h-full flex justify-start items-start">
+        <Sidebar
+          categoriesData={categoriesData}
+          id={category}
+          className="top-[145px] max-h-[calc(100vh-145px)]"
+        />
         <CategoryList
           limit={limit}
           categoryId={category}

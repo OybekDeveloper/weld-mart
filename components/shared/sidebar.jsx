@@ -1,17 +1,36 @@
-import React from "react";
+// Sidebar.jsx
+"use client";
+
+import React, { useState, useEffect } from "react";
 import { ChevronDown } from "lucide-react";
 import {
   Accordion,
-  AccordionContent,
   AccordionItem,
   AccordionTrigger,
+  AccordionContent,
 } from "@/components/ui/accordion";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
-export default function Sidebar({ className, ...props }) {
-  const { categoriesData } = props;
-  console.log(categoriesData);
-  
+export default function Sidebar({ className, categoriesData, id, ...props }) {
+  const pathname = usePathname();
+  const [activeCategory, setActiveCategory] = useState(null);
+  const [defaultValue, setDefaultValue] = useState([]);
+
+  useEffect(() => {
+    // Check if we're on a category page
+    const isCategoryPage = pathname.startsWith("/category/");
+    if (isCategoryPage) {
+      const currentSlug = pathname.split("/category/")[1];
+      setActiveCategory(currentSlug);
+      setDefaultValue(["catalog"]); // Keep catalog open
+    } else {
+      setActiveCategory(null);
+      setDefaultValue([]);
+    }
+  }, [pathname]);
+
   return (
     <aside
       className={cn(
@@ -20,57 +39,69 @@ export default function Sidebar({ className, ...props }) {
       )}
     >
       <main className="p-2 z-20">
-        <Accordion type="single" collapsible className="w-full">
-          {/* First Accordion */}
-          <AccordionItem value="item-1">
-            <AccordionTrigger className="flex justify-between items-center pl-2">
-              Category 1
+        <Accordion
+          type="single"
+          collapsible
+          className="w-full"
+          defaultValue={defaultValue}
+          value={defaultValue}
+          onValueChange={setDefaultValue}
+        >
+          {/* Catalog Accordion */}
+          <AccordionItem value="catalog" className="border-none">
+            <AccordionTrigger className="pl-2 textSmall4 font-semibold">
+              Каталог
             </AccordionTrigger>
-            <AccordionContent>
-              <Accordion type="single" collapsible className="w-full">
-                <AccordionItem value="sub-item-1">
-                  <AccordionTrigger className="flex justify-between items-center pl-6">
-                    Sub Category 1
-                  </AccordionTrigger>
-                  <AccordionContent className="pl-8">
-                    Sub category content 1
-                  </AccordionContent>
-                </AccordionItem>
-                <AccordionItem value="sub-item-2">
-                  <AccordionTrigger className="flex justify-between items-center pl-6">
-                    Sub Category 2
-                  </AccordionTrigger>
-                  <AccordionContent className="pl-8">
-                    Sub category content 2
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
+            <AccordionContent className="relative">
+              <main className="pl-4 flex flex-col gap-2">
+                {categoriesData?.map((category, idx) => (
+                  <Link
+                    href={`/category/${category?.slug}`}
+                    key={idx}
+                    onClick={() => setActiveCategory(category.slug)}
+                    className={cn(
+                      "block border-b-[1px] py-2 transition-all duration-150 ease-linear hover:text-primary",
+                      (id == category.slug ||
+                        category.slut == activeCategory) &&
+                        "text-primary font-bold"
+                    )}
+                  >
+                    {category.name}
+                  </Link>
+                ))}
+              </main>
             </AccordionContent>
           </AccordionItem>
 
-          {/* Second Accordion */}
-          <AccordionItem value="item-2">
-            <AccordionTrigger className="flex justify-between items-center pl-2">
+          {/* Nested Accordion Example */}
+          <AccordionItem value="category-2" className="border-none">
+            <AccordionTrigger className="pl-2 textSmall4 font-semibold">
               Category 2
             </AccordionTrigger>
             <AccordionContent>
               <Accordion type="single" collapsible className="w-full">
-                <AccordionItem value="sub-item-3">
-                  <AccordionTrigger className="flex justify-between items-center pl-6">
-                    Sub Category 3
-                  </AccordionTrigger>
-                  <AccordionContent className="pl-8">
-                    Sub category content 3
-                  </AccordionContent>
-                </AccordionItem>
-                <AccordionItem value="sub-item-4">
-                  <AccordionTrigger className="flex justify-between items-center pl-6">
-                    Sub Category 4
-                  </AccordionTrigger>
-                  <AccordionContent className="pl-8">
-                    Sub category content 4
-                  </AccordionContent>
-                </AccordionItem>
+                {["sub-item-3", "sub-item-4"].map((item, idx) => (
+                  <AccordionItem
+                    key={item}
+                    value={item}
+                    className="border-none"
+                  >
+                    <AccordionTrigger
+                      className={cn(
+                        "pl-6 textSmall4",
+                        activeCategory &&
+                          "data-[state=open]:text-primary data-[state=open]:font-bold"
+                      )}
+                    >
+                      {`Sub Category ${idx + 3}`}
+                    </AccordionTrigger>
+                    <AccordionContent
+                      className={cn("pl-8", activeCategory && "text-primary")}
+                    >
+                      {`Sub category content ${idx + 3}`}
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
               </Accordion>
             </AccordionContent>
           </AccordionItem>

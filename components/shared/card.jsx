@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/card";
 import CustomImage from "./customImage";
 import { Rating } from "react-simple-star-rating";
+import { Star } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function CardComponent({ product }) {
   console.log(product);
@@ -22,52 +24,33 @@ export default function CardComponent({ product }) {
         <CardDescription>Card Description</CardDescription>
       </CardHeader>
       <CardContent className="p-0">
-        <main className="p-3 text-black/80 space-y-1 sm:space-y-2">
+        <main className="p-0 text-black/80 space-y-1 sm:space-y-2">
           <div className="relative aspect-square bg-[#EAEAEA] rounded-md overflow-hidden">
             <CustomImage
-              src={product?.thumbnail}
+              src={product?.images[0]||"/product.svg"}
               alt="img"
-              className={"w-full h-full"}
+              className={"w-full h-full object-contain"}
             />
           </div>
           <h1 className="textSmall3">{product?.title}</h1>
-          <div className="hidden relative demo sm:flex justify-start items-center gap-2">
-            <Rating
-              readonly
-              initialValue={4.5}
-              allowFraction
-              size={24}
-              fillColorArray={[
-                "#f17a45",
-                "#f19745",
-                "#f1a545",
-                "#f1b345",
-                "#f1d045",
-              ]}
-              transition
-              className=""
-            />
-            <span>4.5/5</span>
+          <div className="flex justify-start items-start gap-4 flex-col">
+            <div className="flex items-center">
+              {Array.from({ length: 5 }, (_, i) => (
+                <Star
+                  key={i}
+                  className={cn(
+                    "w-4 h-4 md:w-5 md:h-5",
+                    i < Math.floor(product?.rating)
+                      ? "text-yellow-400 fill-yellow-400"
+                      : "text-gray-300"
+                  )}
+                />
+              ))}
+              <span className="ml-2 textSmall3 text-gray-600">
+                {product?.rating}/5
+              </span>
+            </div>
           </div>
-          <div className="flex relative demo sm:hidden justify-start items-center gap-2">
-            <Rating
-              readonly
-              initialValue={4.5}
-              allowFraction
-              size={16}
-              fillColorArray={[
-                "#f17a45",
-                "#f19745",
-                "#f1a545",
-                "#f1b345",
-                "#f1d045",
-              ]}
-              transition
-              className=""
-            />
-            <span className="font-medium textSmall2 pt-2">4.5/5</span>
-          </div>
-
           <p className="font-medium textSmall3">{product?.price} сум</p>
         </main>
       </CardContent>

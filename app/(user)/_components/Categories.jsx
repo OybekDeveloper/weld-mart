@@ -38,7 +38,7 @@ export default function Categories() {
                     }`}
                   >
                     <Link className="relative mt-1" href={`/`}>
-                      <CardComponent />
+                      <CardComponent/>
                     </Link>
                   </CarouselItem>
                 );

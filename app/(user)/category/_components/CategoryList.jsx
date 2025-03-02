@@ -10,27 +10,22 @@ export default function CategoryList({ categoryId, fetchData, page, limit }) {
   const totalPages = Math.ceil(fetchData.total / limit);
 
   return (
-    <main className="w-full flex-1 lg:max-w-[calc(100vw-340px)] 2xl:max-w-[1100px] lg:pl-5 space-y-5">
-      <section className="px-4 lg:px-0 flex justify-between items-center gap-5 text-black/80">
-        <h1 className="font-medium text-primary textNormal3 sm:textNormal4">
+    <main className="w-11/12 mx-auto lg:w-full flex-1 lg:max-w-[calc(100vw-340px)] 2xl:max-w-[1100px] lg:pl-5 space-y-2 md:space-y-5">
+      <section className="lg:px-0 flex justify-between items-center gap-5 text-black/80">
+        <h1 className="font-medium text-primary textNormal4">
           Акция ва янгиликлар
         </h1>
-        <Link
-          className="textSmall2 flex justify-center items-center gap-1"
-          href={"/category"}
-        >
-          Батафсил
-          <ChevronRight size={18} />
-        </Link>
+        <div>FIlter</div>
       </section>
 
-      <section className="relative grid grid-cols-4 gap-4">
+      <section className="relative grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
         {fetchData?.products?.map((item, i) => (
-          <Link key={item?.id} className="relative mt-1" href={`/`}>
-            <CardComponent
-              product={item}
-              href={`/category/${categoryId}/product/${item?.id}`}
-            />
+          <Link
+            key={item?.id}
+            className="relative mt-1"
+            href={`/category/${categoryId}/product/${item?.id}`}
+          >
+            <CardComponent product={item} />
           </Link>
         ))}
       </section>
