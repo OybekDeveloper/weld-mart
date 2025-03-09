@@ -7,7 +7,9 @@ import { getData } from "@/actions/get";
 export default async function Profile() {
   const authCookie = cookies().get("auth"); // "auth" cookie ni olish
   const auth = authCookie ? JSON.parse(authCookie.value) : null;
-  const [userData] = await Promise.all([getData(`/api/users/${auth?.id}`)]);
+  const [userData] = await Promise.all([
+    getData(`/api/users/${auth?.id}`, "user"),
+  ]);
   console.log(userData);
 
   return (

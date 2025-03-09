@@ -12,7 +12,7 @@ export default async function News() {
   return (
     <Container
       className={
-        "pt-[128] font-montserrat justify-start gap-5 flex-col items-start w-11/12"
+        "pt-[128px] font-montserrat justify-start gap-5 flex-col items-start w-11/12"
       }
     >
       <h1 className="textNormal5 font-medium">Блог ва янгиликлар.</h1>

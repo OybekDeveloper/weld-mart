@@ -1,6 +1,5 @@
 "use client";
 
-import CardComponent from "@/components/shared/card";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import React from "react";
@@ -38,7 +37,7 @@ export default function News({ news }) {
                     i == 0 && "ml-6 lg:ml-0"
                   }`}
                 >
-                  <Link className="relative mt-1" href={`/news/${news?.id}`}>
+                  <Link className="relative mt-1" href={`/news`}>
                     <NewsCard news={news} />
                   </Link>
                 </CarouselItem>
