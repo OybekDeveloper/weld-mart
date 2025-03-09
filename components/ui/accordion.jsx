@@ -38,7 +38,7 @@ const AccordionTrigger = React.forwardRef(
 AccordionTrigger.displayName = AccordionPrimitive.Trigger.displayName;
 
 const AccordionContent = React.forwardRef(
-  ({ className, children, ...props }, ref) => (
+  ({ className, open, children, ...props }, ref) => (
     <AccordionPrimitive.Content
       ref={ref}
       className={cn(

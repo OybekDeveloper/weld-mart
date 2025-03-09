@@ -22,17 +22,17 @@ export default function PopularProducts({ popularProductsData }) {
       <section className="relative">
         <Carousel className="w-full">
           <CarouselContent className="">
-            {popularProductsData?.products?.map((item, i) => {
+            {popularProductsData?.map((item, i) => {
               return (
                 <CarouselItem
                   key={i}
                   className={`basis-[40%] sm:basis-[25%] md:basis-[30%] lg:basis-[25%] xl:basis-[20%] ${
-                    i == 0 && "pl-8 md::ml-0"
+                    i == 0 && "ml-8 md::ml-0"
                   }`}
                 >
                   <Link
                     className="relative mt-1"
-                    href={`/category/${item?.category}/product/${item?.id}`}
+                    href={`/category/${item?.category_id}/product/${item?.id}`}
                   >
                     <CardComponent product={item} />
                   </Link>

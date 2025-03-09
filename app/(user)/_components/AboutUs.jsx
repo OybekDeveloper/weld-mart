@@ -6,34 +6,27 @@ import {
   Mail,
   MapPin,
   Phone,
-  PhoneCall,
   Plus,
 } from "lucide-react";
 import Link from "next/link";
 import React from "react";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselCounter,
-  CarouselItem,
-} from "@/components/ui/carousel";
 import Image from "next/image";
 import { NumberTicker } from "@/components/magicui/number-ticker";
 import { socialMedias } from "@/lib/utils";
 
-export default function AboutUs() {
+export default function AboutUs({ statistics }) {
   const statis = [
     {
       title: "Махсулотлар",
-      count: 95,
+      count: statistics?.products,
     },
     {
       title: "Хамкорлар",
-      count: 124,
+      count: statistics?.partners,
     },
     {
       title: "Мамнун мижозлар",
-      count: 9876,
+      count: statistics?.clients,
     },
   ];
   return (
@@ -42,7 +35,7 @@ export default function AboutUs() {
         <h1 className="font-medium textNormal4">Биз ҳақимизда</h1>
         <Link
           className="textSmall2 flex justify-center items-center gap-1"
-          href={"/category"}
+          href={"/about-us"}
         >
           Батафсил
           <ChevronRight size={18} />

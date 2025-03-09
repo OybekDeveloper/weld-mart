@@ -12,7 +12,7 @@ import {
 import CustomImage from "./customImage";
 import { Rating } from "react-simple-star-rating";
 
-export default function NewsCard() {
+export default function NewsCard({ news }) {
   return (
     <Card>
       <CardHeader className="hidden">
@@ -20,18 +20,21 @@ export default function NewsCard() {
         <CardDescription>Card Description</CardDescription>
       </CardHeader>
       <CardContent className="p-0">
-        <main className="p-3 text-black/80 space-y-1 sm:space-y-2">
-          <div className="relative aspect-square bg-[#EAEAEA] rounded-md overflow-hidden">
+        <main className="text-black/80 space-y-1 sm:space-y-2">
+          <div className="relative w-full aspect-[4/3] bg-[#EAEAEA] rounded-md overflow-hidden">
             <CustomImage
-              src="/assets/banner2.jpg"
+              src={news?.image}
               alt="img"
-              className={"w-full h-full"}
+              className={"w-full h-full hover:scale-[1.2]"}
             />
           </div>
           <h1 className="text-primary textSmall3 font-bold">
-            Янгилик - <span className="textSmall1 font-medium text-black/30">09.02.2025</span>
+            Янгилик -{" "}
+            <span className="textSmall1 font-medium text-black/30">
+              {news?.created_at.slice(0, 10)}
+            </span>
           </h1>
-          <p className="font-medium textSmall1">Lorem ipsum lorem ipsum  lorem ipsum lorem ipsum</p>
+          <p className="font-medium textSmall1">{news?.text}</p>
         </main>
       </CardContent>
       <CardFooter className="hidden">

@@ -1,20 +1,23 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Form } from "../ui/form";
 import CustomFormField, { FormFieldType } from "../shared/customFormField";
 import SubmitButton from "../shared/submitButton";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { UpdateLoginValidation } from "@/lib/validation";
 import { ArrowUpRight } from "lucide-react";
+import { toast } from "sonner";
+import { postData } from "@/actions/post";
+import { useAuth } from "@/context/AuthContext";
 export default function LoginForm() {
+  const { login } = useAuth();
   const RegisterValidation = UpdateLoginValidation();
-  const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const pathname = usePathname();
+  const router = useRouter();
   const form = useForm({
     resolver: zodResolver(RegisterValidation),
     defaultValues: {
@@ -22,9 +25,24 @@ export default function LoginForm() {
       password: "",
     },
   });
-
-  const onSubmit = async (values) => {};
-
+  const onSubmit = async (values) => {
+    setIsLoading(true);
+    try {
+      const response = await postData(values, "/api/login");
+      if (response.error) {
+        return toast.error(response.error);
+      } else if (response?.user) {
+        login(response.user);
+        toast.success("Сиз тизимга кирдингиз!");
+        form.reset();
+        router.push("/");
+      }
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   return (
     <Form {...form}>
       <form
@@ -52,7 +70,7 @@ export default function LoginForm() {
         <div className="flex w-full max-sm:flex-col items-center sm:justify-start gap-3 sm:items-center">
           <SubmitButton
             isLoading={isLoading}
-            className="w-full sm:w-40 bg-white hover:bg-white"
+            className="w-full sm:w-40 bg-white hover:bg-white text-black"
           >
             Юборищ
           </SubmitButton>

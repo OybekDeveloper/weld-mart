@@ -4,10 +4,9 @@ const SubmitButton = ({ isLoading, className, children, disabled }) => {
   return (
     <Button
       aria-label={`submit btn`}
-      variant="ghost"
       type="submit"
       disabled={isLoading || disabled}
-      className={className}
+      className={`bg-primary hover:bg-primary hover:opacity-75 ${className}`}
     >
       {isLoading ? (
         <div className="flex items-center gap-4">

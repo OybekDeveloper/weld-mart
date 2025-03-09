@@ -11,14 +11,16 @@ import {
   CarouselItem,
 } from "@/components/ui/carousel";
 
-export default function Categories() {
+export default function Categories({ productsData }) {
   return (
-    <main className="carousel-container">
+    <main className="carousel-container space-y-3">
       <section className="px-4 lg:px-0 flex justify-between items-center gap-5 text-black/80">
-        <h1 className="font-medium textNormal3 sm:textNormal4">Акция ва янгиликлар</h1>
+        <h1 className="font-medium textNormal3 sm:textNormal4">
+          Акция ва янгиликлар
+        </h1>
         <Link
           className="textSmall2 flex justify-center items-center gap-1"
-          href={"/category"}
+          href={"/category/1"}
         >
           Батафсил
           <ChevronRight size={18} />
@@ -27,22 +29,23 @@ export default function Categories() {
       <section className="relative">
         <Carousel className="w-full">
           <CarouselContent className="">
-            {Array(10)
-              .fill(10)
-              .map((item, i) => {
-                return (
-                  <CarouselItem
-                    key={i}
-                    className={`basis-[40%] sm:basis-[30%] md:basis-[25%] lg:basis-[30%] xl:basis-[25%] p-0 md:px-2 ${
-                      i == 0 && "ml-8 lg:ml-0"
-                    }`}
+            {productsData?.map((product, i) => {
+              return (
+                <CarouselItem
+                  key={i}
+                  className={`basis-[40%] sm:basis-[30%] md:basis-[25%] lg:basis-[30%] xl:basis-[25%] md:mr-4 ${
+                    i == 0 && "ml-6 lg:ml-4"
+                  }`}
+                >
+                  <Link
+                    className="relative mt-1"
+                    href={`/category/${product?.category_id}/product/${product?.id}`}
                   >
-                    <Link className="relative mt-1" href={`/`}>
-                      <CardComponent/>
-                    </Link>
-                  </CarouselItem>
-                );
-              })}
+                    <CardComponent product={product} />
+                  </Link>
+                </CarouselItem>
+              );
+            })}
           </CarouselContent>
         </Carousel>
       </section>

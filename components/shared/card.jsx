@@ -15,24 +15,23 @@ import { Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function CardComponent({ product }) {
-  console.log(product);
-
   return (
     <Card>
       <CardHeader className="hidden">
         <CardTitle>Card Title</CardTitle>
         <CardDescription>Card Description</CardDescription>
       </CardHeader>
-      <CardContent className="p-0">
+      <CardContent className="p-0 ">
         <main className="p-0 text-black/80 space-y-1 sm:space-y-2">
-          <div className="relative aspect-square bg-[#EAEAEA] rounded-md overflow-hidden">
+          <div className="relative aspect-[4/3] bg-[#EAEAEA] rounded-md overflow-hidden">
             <CustomImage
               src={product?.images[0]||"/product.svg"}
               alt="img"
-              className={"w-full h-full object-contain"}
+              property={"true"}
+              className={"w-full h-full object-contain hover:scale-[1.2]"}
             />
           </div>
-          <h1 className="textSmall3">{product?.title}</h1>
+          <h1 className="textSmall3">{product?.name}</h1>
           <div className="flex justify-start items-start gap-4 flex-col">
             <div className="flex items-center">
               {Array.from({ length: 5 }, (_, i) => (

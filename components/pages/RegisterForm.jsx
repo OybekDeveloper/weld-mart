@@ -1,21 +1,34 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Form } from "../ui/form";
 import CustomFormField, { FormFieldType } from "../shared/customFormField";
 import SubmitButton from "../shared/submitButton";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
 import { UpdateRegisterValidation } from "@/lib/validation";
-import { ArrowUpRight, Dot } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import { Checkbox } from "../ui/checkbox";
+import { postData } from "@/actions/post";
+import Cookies from "js-cookie";
+import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../ui/dialog";
+import { Button } from "../ui/button";
+import { useRouter } from "next/navigation";
+
 export default function RegisterForm() {
   const RegisterValidation = UpdateRegisterValidation();
-  const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const pathname = usePathname();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const router = useRouter();
   const form = useForm({
     resolver: zodResolver(RegisterValidation),
     defaultValues: {
@@ -26,13 +39,41 @@ export default function RegisterForm() {
     },
   });
 
-  const onSubmit = async (values) => {};
+  const onSubmit = async (values) => {
+    if (!values.privacy_policy) {
+      return toast.error("Илтимос фойдаланиш шартларига розилик билдиринг!!!");
+    }
+    setIsLoading(true);
+    try {
+      const { privacy_policy, ...registerData } = values;
+      const data = { ...registerData, bonus: 0, rassika_id: 0 };
+
+      const response = await postData(data, "/api/users", "user");
+      if (response.error) {
+        return toast.error(response.error);
+      } else if (response?.phone) {
+        const expires = new Date();
+        expires.setTime(expires.getTime() + 3 * 24 * 60 * 60 * 1000);
+        Cookies.set("auth", JSON.stringify(response), {
+          expires,
+          path: "/",
+        });
+        toast.success("Сиз рўйхатдан ўтдингиз!");
+        form.reset();
+        router.push("/");
+      }
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="w-full space-y-5 sm:space-y-4 w-ful rounded-md"
+        className="w-full space-y-5 sm:space-y-4 rounded-md"
       >
         <div className="w-full flex flex-col gap-3 lg:gap-6">
           <CustomFormField
@@ -51,16 +92,14 @@ export default function RegisterForm() {
             placeholder=""
             inputClass="rounded-md border-[1px]"
           />
-          <div className="w-full space-y-2">
-            <CustomFormField
-              label="Пароль"
-              fieldType={FormFieldType.PASSWORDINPUT}
-              control={form.control}
-              name="password"
-              placeholder=""
-              inputClass="rounded-md border-[2px] focus:ring-0 focus-visible:ring-0"
-            />
-          </div>
+          <CustomFormField
+            label="Пароль"
+            fieldType={FormFieldType.PASSWORDINPUT}
+            control={form.control}
+            name="password"
+            placeholder=""
+            inputClass="rounded-md border-[2px]"
+          />
           <div className="flex items-center space-x-2">
             <Checkbox
               onCheckedChange={() =>
@@ -70,41 +109,115 @@ export default function RegisterForm() {
                 )
               }
             />
-            <h1 className="text-white textSmall2">
-              Аккаунт очиш билан мен Фойдаланиш шартлари ва махфийлик сийосатига
-              розилик билдираман
+            <h1
+              className="text-white textSmall2 cursor-pointer"
+              onClick={() => setIsDialogOpen(true)}
+            >
+              Аккаунт очиш билан мен{" "}
+              <span className="underline">Фойдаланиш шартлари</span> ва
+              махфийлик сийосатига розилик билдираман
             </h1>
           </div>
         </div>
-        <div className="flex w-full max-sm:flex-col items-center sm:justify-start gap-3 sm:items-center">
-          <SubmitButton
-            isLoading={isLoading}
-            className="w-full sm:w-40 bg-white hover:bg-white"
-          >
-            Юборищ
-          </SubmitButton>
-          <div className="sm:hidden w-full text-white flex items-center justify-center gap-2">
-            <div className="w-full h-[1.5px] bg-white" />
-            <h1 className="textNormal3">Йоки</h1>
-            <div className="w-full h-[1.5px] bg-white" />
-          </div>
-          <div>
-            <h1 className="max-sm:hidden text-[13px] text-white font-[400]">
-              Аллақачон аккаунт бор
-              <Link href={`/login`} className="hover:underline font-bold ">
-                {" Кириш"}
-              </Link>
-            </h1>
-          </div>
-          <Link
-            href={`/login`}
-            className="hover:underline sm:hidden flex justify-center items-center gap-2 text-white"
-          >
-            <h1 className="">Кириш</h1>
-            <ArrowUpRight />
-          </Link>
-        </div>
+        <SubmitButton
+          isLoading={isLoading}
+          className="w-full sm:w-40 bg-white hover:bg-white text-black"
+        >
+          Юбориш
+        </SubmitButton>
       </form>
+
+      {/* ShadCN Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent
+          mark="false"
+          className="w-11/12 rounded-md max-h-[80vh] overflow-y-auto"
+        >
+          <DialogHeader>
+            <DialogTitle>Фойдаланиш шартлари</DialogTitle>
+            <DialogDescription className="hidden">dfasf</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 text-sm text-gray-700">
+            <h2 className="font-semibold text-lg">1. Кириш</h2>
+            <p>
+              Ушбу веб-сайтга киришингиз ва ундан фойдаланишингиз шу ерда
+              кўрсатилган шартларга розилик билдиришингизни англатади. Агар сиз
+              ушбу шартларга рози бўлмасангиз, илтимос, сайтдан фойдаланманг.
+            </p>
+
+            <h2 className="font-semibold text-lg">
+              2. Фойдаланувчи мажбуриятлари
+            </h2>
+            <p>
+              Сиз ушбу хизматдан қонунга мувофиқ ва ахлоқ меъёрларига мос
+              равишда фойдаланишингиз керак. Қуйидагилар тақиқланади:
+            </p>
+            <ul className="list-disc ml-5">
+              <li>Қонунга зид ёки ноқонуний фаолият олиб бориш;</li>
+              <li>
+                Бошқа фойдаланувчиларни хафа қилиш, таҳқирлаш ёки шаънига путур
+                етказиш;
+              </li>
+              <li>Ҳар қандай турдаги спам ёки зарарли дастурларни тарқатиш;</li>
+              <li>
+                Бошқа шахсларнинг шахсий маълумотларини рухсатсиз тўплаш ва
+                фойдаланиш.
+              </li>
+            </ul>
+
+            <h2 className="font-semibold text-lg">3. Хизматнинг чекловлари</h2>
+            <p>
+              Администраторлар хизматнинг фаолиятини таъминлаш мақсадида ушбу
+              шартларни бузган фойдаланувчиларни огоҳлантириш, блоклаш ёки
+              аккаунтини ўчириш ҳуқуқига эга.
+            </p>
+
+            <h2 className="font-semibold text-lg">
+              4. Маълумотларни муҳофаза қилиш
+            </h2>
+            <p>
+              Биз сиз берган шахсий маълумотларни ҳимоя қилишга ҳаракат қиламиз.
+              Бизнинг <span className="underline">Махфийлик сиёсати</span>{" "}
+              бўлимида бу ҳақда батафсил маълумот берилган.
+            </p>
+
+            <h2 className="font-semibold text-lg">
+              5. Ҳуқуқлар ва жавобгарлик
+            </h2>
+            <p>
+              Хизматдаги маълумотлар ҳар қандай вақтда ўзгартирилиши,
+              тўхтатилиши ёки бекор қилиниши мумкин. Биз фойдаланувчиларнинг
+              сайтдан нотўғри фойдаланиши натижасида келиб чиқадиган зарарлар
+              учун жавобгар эмасмиз.
+            </p>
+
+            <h2 className="font-semibold text-lg">6. Ўзгаришлар</h2>
+            <p>
+              Биз ушбу шартларни вақти-вақти билан ўзгартириш ҳуқуқига эгамиз.
+              Барча ўзгаришлар сайтда эълон қилинган вақтдан бошлаб амалга
+              киритилади.
+            </p>
+          </div>
+          <DialogFooter className={""}>
+            <Button
+              className=""
+              variant="secondary"
+              onClick={() => setIsDialogOpen(false)}
+            >
+              Бекор қилиш
+            </Button>
+            <Button
+              className="hover:bg-primary"
+              onClick={() => {
+                form.setValue("privacy_policy", true);
+                setIsDialogOpen(false);
+              }}
+            >
+              ОК
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Form>
   );
 }

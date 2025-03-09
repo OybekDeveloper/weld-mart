@@ -47,10 +47,10 @@ export const useProductStore = create((set) => ({
     set((state) => {
       state.initializeProducts();
       let updatedProducts = state.products.some(
-        (p) => p.product_id === data.product_id
+        (p) => p.id === data.id
       )
         ? state.products.map((p) =>
-            p.product_id === data.product_id ? { ...p, count: p.count + 1 } : p
+            p.id === data.id ? { ...p, count: p.count + 1 } : p
           )
         : [...state.products, { ...data, count: 1 }];
       localStorage.setItem("products", JSON.stringify(updatedProducts));
@@ -60,7 +60,7 @@ export const useProductStore = create((set) => ({
     set((state) => {
       if (product_id) {
         let updatedProducts = state.products.map((product) =>
-          product.product_id === product_id
+          product.id === product_id
             ? { ...product, count: product.count + 1 }
             : product
         );
@@ -73,7 +73,7 @@ export const useProductStore = create((set) => ({
       if (product_id) {
         let updatedProducts = state.products
           .map((product) =>
-            product?.product_id === product_id && product.count > 0
+            product?.id === product_id && product.count > 0
               ? { ...product, count: product.count - 1 }
               : product
           )
@@ -87,7 +87,7 @@ export const useProductStore = create((set) => ({
   deleteProduct: (product_id) =>
     set((state) => {
       let updatedProducts = state.products.filter(
-        (product) => product?.product_id !== product_id
+        (product) => product?.id !== product_id
       );
       localStorage.setItem("products", JSON.stringify(updatedProducts));
       return { products: updatedProducts };

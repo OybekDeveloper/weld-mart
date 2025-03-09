@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/carousel";
 
 const Banner = ({ banners }) => {
-  const pathname = usePathname();
   return (
     <main className={"mx-auto w-full"}>
       <section className="flex items-center w-full justify-center h-full">
@@ -32,13 +31,13 @@ const Banner = ({ banners }) => {
             className="w-full text-secondary"
           >
             <CarouselContent className="my-0 px-2 md:px-4 lg:px-8 py-0 lg:gap-8">
-              {[1, 2, 3].map((item, i) => {
+              {banners?.map((banner, i) => {
                 return (
                   <CarouselItem key={i} className="">
-                    <Link className="mt-1" href={`/`}>
-                      <div className="relative mx-auto aspect-[16/6] rounded-md overflow-hidden">
+                    <Link className="mt-1" href={banner?.url}>
+                      <div className="relative mx-auto aspect-[15/7] md:aspect-[16/6] rounded-md overflow-hidden">
                         <CustomImage
-                          src={"/assets/banner2.jpg"}
+                          src={banner?.image}
                           alt={`banner-img`}
                           fill
                           loading="eager"
@@ -51,7 +50,7 @@ const Banner = ({ banners }) => {
                 );
               })}
             </CarouselContent>
-            <CarouselCounter />
+            <CarouselCounter className={"max-sm:bottom-2"} />
           </Carousel>
         </div>
       </section>
