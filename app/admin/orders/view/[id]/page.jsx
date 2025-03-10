@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { getData } from "@/actions/get"; // Assuming this exists
+import { getData } from "@/actions/get"; // Ma'lumot olish uchun
+import { putData } from "@/actions/put"; // Ma'lumotni yangilash uchun
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -16,23 +17,36 @@ import {
 import { Loader2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import Image from "next/image";
+import { useAuth } from "@/context/AuthContext";
+import { useAdminSocket } from "@/context/AdmnSocketContext";
 
 export default function ViewOrder() {
   const router = useRouter();
-  const { id } = useParams(); // Get the order ID from the URL
+  const { id } = useParams(); // URL dan buyurtma ID sini olish
   const [order, setOrder] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-
+  const { reloadFunc } = useAdminSocket();
   useEffect(() => {
     const fetchOrder = async () => {
       try {
         setIsLoading(true);
-        // Try fetching from both endpoints since we don’t know the type upfront
         let orderData = await getData(`/api/orders/${id}`, "order");
         if (!orderData) {
           throw new Error("Order not found");
         }
         setOrder(orderData);
+
+        // Agar buyurtma statusi "new" bo'lsa, uni "created" ga o'zgartiramiz
+        if (orderData.status === "new") {
+          const updatedOrder = { ...orderData, status: "created" };
+          console.log(updatedOrder);
+
+          const res = await putData(updatedOrder, `/api/orders/${id}`, "order");
+          console.log(res);
+
+          setOrder(updatedOrder);
+          reloadFunc();
+        }
       } catch (error) {
         console.error("Failed to fetch order:", error);
         toast.error("Буюртмани юклашда хатолик юз берди.");
@@ -40,6 +54,7 @@ export default function ViewOrder() {
         setIsLoading(false);
       }
     };
+
     if (id) {
       fetchOrder();
     }
@@ -78,6 +93,7 @@ export default function ViewOrder() {
     organization,
     inn,
     comment,
+    status,
     order_items,
   } = order;
 
@@ -112,6 +128,10 @@ export default function ViewOrder() {
           <div>
             <p className="text-sm text-gray-500">Фойдаланувчи ID</p>
             <p className="text-lg font-semibold">{user_id}</p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500">Status</p>
+            <p className="text-lg font-semibold">{status}</p>
           </div>
           <div>
             <p className="text-sm text-gray-500">Телефон</p>
@@ -171,11 +191,10 @@ export default function ViewOrder() {
             </TableHeader>
             <TableBody>
               {order_items.map((item, idx) => {
-                // Assuming product details are nested or need to be fetched
-                const product = item.product || {}; // Adjust based on your API response
+                const product = item.product || {};
                 const productName =
                   product.name || `Маҳсулот #${item.product_id}`;
-                const productImage = product.image || "/product.svg"; // Placeholder image
+                const productImage = product.image || "/product.svg";
 
                 return (
                   <TableRow key={idx}>
@@ -193,7 +212,8 @@ export default function ViewOrder() {
                     <TableCell>{item.order_quantity}</TableCell>
                     <TableCell>{item?.price.toLocaleString()} сўм</TableCell>
                     <TableCell>
-                      {(item?.price * item?.order_quantity).toLocaleString()} сўм
+                      {(item?.price * item?.order_quantity).toLocaleString()}{" "}
+                      сўм
                     </TableCell>
                   </TableRow>
                 );

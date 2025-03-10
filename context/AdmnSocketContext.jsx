@@ -11,6 +11,7 @@ const AdminSocketContext = createContext(null);
 export function AdminSocketProvider({ children }) {
   const { playSound } = useAudio();
   const [newOrders, setNewOrders] = useState([]);
+  const [reload, setReload] = useState(false);
 
   useEffect(() => {
     const socket = io(backUrl);
@@ -24,6 +25,7 @@ export function AdminSocketProvider({ children }) {
           position: "top-center",
           duration: 5000,
         });
+
         setNewOrders((prev) => [...prev, order]);
       }
     });
@@ -33,8 +35,14 @@ export function AdminSocketProvider({ children }) {
     };
   }, [playSound]);
 
+  const reloadFunc = () => {
+    setReload(!reload); // reload qiymatini o‘zgartiramiz
+  };
+
   return (
-    <AdminSocketContext.Provider value={{ newOrders, setNewOrders }}>
+    <AdminSocketContext.Provider
+      value={{ newOrders, setNewOrders, reload, reloadFunc }}
+    >
       {children}
     </AdminSocketContext.Provider>
   );

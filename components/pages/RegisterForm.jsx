@@ -23,6 +23,7 @@ import {
 } from "../ui/dialog";
 import { Button } from "../ui/button";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 
 export default function RegisterForm() {
   const RegisterValidation = UpdateRegisterValidation();
@@ -39,6 +40,8 @@ export default function RegisterForm() {
     },
   });
 
+  const { login } = useAuth();
+
   const onSubmit = async (values) => {
     if (!values.privacy_policy) {
       return toast.error("Илтимос фойдаланиш шартларига розилик билдиринг!!!");
@@ -52,15 +55,11 @@ export default function RegisterForm() {
       if (response.error) {
         return toast.error(response.error);
       } else if (response?.phone) {
-        const expires = new Date();
-        expires.setTime(expires.getTime() + 3 * 24 * 60 * 60 * 1000);
-        Cookies.set("auth", JSON.stringify(response), {
-          expires,
-          path: "/",
-        });
+        console.log(response);
+
+        login(response);
         toast.success("Сиз рўйхатдан ўтдингиз!");
         form.reset();
-        router.push("/");
       }
     } catch (error) {
       console.log(error);
@@ -119,12 +118,34 @@ export default function RegisterForm() {
             </h1>
           </div>
         </div>
-        <SubmitButton
-          isLoading={isLoading}
-          className="w-full sm:w-40 bg-white hover:bg-white text-black"
-        >
-          Юбориш
-        </SubmitButton>
+        <div className="flex w-full max-sm:flex-col items-center sm:justify-start gap-3 sm:items-center">
+          <SubmitButton
+            isLoading={isLoading}
+            className="w-full sm:w-40 bg-white hover:bg-white text-black"
+          >
+            Юборищ
+          </SubmitButton>
+          <div className="sm:hidden w-full text-white flex items-center justify-center gap-2">
+            <div className="w-full h-[1.5px] bg-white" />
+            <h1 className="textNormal3">Йоки</h1>
+            <div className="w-full h-[1.5px] bg-white" />
+          </div>
+          <div>
+            <h1 className="max-sm:hidden text-[13px] text-white font-[400]">
+              Аккаунт мавжудми?
+              <Link href={`/login`} className="hover:underline font-bold ">
+                {" Кириш"}
+              </Link>
+            </h1>
+          </div>
+          <Link
+            href={`/register`}
+            className="hover:underline sm:hidden flex justify-center items-center gap-2 text-white"
+          >
+            <h1 className="">Кириш</h1>
+            <ArrowUpRight />
+          </Link>
+        </div>
       </form>
 
       {/* ShadCN Dialog */}

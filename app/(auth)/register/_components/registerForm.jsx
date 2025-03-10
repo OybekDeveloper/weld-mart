@@ -10,9 +10,9 @@ import Link from "next/link";
 import { socialMedias } from "@/lib/utils";
 import RegisterForm from "@/components/pages/RegisterForm";
 
-export default function RegisterFormComponent({ statis }) {
+export default function RegisterFormComponent({brands, statis }) {
   return (
-    <Container className="pt-16 md:pt-12 lg:pt-20 font-montserrat w-11/12 min-h-screen  pb-[80px] flex max-lg:flex-col justify-around gap-5">
+    <Container className="pt-16 md:pt-12 lg:pt-20 font-montserrat w-11/12 min-h-screen  lg:pb-[80px] flex max-lg:flex-col justify-around gap-5">
       <section className="w-full lg:w-1/2 flex justify-center flex-col gap-5 items-start 2xl:pl-24">
         <Image
           src={"/logo.svg"}
@@ -70,8 +70,8 @@ export default function RegisterFormComponent({ statis }) {
           })}
         </div>
       </section>
-      <section className="fixed bottom-0 left-0 w-full h-20 flex justify-center bg-background items-center">
-        <InfinityCards />
+      <section className="lg:fixed bottom-0 left-0 w-full h-20 flex justify-center bg-background items-center">
+        <InfinityCards brands={brands} />
       </section>
     </Container>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Container from "./container";
 import { MailPlus } from "lucide-react";
 import { Button } from "../ui/button";
@@ -8,8 +8,53 @@ import Image from "next/image";
 import { socialMedias } from "@/lib/utils";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { postData } from "@/actions/post";
+import { useAuth } from "@/context/AuthContext";
+import { toast } from "sonner";
 
 export default function Footer() {
+  const { auth } = useAuth();
+  const [loading, setIsLoading] = useState(false);
+  const [email, setEmail] = useState("");
+  const [error, setError] = useState("");
+
+  const validateEmail = (email) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
+
+  const handleSendEmail = async () => {
+    if (!email) {
+      setError("Почта манзили киритинг");
+      return;
+    }
+    if (!validateEmail(email)) {
+      setError("Тўғри почта манзили киритинг");
+      return;
+    }
+    setError("");
+    try {
+      setIsLoading(true);
+      let rassilkaData = {
+        email,
+      };
+      if (auth) {
+        rassilkaData.user_id = auth.id;
+      }
+      const res = await postData(rassilkaData, "/api/rassikas", "rassilka");
+      console.log(res);
+
+      if (res) {
+        toast.success("E-mail муваффақиятли юборилди!");
+        setEmail("");
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error("Юборишда хатолик юз берди");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const pathname = usePathname();
   if (
     pathname.startsWith("/register") ||
@@ -18,12 +63,13 @@ export default function Footer() {
   ) {
     return null;
   }
+
   return (
     <footer className="relative bg-thin w-full pt-36 md:pt-24 mt-36 md:mt-32 font-montserrat">
       <Container
         className={"w-10/12 justify-center items-center flex-col gap-5"}
       >
-        <section className=" max-w-2xl max-md:flex-col p-5 md:p-3 w-11/12 sm:w-[70%] bg-primary rounded-xl md:rounded-md absolute min-h-32 flex gap-3 -top-24 md:-top-16 left-auto right-auto">
+        <section className="max-w-2xl max-md:flex-col p-5 md:p-3 w-11/12 sm:w-[70%] bg-primary rounded-xl md:rounded-md absolute min-h-32 flex gap-3 -top-24 md:-top-16 left-auto right-auto">
           <h1 className="textNormal4 text-white font-bold max-sm:text-center">
             СУНГИ ЯНГИЛИК ВА ТАКЛИФЛАРИМИЗНИ ЎТКАЗИБ ЮБОРМАНГ
           </h1>
@@ -31,13 +77,21 @@ export default function Footer() {
             <div className="rounded-xl bg-white justify-start flex items-center p-2 h-10 gap-2">
               <MailPlus size={20} className="text-black/70" />
               <input
-                type="text"
+                type="email"
                 className="w-full outline-none"
                 placeholder="Почта манзилингизни киритинг"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
               />
             </div>
-            <Button className="rounded-xl p-2 w-full bg-white hover:bg-white text-black/70">
-              Обуна болинг
+            {error && <p className="text-red-100 text-sm">{error}</p>}
+            <Button
+              onClick={handleSendEmail}
+              type="submit"
+              className="rounded-xl p-2 w-full bg-white hover:bg-white text-black/70"
+              disabled={loading}
+            >
+              {loading ? "Юкланмоқда..." : "Обуна болинг"}
             </Button>
           </div>
         </section>
@@ -63,7 +117,7 @@ export default function Footer() {
               </li>
               <li>
                 <a href="#" className="text-black/70">
-                  Каталог{" "}
+                  Каталог
                 </a>
               </li>
               <li>
@@ -100,19 +154,17 @@ export default function Footer() {
             weldmart © 2022-2025, Барча хуқуқлар химояланган
           </h1>
           <div className="w-full mx-auto flex justify-center sm:justify-end gap-4 items-end">
-            {socialMedias?.map((social, idx) => {
-              return (
-                <Link key={idx} target="_blank" href={social.url} className="">
-                  <Image
-                    width={100}
-                    height={100}
-                    src={social.icon}
-                    alt={social.name}
-                    className="w-8 h-8"
-                  />
-                </Link>
-              );
-            })}
+            {socialMedias?.map((social, idx) => (
+              <Link key={idx} target="_blank" href={social.url} className="">
+                <Image
+                  width={100}
+                  height={100}
+                  src={social.icon}
+                  alt={social.name}
+                  className="w-8 h-8"
+                />
+              </Link>
+            ))}
           </div>
         </section>
       </Container>

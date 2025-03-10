@@ -42,6 +42,8 @@ export default function Sidebar() {
     { icon: BarChart, label: "Статистика", path: "/admin/statistics" },
     { icon: Users, label: "Фойдаланувчилар", path: "/admin/users" },
     { icon: ShoppingBag, label: "Буюртмалар", path: "/admin/orders" },
+    { icon: ShoppingBag, label: "Admin", path: "/admin/admin" },
+
   ];
 
   return (

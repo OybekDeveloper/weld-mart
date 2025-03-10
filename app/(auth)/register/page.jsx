@@ -2,8 +2,9 @@ import { getData } from "@/actions/get";
 import RegisterFormComponent from "./_components/registerForm";
 
 export default async function Register() {
-  const [statistics] = await Promise.all([
+  const [statistics,brands] = await Promise.all([
     getData("/api/statistics", "statistics"),
+    getData("/api/brands", "brand"),
   ]);
   const statis = [
     {
@@ -19,5 +20,5 @@ export default async function Register() {
       count: statistics?.clients,
     },
   ];
-  return <RegisterFormComponent statis={statis} />;
+  return <RegisterFormComponent statis={statis} brands={brands}/>;
 }

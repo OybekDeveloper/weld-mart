@@ -79,7 +79,7 @@ const legalSchema = (maxBonus) =>
 
 export default function TotalInfo() {
   const { auth } = useAuth();
-  const { products } = useProductStore();
+  const { products,resetProduct } = useProductStore();
   const { totalSum, setTotalSum } = useOrderStore();
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -189,6 +189,7 @@ export default function TotalInfo() {
         sendToSocket(res); // Send to Socket.IO
         setOpen(false);
         individualForm.reset();
+        resetProduct()
         await fetch(`/api/revalidate`, {
           method: "POST",
           headers: {
@@ -228,7 +229,7 @@ export default function TotalInfo() {
 
       if (res.id) {
         console.log("Order created:", res);
-
+        resetProduct()
         toast.success("Буюртма мувофаққиятли яратилди!");
         setOpen(false);
         legalForm.reset();

@@ -20,13 +20,18 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getData } from "@/actions/get";
-import { Loader2 } from "lucide-react";
+import { History, Loader2 } from "lucide-react";
+import { deleteData } from "@/actions/delete";
+import { toast } from "sonner";
+import { postData } from "@/actions/post";
 
 export default function MailingList() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [itemsToDelete, setItemsToDelete] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [filters, setFilters] = useState({
@@ -39,15 +44,19 @@ export default function MailingList() {
   const [mailingList, setMailingList] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedItems, setSelectedItems] = useState([]);
+  const [emailTitle, setEmailTitle] = useState("");
+  const [emailDescription, setEmailDescription] = useState("");
+  const [isSending, setIsSending] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
         const response = await getData("/api/rassikas", "rassilka");
-        setMailingList(response); // Assuming the API returns an array directly
+        setMailingList(response);
       } catch (error) {
         console.log(error);
+        toast.error("Failed to load mailing list");
       } finally {
         setIsLoading(false);
       }
@@ -58,33 +67,37 @@ export default function MailingList() {
   const itemsPerPage = 10;
 
   // Filter logic
-  const filteredMailingList = mailingList.filter((item) => {
-    const matchesId =
-      filters.id === "" || item.id.toString().includes(filters.id);
-    const matchesEmail = item.email
-      .toLowerCase()
-      .includes(filters.email.toLowerCase());
-    const matchesUserId =
-      filters.userId === "" || item.user_id.toString().includes(filters.userId);
-    const matchesCreatedAt =
-      filters.createdAt === "" ||
-      new Date(item.created_at)
-        .toLocaleDateString()
-        .includes(filters.createdAt);
-    const matchesUpdatedAt =
-      filters.updatedAt === "" ||
-      new Date(item.updated_at)
-        .toLocaleDateString()
-        .includes(filters.updatedAt);
+  const filteredMailingList = mailingList
+    ?.slice()
+    ?.reverse()
+    ?.filter((item) => {
+      const matchesId =
+        filters.id === "" || item.id.toString().includes(filters.id);
+      const matchesEmail = item.email
+        .toLowerCase()
+        .includes(filters.email.toLowerCase());
+      const matchesUserId =
+        filters.userId === "" ||
+        item.user_id?.toString().includes(filters.userId);
+      const matchesCreatedAt =
+        filters.createdAt === "" ||
+        new Date(item.created_at)
+          .toLocaleDateString()
+          .includes(filters.createdAt);
+      const matchesUpdatedAt =
+        filters.updatedAt === "" ||
+        new Date(item.updated_at)
+          .toLocaleDateString()
+          .includes(filters.updatedAt);
 
-    return (
-      matchesId &&
-      matchesEmail &&
-      matchesUserId &&
-      matchesCreatedAt &&
-      matchesUpdatedAt
-    );
-  });
+      return (
+        matchesId &&
+        matchesEmail &&
+        matchesUserId &&
+        matchesCreatedAt &&
+        matchesUpdatedAt
+      );
+    });
 
   // Pagination logic
   const totalPages = Math.ceil(filteredMailingList.length / itemsPerPage);
@@ -98,33 +111,89 @@ export default function MailingList() {
     setIsDeleteModalOpen(true);
   };
 
-  const handleConfirmDelete = () => {
-    // Here you would typically make an API call to delete the selected items
-    console.log(
-      `Deleting items with IDs: ${itemsToDelete
-        .map((item) => item.id)
-        .join(", ")}`
-    );
-    setMailingList((prev) =>
-      prev.filter((item) => !itemsToDelete.some((del) => del.id === item.id))
-    );
-    setSelectedItems([]);
-    setIsDeleteModalOpen(false);
-    setItemsToDelete([]);
+  const handleConfirmDelete = async () => {
+    try {
+      if (itemsToDelete.length > 1) {
+        const deletePromises = itemsToDelete.map((item) =>
+          deleteData(`/api/rassikas/${item.id}`, "rassilka")
+        );
+        await Promise.all(deletePromises);
+        toast.success(`Successfully deleted ${itemsToDelete.length} items`);
+      } else if (itemsToDelete.length === 1) {
+        await deleteData(`/api/rassikas/${itemsToDelete[0].id}`, "rassilka");
+        toast.success(`Successfully deleted item ${itemsToDelete[0].id}`);
+      }
+
+      setMailingList((prev) =>
+        prev.filter((item) => !itemsToDelete.some((del) => del.id === item.id))
+      );
+      setSelectedItems([]);
+      setIsDeleteModalOpen(false);
+      setItemsToDelete([]);
+    } catch (error) {
+      console.error("Deletion error:", error);
+      toast.error("Failed to delete items. Please try again.");
+    }
   };
 
-  const handleSendEmail = () => {
-    // Here you would typically make an API call to send emails
-    console.log(
-      `Sending email with data: ${JSON.stringify(selectedItems, null, 2)}`
-    );
-    alert("Email sent to selected items (simulated)!");
+  const handleSendEmailClick = () => {
+    if (selectedItems.length === 0) return;
+    setEmailTitle("");
+    setEmailDescription("");
+    setIsEmailModalOpen(true);
+  };
+
+  const handleSendEmail = async () => {
+    if (!emailTitle || !emailDescription) {
+      toast.error("Please provide both title and description");
+      return;
+    }
+
+    setIsSending(true);
+    try {
+      const emails = selectedItems.map((item) => item.email);
+      const response = await fetch("/api/send-emails", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          emails,
+          subject: emailTitle,
+          message: emailDescription,
+        }),
+      });
+      const hrassikas = await postData(
+        { title: emailTitle, body: emailDescription },
+        `/api/hrassikas`,
+        "rassilka"
+      );
+
+      console.log(hrassikas);
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || "Failed to send emails");
+      }
+
+      toast.success(
+        `Successfully sent emails to ${selectedItems.length} recipients`
+      );
+      setIsEmailModalOpen(false);
+      setSelectedItems([]);
+    } catch (error) {
+      console.error("Email sending error:", error);
+      toast.error("Failed to send emails. Please try again.");
+    } finally {
+      setIsSending(false);
+    }
   };
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     setFilters((prev) => ({ ...prev, [name]: value }));
-    setCurrentPage(1); // Reset to first page when filters change
+    setCurrentPage(1);
   };
 
   const handleCheckboxChange = (item, checked) => {
@@ -148,11 +217,14 @@ export default function MailingList() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Почта рўйхати</h1>
         <div className="flex gap-2">
-          <Button asChild>
-            <Link
-              className="hover:bg-primary hover:opacity-75"
-              href="/admin/mailing-list/new"
-            >
+          <Button className="hover:bg-primary hover:opacity-75" asChild>
+            <Link className="" href="/admin/mailing-list/history">
+              <History />
+              Рассилка Тарихи
+            </Link>
+          </Button>
+          <Button className="hover:bg-primary hover:opacity-75" asChild>
+            <Link className="" href="/admin/mailing-list/add">
               Почта қўшиш
             </Link>
           </Button>
@@ -163,10 +235,11 @@ export default function MailingList() {
           >
             Танланганларни ўчириш
           </Button>
+
           <Button
             variant="outline"
             disabled={selectedItems.length === 0}
-            onClick={handleSendEmail}
+            onClick={handleSendEmailClick}
           >
             Хат юбориш
           </Button>
@@ -269,7 +342,7 @@ export default function MailingList() {
               </TableCell>
               <TableCell>{item.id}</TableCell>
               <TableCell>{item.email}</TableCell>
-              <TableCell>{item.user_id}</TableCell>
+              <TableCell>{item.user_id || "-"}</TableCell>
               <TableCell>
                 {new Date(item.created_at).toLocaleDateString()}
               </TableCell>
@@ -337,6 +410,55 @@ export default function MailingList() {
             </Button>
             <Button variant="destructive" onClick={handleConfirmDelete}>
               Ўчириш
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Хат юбориш ойнаси */}
+      <Dialog open={isEmailModalOpen} onOpenChange={setIsEmailModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Хат юбориш</DialogTitle>
+            <DialogDescription>
+              Танланган {selectedItems.length} та почтага хат юбориш учун мавзу
+              ва тавсифни киритинг.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="emailTitle">Мавзу</Label>
+              <Input
+                id="emailTitle"
+                value={emailTitle}
+                onChange={(e) => setEmailTitle(e.target.value)}
+                placeholder="Хат мавзусини киритинг"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="emailDescription">Тавсиф</Label>
+              <Textarea
+                id="emailDescription"
+                value={emailDescription}
+                onChange={(e) => setEmailDescription(e.target.value)}
+                placeholder="Хат тавсифини киритинг"
+                rows={4}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsEmailModalOpen(false)}
+            >
+              Бекор қилиш
+            </Button>
+            <Button onClick={handleSendEmail} disabled={isSending}>
+              {isSending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "Юбориш"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -21,7 +21,7 @@ export default function CategoryList({
         <h1 className="font-medium text-primary textNormal4">
           Акция ва янгиликлар
         </h1>
-        <div>FIlter</div>
+        {/* <div>FIlter</div> */}
       </section>
 
       <section className="relative grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">

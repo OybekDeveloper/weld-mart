@@ -1,48 +1,62 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
+import { getData } from "@/actions/get";
 
 export default function LoginAdmin() {
   const router = useRouter();
-
-  // Statik login va parol (buni o'zgartirib qo'yishingiz mumkin)
-  const ADMIN_CREDENTIALS = {
-    login: "admin",
-    password: "123456",
-    name: "Administrator",
-  };
-
-  // State
   const [form, setForm] = useState({ login: "", password: "" });
+  const [adminData, setAdminData] = useState(null);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  // Inputlarni yangilash
+  // Admin ma'lumotlarini API'dan olish
+  useEffect(() => {
+    const fetchAdminData = async () => {
+      try {
+        const response = await getData("/api/admin", "admin");
+        setAdminData(response);
+      } catch (err) {
+        setError("Admin ma'lumotlarini yuklashda xatolik!");
+      }
+    };
+
+    fetchAdminData();
+  }, []);
+
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // Login funksiyasi
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
+    setError("");
+
+    // Ma'lumotlar hali yuklanmagan bo'lsa, loginni rad etish
+    if (!adminData) {
+      setError("Ma'lumotlar hali yuklanmagan. Iltimos, biroz kuting.");
+      return;
+    }
+
+    // Login va parolni tekshirish
     if (
-      form.login === ADMIN_CREDENTIALS.login &&
-      form.password === ADMIN_CREDENTIALS.password
+      form.login === adminData.login &&
+      form.password === adminData.password
     ) {
-      // 3 kun (72 soat) vaqt bilan cookie saqlash
-      const expires = new Date();
-      expires.setTime(expires.getTime() + 3 * 24 * 60 * 60 * 1000);
-      Cookies.set("adminAuth", JSON.stringify(ADMIN_CREDENTIALS), {
-        expires,
+      // Tokenni cookie-ga yozish
+      Cookies.set("adminAuth", JSON.stringify(adminData), {
+        expires: 3, // 3 kun
         path: "/",
       });
 
-      // Admin dashboard'ga yo‘naltirish
       router.push("/admin");
     } else {
       setError("Login yoki parol noto‘g‘ri!");
     }
+
+    setLoading(false);
   };
 
   return (
@@ -76,8 +90,9 @@ export default function LoginAdmin() {
           <button
             type="submit"
             className="w-full bg-primary text-white p-2 rounded-md hover:bg-primary hover:opacity-75"
+            disabled={loading}
           >
-            Кириш
+            {loading ? "Кириш..." : "Кириш"}
           </button>
         </form>
       </div>

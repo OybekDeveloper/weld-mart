@@ -28,10 +28,10 @@ export default async function UserRoot() {
       />
       <main className="w-full flex-1 lg:max-w-[calc(100vw-340px)] 2xl:max-w-[1100px] lg:pl-5 space-y-5 md:space-y-8 lg:space-y-10">
         <Banner banners={banners} />
-        <InfinityCards />
+        <InfinityCards brands={brands} />
         <Categories productsData={products?.products} />
         <News news={news} />
-        <AboutUs statistics={statistics}/>
+        <AboutUs statistics={statistics} />
       </main>
     </Container>
   );
