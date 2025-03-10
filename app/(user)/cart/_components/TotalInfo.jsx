@@ -79,7 +79,7 @@ const legalSchema = (maxBonus) =>
 
 export default function TotalInfo() {
   const { auth } = useAuth();
-  const { products,resetProduct } = useProductStore();
+  const { products, resetProduct } = useProductStore();
   const { totalSum, setTotalSum } = useOrderStore();
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -176,6 +176,8 @@ export default function TotalInfo() {
     };
     if (auth?.phone) {
       indivData = { ...indivData, user_id: auth?.id };
+    } else {
+      indivData = { ...indivData, user_id: 0 };
     }
     console.log("Indiv data", indivData);
 
@@ -189,13 +191,20 @@ export default function TotalInfo() {
         sendToSocket(res); // Send to Socket.IO
         setOpen(false);
         individualForm.reset();
-        resetProduct()
+        resetProduct();
         await fetch(`/api/revalidate`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ tag: "product" }), // Send tag in body
+        });
+        await fetch(`/api/revalidate`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ tag: "user" }), // Send tag in body
         });
       }
     } catch (error) {
@@ -220,6 +229,8 @@ export default function TotalInfo() {
     };
     if (auth?.phone) {
       legalData = { ...legalData, user_id: auth?.id };
+    } else {
+      legalData = { ...legalData, user_id: 0 };
     }
     console.log("Legal data", legalData);
 
@@ -229,7 +240,7 @@ export default function TotalInfo() {
 
       if (res.id) {
         console.log("Order created:", res);
-        resetProduct()
+        resetProduct();
         toast.success("Буюртма мувофаққиятли яратилди!");
         setOpen(false);
         legalForm.reset();
@@ -239,6 +250,13 @@ export default function TotalInfo() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ tag: "product" }), // Send tag in body
+        });
+        await fetch(`/api/revalidate`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ tag: "user" }), // Send tag in body
         });
         sendToSocket(res); // Send to Socket.IO
       }
@@ -286,8 +304,12 @@ export default function TotalInfo() {
           </DialogHeader>
           <Tabs defaultValue="individual" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger className="textSmall3" value="individual">Жисмоний Шахс</TabsTrigger>
-              <TabsTrigger className="textSmall3" value="legal">Юридик Шахс</TabsTrigger>
+              <TabsTrigger className="textSmall3" value="individual">
+                Жисмоний Шахс
+              </TabsTrigger>
+              <TabsTrigger className="textSmall3" value="legal">
+                Юридик Шахс
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="individual">

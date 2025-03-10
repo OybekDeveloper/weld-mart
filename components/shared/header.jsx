@@ -45,23 +45,27 @@ export default function Header({ categoriesData, brandsData }) {
   }
   return (
     <header className="fixed top-0 left-0 w-full bg-white z-[999]">
-      <div className="hidden w-full h-8 text-white bg-primary sm:flex justify-center gap-1 items-center font-montserrat">
-        Йетказиб беришга 10% чегирма.
-        <Link className="font-medium hover:underline" href={"/"}>
-          Хозироқ буюртма беринг
-        </Link>{" "}
-      </div>
-      <Marquee
-        pauseOnHover
-        className="sm:hidden [--duration:10s] w-full h-8 text-white bg-primary flex justify-center gap-1 items-center font-montserrat"
-      >
-        <div className=" w-full h-8 text-white bg-primary flex justify-center gap-1 items-center font-montserrat">
-          Йетказиб беришга 10% чегирма.
-          <Link className="font-medium hover:underline" href={"/"}>
-            Хозироқ буюртма беринг
-          </Link>{" "}
-        </div>
-      </Marquee>
+      {!auth && (
+        <>
+          <div className="hidden w-full h-8 text-white bg-primary sm:flex justify-center gap-1 items-center font-montserrat">
+            Йетказиб беришга 10% чегирма.
+            <Link className="font-medium hover:underline" href={"/"}>
+              Хозироқ буюртма беринг
+            </Link>{" "}
+          </div>
+          <Marquee
+            pauseOnHover
+            className="sm:hidden [--duration:10s] w-full h-8 text-white bg-primary flex justify-center gap-1 items-center font-montserrat"
+          >
+            <div className=" w-full h-8 text-white bg-primary flex justify-center gap-1 items-center font-montserrat">
+              Йетказиб беришга 10% чегирма.
+              <Link className="font-medium hover:underline" href={"/"}>
+                Хозироқ буюртма беринг
+              </Link>{" "}
+            </div>
+          </Marquee>
+        </>
+      )}
       {!(
         pathname.startsWith("/admin") ||
         pathname.startsWith("/login") ||
