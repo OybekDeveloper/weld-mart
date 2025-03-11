@@ -21,11 +21,11 @@ export default function CardComponent({ product }) {
         <CardTitle>Card Title</CardTitle>
         <CardDescription>Card Description</CardDescription>
       </CardHeader>
-      <CardContent className="p-0 ">
+      <CardContent className="p-1">
         <main className="p-0 text-black/80 space-y-1 sm:space-y-2">
           <div className="relative aspect-[4/3] bg-[#EAEAEA] rounded-md overflow-hidden">
             <CustomImage
-              src={product?.images[0]||"/product.svg"}
+              src={product?.images[0] || "/product.svg"}
               alt="img"
               property={"true"}
               className={"w-full h-full object-contain hover:scale-[1.2]"}
@@ -50,7 +50,14 @@ export default function CardComponent({ product }) {
               </span>
             </div>
           </div>
-          <p className="font-medium textSmall3">{product?.price} сум</p>
+          <p className="font-medium textSmall3">
+            {product?.price?.toLocaleString()} сум{" "}
+            {product?.discount && (
+              <span className="font-medium textSmall1 px-2 py-1 text-red-500 rounded-md bg-red-100">
+                -{product?.discount}%
+              </span>
+            )}
+          </p>
         </main>
       </CardContent>
       <CardFooter className="hidden">

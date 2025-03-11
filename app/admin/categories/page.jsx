@@ -59,7 +59,7 @@ export default function Categories() {
   const itemsPerPage = 10;
 
   // Filter logic
-  const filteredCategories = categories.filter((category) => {
+  const filteredCategories = categories?.slice()?.reverse()?.filter((category) => {
     const matchesId =
       filters.id === "" || category.id.toString().includes(filters.id);
     const matchesName = category.name

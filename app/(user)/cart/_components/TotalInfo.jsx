@@ -81,6 +81,7 @@ export default function TotalInfo() {
   const { auth } = useAuth();
   const { products, resetProduct } = useProductStore();
   const { totalSum, setTotalSum } = useOrderStore();
+  const [totalSumUser, setTotalSumUser] = useState(0);
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const deliveryPrice = 50000;
@@ -136,19 +137,31 @@ export default function TotalInfo() {
     if (!product || !product.price || !product.count) {
       return 0;
     }
-    const productPrice = Number(product.price);
+    let productPrice = 0;
+    if (product?.discount) {
+      productPrice = product.price * (1 - product.discount / 100);
+    } else {
+      productPrice = product.price;
+    }
     const count = product.count || 0;
     return roundToTwoDecimals(productPrice * count);
   };
 
   useEffect(() => {
     const calculateTotals = async () => {
-      let totalSum = 0;
+      let totalSum = 0,
+        totalSumUser = 0;
       products.forEach((product) => {
-        const productTotal = calculateProductTotal(product);
+        const productTotalUser = calculateProductTotal(product);
+        const productTotal = calculateProductTotal({
+          price: product.price,
+          count: product.count,
+        });
         totalSum += productTotal;
+        totalSumUser += productTotalUser;
       });
       setTotalSum(roundToTwoDecimals(totalSum));
+      setTotalSumUser(roundToTwoDecimals(totalSumUser));
     };
     calculateTotals();
   }, [products]);
@@ -185,7 +198,7 @@ export default function TotalInfo() {
       const res = await postData(indivData, "/api/individual-orders", "order");
       console.log(res);
 
-      if (res.id) {
+      if (res.id || res.error.includes("created")) {
         console.log("Order created:", res);
         toast.success("Буюртма мувофаққиятли яратилди!");
         sendToSocket(res); // Send to Socket.IO
@@ -238,7 +251,7 @@ export default function TotalInfo() {
       const res = await postData(legalData, "/api/legal-orders", "order");
       console.log(res);
 
-      if (res.id) {
+      if (res.id || res.error.includes("created")) {
         console.log("Order created:", res);
         resetProduct();
         toast.success("Буюртма мувофаққиятли яратилди!");
@@ -275,7 +288,9 @@ export default function TotalInfo() {
       <div className="flex flex-col gap-2 text-base">
         <div className="flex justify-between font-medium">
           <span>Жами</span>
-          <span className="font-bold">{totalSum?.toLocaleString()} сум</span>
+          <span className="font-bold">
+            {totalSumUser?.toLocaleString()} сум
+          </span>
         </div>
         <div className="flex justify-between font-medium">
           <span>Етакзиб бериш</span>
@@ -285,7 +300,7 @@ export default function TotalInfo() {
 
       <div className="flex justify-between font-bold text-lg">
         <span>Умуний</span>
-        <span>{(+totalSum + +deliveryPrice).toLocaleString()} сум</span>
+        <span>{(+totalSumUser + +deliveryPrice).toLocaleString()} сум</span>
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>

@@ -34,6 +34,7 @@ export default function ProductInfo({ productData }) {
     rating = 0,
     brand,
     quantity = 0,
+    discount,
   } = productData;
 
   const findProduct = products.find((pr) => pr.id == productData?.id);
@@ -65,6 +66,8 @@ export default function ProductInfo({ productData }) {
       decrementCount(productData.id);
     }
   };
+
+  const discountSum = price * (1 - discount / 100);
 
   return (
     <section className="w-11/12 mx-auto flex flex-col md:flex-row gap-6 mb-12">
@@ -130,7 +133,19 @@ export default function ProductInfo({ productData }) {
               {rating.toFixed(1)}/5
             </span>
           </div>
-          <span className="text-2xl font-semibold">${price.toFixed(2)}</span>
+          <div className="text-2xl font-semibold flex justify-start items-center gap-2">
+            <div>
+              <h1 className={`${discountSum && "line-through text-black/20"}`}>
+                {price.toLocaleString()} сум
+              </h1>
+              {discountSum && <h1>{discountSum} сум</h1>}
+            </div>
+            {discount && (
+              <span className="font-medium textSmall3 px-2 text-red-500 rounded-md bg-red-100">
+                -{discount}%
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Description */}
@@ -155,11 +170,15 @@ export default function ProductInfo({ productData }) {
         {/* Brand Info */}
         <div className="w-full flex textSmall3 gap-4">
           <h1 className="w-full sm:w-1/3 textNormall3">Бренд</h1>
-          <span className="w-full sm:w-2/3 font-bold">{brand?.name}</span>
+          <span className="w-full sm:w-2/3 font-bold">
+            {brand?.name ? brand?.name : "-"}
+          </span>
         </div>
         <div className="w-full flex gap-4 textSmall3">
           <h1 className="w-full sm:w-1/3 textNormall3">Ишлаб чиқарилган</h1>
-          <span className="w-full sm:w-2/3 font-bold">{brand?.country}</span>
+          <span className="w-full sm:w-2/3 font-bold">
+            {brand?.country ? brand?.country : "-"}
+          </span>
         </div>
 
         <div className="h-[1px] w-full bg-thin" />

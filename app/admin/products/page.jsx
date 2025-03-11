@@ -26,6 +26,7 @@ import { getData } from "@/actions/get";
 import { Loader2 } from "lucide-react";
 import { deleteData } from "@/actions/delete";
 import { toast } from "sonner";
+import { truncateText } from "@/lib/utils";
 
 export default function Products() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -226,8 +227,8 @@ export default function Products() {
           {paginatedProducts.map((product) => (
             <TableRow key={product.id}>
               <TableCell>{product.id}</TableCell>
-              <TableCell>{product.name}</TableCell>
-              <TableCell>{product.description}</TableCell>
+              <TableCell>{truncateText(product.name, 50)}</TableCell>
+              <TableCell>{truncateText(product.description, 100)}</TableCell>
               <TableCell>
                 <Image
                   src={product.images[0]}

@@ -15,68 +15,94 @@ export default function ProductList() {
     <main className="relative w-full border sidebar rounded-md p-4 max-h-[300px] md:max-h-[400px] overflow-y-auto">
       {products.length > 0 ? (
         <>
-          {products?.map((product, idx) => (
-            <div
-              key={idx}
-              className="w-full flex items-center gap-4 pb-3 mb-3 border-b"
-            >
-              {/* Product Image */}
-              <div className="w-16 h-16 md:w-24 md:h-24 relative overflow-hidden border rounded-md">
-                <CustomImage
-                  src={product?.images?.[0]}
-                  alt={product?.name}
-                  className="w-full h-full object-contain bg-thin"
-                />
-              </div>
-
-              {/* Product Info */}
-              <div className="w-full flex-1 flex flex-col">
-                {/* Product Name & Remove Button */}
-                <div className="flex justify-between items-center">
-                  <h1 className="textSmall3 font-medium">{product?.name}</h1>
-                  <Button
-                    onClick={() => deleteProduct(product?.id)}
-                    className="p-2 h-auto bg-primary hover:bg-primary hover:opacity-80 text-white rounded-md"
-                  >
-                    <Trash2 size={18} />
-                  </Button>
+          {products?.map((product, idx) => {
+            let discountSum = null;
+            if (product?.discount) {
+              discountSum = +product?.price * (1 - +product?.discount / 100);
+            }
+            return (
+              <div
+                key={idx}
+                className="w-full flex items-center gap-4 pb-3 mb-3 border-b"
+              >
+                {/* Product Image */}
+                <div className="w-16 h-16 md:w-24 md:h-24 relative overflow-hidden border rounded-md">
+                  <CustomImage
+                    src={product?.images?.[0]}
+                    alt={product?.name}
+                    className="w-full h-full object-contain bg-thin"
+                  />
                 </div>
 
-                {/* Price & Quantity Controls */}
-                <div className="flex justify-between items-center mt-2">
-                  <h1 className="textSmall4 font-semibold">
-                    {product?.price?.toLocaleString()} сум
-                  </h1>
-                  <div className="bg-thin flex items-center gap-2 border rounded-md md:px-2 md:py-1">
+                {/* Product Info */}
+                <div className="w-full flex-1 flex flex-col">
+                  {/* Product Name & Remove Button */}
+                  <div className="flex justify-between items-center">
+                    <h1 className="textSmall3 font-medium">{product?.name}</h1>
                     <Button
-                      onClick={() => decrementCount(product?.id)}
-                      variant="outline"
-                      className="p-2 h-auto bg-thin border-none"
+                      onClick={() => deleteProduct(product?.id)}
+                      className="p-2 h-auto bg-primary hover:bg-primary hover:opacity-80 text-white rounded-md"
                     >
-                      <Minus />
+                      <Trash2 size={18} />
                     </Button>
-                    <span className="textNormal2 w-6 text-center font-medium">
-                      {product?.count}
-                    </span>
-                    <Button
-                      onClick={() => incrementCount(product?.id)}
-                      variant="outline"
-                      className="p-2 h-auto bg-thin border-none"
-                    >
-                      <Plus size={16} />
-                    </Button>
+                  </div>
+
+                  {/* Price & Quantity Controls */}
+                  <div className="flex justify-between items-center mt-2">
+                    <div className="max-sm:flex-col max-sm:gap-1 flex sm:justify-center sm:items-center gap-3">
+                      <div className="flex flex-col justify-start items-start textSmall3 font-semibold">
+                        <span
+                          className={`${discountSum ? "line-through text-black/20" : ""}`}
+                        >
+                          {product?.price?.toLocaleString()} сум{" "}
+                        </span>
+
+                        <span>
+                          {discountSum && `${discountSum.toLocaleString()} сум`}
+                        </span>
+                      </div>
+                      {product?.discount && (
+                        <span className="text-center font-medium textSmall2 px-2 py-1 text-red-500 rounded-md bg-red-100">
+                          -{product?.discount}%
+                        </span>
+                      )}
+                    </div>
+                    <div className="bg-thin flex items-center gap-2 border rounded-md md:px-2 md:py-1">
+                      <Button
+                        onClick={() => decrementCount(product?.id)}
+                        variant="outline"
+                        className="p-2 h-auto bg-thin border-none"
+                      >
+                        <Minus />
+                      </Button>
+                      <span className="textNormal2 w-6 text-center font-medium">
+                        {product?.count}
+                      </span>
+                      <Button
+                        onClick={() => incrementCount(product?.id)}
+                        variant="outline"
+                        className="p-2 h-auto bg-thin border-none"
+                      >
+                        <Plus size={16} />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </>
       ) : (
-        <div className="flex flex-col gap-2 justify-start items-start"> 
+        <div className="flex flex-col gap-2 justify-start items-start">
           <h1 className="font-medium textNormal2 font-montserrat">
             Маҳсулотлар мавжуд эмас
           </h1>
-          <Link className="mt-2 bg-primary textSmall3 px-3 py-2 rounded-md text-white" href="/">Асосий мену</Link>
+          <Link
+            className="mt-2 bg-primary textSmall3 px-3 py-2 rounded-md text-white"
+            href="/"
+          >
+            Асосий мену
+          </Link>
         </div>
       )}
     </main>

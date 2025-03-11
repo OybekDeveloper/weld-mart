@@ -24,30 +24,51 @@ import Cookies from "js-cookie";
 import Link from "next/link";
 import { useAdminSocket } from "@/context/AdmnSocketContext";
 import { getData } from "@/actions/get";
+import useAudio from "@/hooks/use-audio";
+import { toast } from "sonner";
 
 export default function Header({ authData }) {
   const { newOrders, reload } = useAdminSocket();
   const [newOrdersData, setNewOrdersData] = useState([]);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const { playSound } = useAudio();
 
   useEffect(() => {
-    console.log(reload);
-    
     const fetchData = async () => {
       try {
         const order = await getData("/api/orders", "order");
         if (order) {
-          setNewOrdersData(order.filter((or) => or.status == "new"));
+          const filterOrder = order.filter((or) => or.status == "new");
+          if (filterOrder?.length > 0) {
+            playSound("sound1");
+            toast.success("Сизда янги буюртма келди!!", {
+              position: "top-center",
+              duration: 5000,
+            });
+            setNewOrdersData(filterOrder);
+          }
         }
-      } catch (error) {}
+      } catch (error) {
+        console.error("Error fetching orders:", error);
+      }
     };
+
+    // Initial fetch
     fetchData();
-  }, [newOrders, reload]);
+
+    // Set up polling every 10 seconds
+    const intervalId = setInterval(() => {
+      fetchData();
+    }, 5 * 60 * 1000);
+
+    return () => clearInterval(intervalId);
+  }, [newOrders, reload]); // Dependencies include newOrders and reload
 
   return (
     <header className="fixed top-0 left-0 right-0 bg-white shadow-sm h-16 flex items-center justify-between px-6 z-10">
-      <Image src="/logo.svg" alt="Company Logo" width={150} height={40} />
-
+      <Link href="/">
+        <Image src="/logo.svg" alt="Company Logo" width={150} height={40} />
+      </Link>
       <div className="flex items-center gap-4">
         {/* Notification Bell with Sheet */}
         <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>

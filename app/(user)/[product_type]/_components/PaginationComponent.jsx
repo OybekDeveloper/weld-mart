@@ -11,7 +11,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 
-export default function PaginationComponent({ url, currentPage, totalPages,totalPagesCount }) {
+export default function PaginationComponent({ url, currentPage, totalPages, totalPagesCount }) {
   const router = useRouter();
 
   const handlePageChange = (newPage) => {
@@ -22,51 +22,49 @@ export default function PaginationComponent({ url, currentPage, totalPages,total
 
   console.log(currentPage, totalPages);
 
-  const maxVisiblePages = 10;
+  // Adjust max visible pages based on screen size
+  const maxVisiblePages = typeof window !== "undefined" && window.innerWidth < 640 ? 5 : 10;
   let pages = [];
 
   if (totalPages <= maxVisiblePages) {
     pages = Array.from({ length: totalPages }, (_, i) => i + 1);
   } else {
-    if (currentPage <= 5) {
-      pages = [1, 2, 3, 4, 5, 6, 7, "...", totalPages];
-    } else if (currentPage >= totalPages - 5) {
-      // When currentPage is close to or equals totalPages, show the last 7 pages
-      pages = [
-        1,
-        "...",
-        totalPages - 6,
-        totalPages - 5,
-        totalPages - 4,
-        totalPages - 3,
-        totalPages - 2,
-        totalPages - 1,
-        totalPages,
-      ];
+    if (currentPage <= Math.floor(maxVisiblePages / 2)) {
+      pages = [...Array(maxVisiblePages - 2).keys()].map(i => i + 1).concat(["...", totalPages]);
+    } else if (currentPage >= totalPages - Math.floor(maxVisiblePages / 2)) {
+      pages = [1, "..."].concat(
+        Array.from(
+          { length: maxVisiblePages - 2 },
+          (_, i) => totalPages - (maxVisiblePages - 3) + i
+        )
+      );
     } else {
+      const sidePages = Math.floor((maxVisiblePages - 3) / 2);
       pages = [
         1,
         "...",
-        currentPage - 2,
-        currentPage - 1,
-        currentPage,
-        currentPage + 1,
-        currentPage + 2,
+        ...Array.from(
+          { length: maxVisiblePages - 4 },
+          (_, i) => currentPage - sidePages + i
+        ),
         "...",
         totalPages,
       ];
     }
   }
 
-  // Filter out any pages that exceed totalPages (just in case)
+  // Filter out any invalid pages
   pages = pages.filter((p) => p === "..." || (p >= 1 && p <= totalPages));
+
+  // Hide pagination if total items are too few
   if (totalPagesCount <= 4) {
-    return;
+    return null;
   }
+
   return (
     <Pagination>
-      <PaginationContent className="w-full">
-        <PaginationItem className="w-full">
+      <PaginationContent className="w-full flex flex-wrap justify-center gap-1 sm:gap-2 py-2">
+        <PaginationItem>
           <PaginationPrevious
             href="#"
             onClick={(e) => {
@@ -74,11 +72,13 @@ export default function PaginationComponent({ url, currentPage, totalPages,total
               handlePageChange(currentPage - 1);
             }}
             disabled={currentPage === 1}
+            className="px-2 py-1 text-sm sm:px-3 sm:py-2"
           />
         </PaginationItem>
+
         {pages.map((p, index) =>
           p === "..." ? (
-            <PaginationItem key={index}>
+            <PaginationItem key={index} className="hidden sm:block">
               <PaginationEllipsis />
             </PaginationItem>
           ) : (
@@ -90,6 +90,7 @@ export default function PaginationComponent({ url, currentPage, totalPages,total
                   handlePageChange(p);
                 }}
                 isActive={currentPage === p}
+                className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center text-sm sm:text-base"
               >
                 {p}
               </PaginationLink>
@@ -97,7 +98,7 @@ export default function PaginationComponent({ url, currentPage, totalPages,total
           )
         )}
 
-        <PaginationItem className="w-full flex justify-end">
+        <PaginationItem>
           <PaginationNext
             href="#"
             onClick={(e) => {
@@ -105,6 +106,7 @@ export default function PaginationComponent({ url, currentPage, totalPages,total
               handlePageChange(currentPage + 1);
             }}
             disabled={currentPage === totalPages}
+            className="px-2 py-1 text-sm sm:px-3 sm:py-2"
           />
         </PaginationItem>
       </PaginationContent>

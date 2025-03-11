@@ -26,6 +26,7 @@ import { getData } from "@/actions/get";
 import { deleteData } from "@/actions/delete"; // Added import
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner"; // Added import for toast notifications
+import { truncateText } from "@/lib/utils";
 
 export default function News() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -200,7 +201,7 @@ export default function News() {
           {paginatedNews.map((item) => (
             <TableRow key={item.id}>
               <TableCell>{item.id}</TableCell>
-              <TableCell>{item.text}</TableCell>
+              <TableCell>{truncateText(item.text,100)}</TableCell>
               <TableCell>
                 <Image
                   src={item.image}

@@ -30,7 +30,7 @@ export default async function BrandPage({ searchParams, params }) {
 
   return (
     <Container className="font-montserrat w-full flex-col relative pt-[112px] flex justify-start items-start gap-3">
-      <div className="w-11/12 mx-auto lg:sticky top-[112px] bg-white z-20">
+      <div className="w-11/12 mx-auto bg-white z-20">
         <BreadcrumbBar typeData={typeData} />
       </div>
       <div className="relative w-11/12 mx-auto h-full flex justify-start items-start">
