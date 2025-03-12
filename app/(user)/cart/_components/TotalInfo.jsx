@@ -4,7 +4,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Loader2 } from "lucide-react";
 import { useOrderStore, useProductStore } from "@/store";
-import { roundToTwoDecimals } from "@/lib/utils";
+import { roundToTwoDecimals, wsUrl } from "@/lib/utils";
 import Image from "next/image";
 import {
   Dialog,
@@ -113,7 +113,7 @@ export default function TotalInfo() {
   });
 
   useEffect(() => {
-    const ws = new WebSocket("ws://127.0.0.1:8080/ws");
+    const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
 
     ws.onopen = () => console.log("WebSocket connected");

@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { backUrl } from "@/lib/utils";
+import { backUrl, wsUrl } from "@/lib/utils";
 import useAudio from "@/hooks/use-audio";
 
 const AdminSocketContext = createContext(null);
@@ -14,7 +14,7 @@ export function AdminSocketProvider({ children }) {
 
   useEffect(() => {
     // Create WebSocket connection
-    const socket = new WebSocket("ws://127.0.0.1:8080/ws");
+    const socket = new WebSocket(wsUrl);
 
     // When connection opens
     socket.onopen = () => {
