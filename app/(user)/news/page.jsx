@@ -4,6 +4,7 @@ import Container from "@/components/shared/container";
 import React from "react";
 import NewsGrid from "./_components/NewsGrid";
 import FeaturedNews from "./_components/FeaturedNews";
+import BreadcrumbComponent from "@/components/shared/BreadcrumbComponent";
 
 export default async function News() {
   const [news] = await Promise.all([getData(`/api/news`, "new")]);
@@ -12,9 +13,21 @@ export default async function News() {
   return (
     <Container
       className={
-        "pt-[128px] font-montserrat justify-start gap-5 flex-col items-start w-11/12"
+        "font-montserrat justify-start gap-5 flex-col items-start w-11/12"
       }
     >
+      <BreadcrumbComponent
+        data={[
+          {
+            href: "/",
+            name: "Бош саҳифа",
+          },
+          {
+            name: "Янгиликлар",
+            href: "/news",
+          }
+        ]}
+      />
       <h1 className="textNormal5 font-medium">Блог ва янгиликлар.</h1>
       {randomNews && <FeaturedNews news={randomNews} />}
       <NewsGrid newsItems={news} />

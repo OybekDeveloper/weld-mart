@@ -4,7 +4,6 @@ import { backUrl } from "@/lib/utils";
 
 export async function putData(data, endpoint, tag) {
   const url = `${backUrl}${endpoint}`;
-  console.log(url);
 
   try {
     const response = await fetch(url, {

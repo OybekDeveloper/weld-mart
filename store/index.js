@@ -46,9 +46,7 @@ export const useProductStore = create((set) => ({
   setProducts: (data) =>
     set((state) => {
       state.initializeProducts();
-      let updatedProducts = state.products.some(
-        (p) => p.id === data.id
-      )
+      let updatedProducts = state.products.some((p) => p.id === data.id)
         ? state.products.map((p) =>
             p.id === data.id ? { ...p, count: p.count + 1 } : p
           )
@@ -83,7 +81,11 @@ export const useProductStore = create((set) => ({
         return { products: updatedProducts };
       }
     }),
-  resetProduct: () => set(() => ({ products: [] })),
+  resetProduct: () =>
+    set(() => {
+      localStorage.setItem("products", JSON.stringify([]));
+      return { products: [] };
+    }),
   deleteProduct: (product_id) =>
     set((state) => {
       let updatedProducts = state.products.filter(

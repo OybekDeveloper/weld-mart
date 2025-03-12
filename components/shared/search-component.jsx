@@ -86,7 +86,7 @@ export default function SearchComponent({ variant }) {
               isFocused ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
             }`}
           >
-            <div className="mb-2 pr-2 w-full max-h-80 overflow-y-auto sidebar pb-4">
+            <div className="mb-2 pr-2 w-full max-h-80 overflow-y-auto sidebar1 pb-4">
               {isLoading ? (
                 <div className="px-3 py-1.5 text-gray-500 text-sm">
                   Юкланмоқда...
@@ -187,7 +187,7 @@ export default function SearchComponent({ variant }) {
                   />
                 </div>
 
-                <div className="mt-4 max-h-[calc(70vh-100px)] overflow-y-auto sidebar pr-2">
+                <div className="mt-4 max-h-[calc(70vh-100px)] overflow-y-auto sidebar1 pr-2">
                   {isLoading ? (
                     <div className="px-3 py-2 text-gray-500 text-sm">
                       Юкланмоқда...

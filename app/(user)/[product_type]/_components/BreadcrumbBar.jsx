@@ -8,13 +8,14 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import Link from "next/link";
 
 export function BreadcrumbBar({ typeData }) {
   return (
     <Breadcrumb className="z-10 relative">
       <BreadcrumbList>
         <BreadcrumbItem>
-          <BreadcrumbLink href="/">Бош сахифа</BreadcrumbLink>
+          <Link href="/">Бош сахифа</Link>
         </BreadcrumbItem>
         <BreadcrumbSeparator>
           <Slash />

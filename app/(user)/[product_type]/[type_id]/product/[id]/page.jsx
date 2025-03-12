@@ -12,10 +12,8 @@ export default async function ProductPage({ params }) {
     getData(`/api/products?limit=10&skip=10`, "product"),
   ]);
   const popularProductsData = products?.products;
-  console.log(popularProductsData);
-
   return (
-    <Container className="font-montserrat w-full flex-col gap-5 md:gap-10 lg:px-5 relative pt-[112px] flex justify-start items-start">
+    <Container className="font-montserrat w-full flex-col gap-5 md:gap-10 lg:px-5 relative flex justify-start items-start">
       <BreadcrumbBarProduct productData={productData} className="mb-6" />
       <ProductInfo productData={productData} />
       <FeatureInfo productData={productData} />

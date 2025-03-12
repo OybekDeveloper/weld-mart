@@ -8,8 +8,6 @@ export default async function BrandPage({ searchParams, params }) {
   const { type_id, product_type } = await params;
   const resolvedSearchParams = await searchParams;
   const page = parseInt(resolvedSearchParams?.page, 10) || 1;
-  console.log(await params);
-
   const limit = 4;
   const skip = (page - 1) * limit; // Correct skip calculation (page 1 = skip 0)
 
@@ -29,7 +27,7 @@ export default async function BrandPage({ searchParams, params }) {
   ]);
 
   return (
-    <Container className="font-montserrat w-full flex-col relative pt-[112px] flex justify-start items-start gap-3">
+    <Container className="font-montserrat w-full flex-col relative flex justify-start items-start gap-3">
       <div className="w-11/12 mx-auto bg-white z-20">
         <BreadcrumbBar typeData={typeData} />
       </div>

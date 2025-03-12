@@ -9,24 +9,28 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import Link from "next/link";
 
-export default function BreadcrumbComponent() {
+export default function BreadcrumbComponent({ data }) {
   return (
     <Breadcrumb className="z-10 relative">
       <BreadcrumbList>
-        <BreadcrumbItem>
-          <BreadcrumbLink href="/">Бош сахифа</BreadcrumbLink>
-        </BreadcrumbItem>
-        <BreadcrumbSeparator>
-          <Slash />
-        </BreadcrumbSeparator>
-        <BreadcrumbItem>
-          <BreadcrumbLink href="/category">Каталог</BreadcrumbLink>
-        </BreadcrumbItem>
-        <BreadcrumbSeparator>
-          <Slash />
-        </BreadcrumbSeparator>
-        <BreadcrumbItem>Category name </BreadcrumbItem>
+        {data.map((item, index) => (
+          <React.Fragment key={index}>
+            <BreadcrumbItem>
+              {item.href ? (
+                <Link href={item.href}>{item.name}</Link>
+              ) : (
+                <BreadcrumbPage>{item.name}</BreadcrumbPage>
+              )}
+            </BreadcrumbItem>
+            {index < data.length - 1 && (
+              <BreadcrumbSeparator>
+                <Slash />
+              </BreadcrumbSeparator>
+            )}
+          </React.Fragment>
+        ))}
       </BreadcrumbList>
     </Breadcrumb>
   );

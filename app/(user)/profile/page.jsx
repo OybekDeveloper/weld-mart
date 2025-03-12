@@ -3,6 +3,7 @@ import UserInfo from "./_components/UserInfo";
 import OrderInfo from "./_components/OrderInfo";
 import { cookies } from "next/headers";
 import { getData } from "@/actions/get";
+import BreadcrumbComponent from "@/components/shared/BreadcrumbComponent";
 
 export default async function Profile() {
   const authCookie = cookies().get("auth"); // "auth" cookie ni olish
@@ -13,9 +14,23 @@ export default async function Profile() {
   console.log(userData);
 
   return (
-    <Container className="font-montserrat gap-10 justify-start max-md:flex-col items-start pt-[120px] w-11/12 lg:w-10/12 xl:w-8/12 mx-auto mb-10">
-      <UserInfo userData={userData} />
-      <OrderInfo userData={userData} />
+    <Container className="flex-col font-montserrat gap-10 justify-start items-start w-11/12 lg:w-10/12 xl:w-10/12 mx-auto mb-10">
+      <BreadcrumbComponent
+        data={[
+          {
+            href: "/",
+            name: "Бош саҳифа",
+          },
+          {
+            name: "Профиле",
+            href: "/profile",
+          },
+        ]}
+      />
+      <div className="w-full gap-10 flex justify-start max-md:flex-col items-start">
+        <UserInfo userData={userData} />
+        <OrderInfo userData={userData} />
+      </div>
     </Container>
   );
 }

@@ -19,9 +19,8 @@ export default async function UserRoot() {
       getData("/api/news?limit=6&skip=6", "new"),
       getData("/api/statistics", "statistics"),
     ]);
-  console.log(categories, banners);
   return (
-    <Container className="font-montserrat w-full lg:px-5 relative pt-[112px] flex justify-start items-start">
+    <Container className="font-montserrat w-full lg:px-5 relative flex justify-start items-start">
       <Sidebar
         categoriesData={categories?.categories}
         brandsData={brands?.brands}

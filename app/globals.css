@@ -42,6 +42,17 @@ body {
   scrollbar-width: thin;
   scrollbar-color: hsl(var(--primary)) hsl(var(--secondary));
 }
+.sidebar1 {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--primary)) hsl(var(--secondary));
+}
+
+/* Add to your CSS file */
+.input-phone1 > *:focus {
+  outline: none;
+  border: none;
+}
+
 
 .empty-icons > * {
   display: inline-block !important;

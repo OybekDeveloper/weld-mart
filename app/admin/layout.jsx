@@ -4,8 +4,17 @@ import Sidebar from "./_components/Sidebar";
 import { AdminSocketProvider } from "@/context/AdmnSocketContext";
 
 export default function AdminLayout({ children }) {
-  const authCookie = cookies().get("adminAuth"); // "auth" cookie ni olish
-  const auth = authCookie ? JSON.parse(authCookie.value) : null;
+  let auth = null;
+  const authCookie = cookies().get("adminAuth");
+
+  if (authCookie) {
+    try {
+      auth = JSON.parse(authCookie.value);
+    } catch (error) {
+      console.error("Invalid auth cookie:", error);
+    }
+  }
+
   return (
     <AdminSocketProvider>
       <div className="flex flex-col min-h-screen">

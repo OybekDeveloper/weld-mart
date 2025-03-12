@@ -44,7 +44,7 @@ export default function Header({ categoriesData, brandsData }) {
     return;
   }
   return (
-    <header className="fixed top-0 left-0 w-full bg-white z-[999]">
+    <header className="sticky top-0 left-0 w-full bg-white z-[999]">
       {!auth && (
         <>
           <div className="hidden w-full h-8 text-white bg-primary sm:flex justify-center gap-1 items-center font-montserrat">

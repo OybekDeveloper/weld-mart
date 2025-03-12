@@ -4,7 +4,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Loader2 } from "lucide-react";
 import { useOrderStore, useProductStore } from "@/store";
-import { roundToTwoDecimals, backUrl } from "@/lib/utils";
+import { roundToTwoDecimals } from "@/lib/utils";
 import Image from "next/image";
 import {
   Dialog,
@@ -29,15 +29,16 @@ import * as z from "zod";
 import { postData } from "@/actions/post";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
-import io from "socket.io-client";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
+import PhoneInput from "react-phone-number-input";
+import "react-phone-number-input/style.css";
 
 const individualSchema = (maxBonus) =>
   z.object({
     phone: z
       .string()
       .min(1, "Телефон талаб қилинади")
-      .regex(/^\+?[1-9]\d{1,14}$/, "Нотўғри телефон рақами формати"),
+      .regex(/^\+998\d{9}$/, "Нотўғри телефон рақами формати"),
     name: z.string().min(1, "Исм талаб қилинади"),
     comment: z.string().optional(),
     bonus:
@@ -83,12 +84,11 @@ export default function TotalInfo() {
   const { auth } = useAuth();
   const { products, resetProduct } = useProductStore();
   const { totalSum, setTotalSum } = useOrderStore();
-  const [totalSumUser, setTotalSumUser] = useState(0);
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const deliveryPrice = 50000;
   const maxBonus = auth?.bonus || 0;
-  const socketRef = useRef(null);
+  const wsRef = useRef(null);
 
   const individualForm = useForm({
     resolver: zodResolver(individualSchema(maxBonus)),
@@ -113,16 +113,17 @@ export default function TotalInfo() {
   });
 
   useEffect(() => {
-    const socket = io(backUrl);
-    socketRef.current = socket;
+    const ws = new WebSocket("ws://127.0.0.1:8080/ws");
+    wsRef.current = ws;
 
-    socket.on("connect", () => console.log("Socket.IO connected"));
-    socket.on("disconnect", () => console.log("Socket.IO disconnected"));
-    socket.on("connect_error", (error) =>
-      console.error("Socket.IO connection error:", error)
-    );
+    ws.onopen = () => console.log("WebSocket connected");
+    ws.onclose = () => console.log("WebSocket disconnected");
+    ws.onmessage = (event) =>
+      console.log("WebSocket message received:", event.data);
 
-    return () => socket.disconnect();
+    return () => {
+      ws.close();
+    };
   }, []);
 
   const calculateProductTotal = (product) => {
@@ -136,34 +137,38 @@ export default function TotalInfo() {
 
   useEffect(() => {
     const calculateTotals = async () => {
-      let totalSum = 0,
-        totalSumUser = 0;
+      let totalSum = 0;
       products.forEach((product) => {
-        const productTotalUser = calculateProductTotal(product);
-        const productTotal = calculateProductTotal({
-          price: product.price,
-          count: product.count,
-        });
+        const productTotal = calculateProductTotal(product);
         totalSum += productTotal;
-        totalSumUser += productTotalUser;
       });
       setTotalSum(roundToTwoDecimals(totalSum));
-      setTotalSumUser(roundToTwoDecimals(totalSumUser));
     };
     calculateTotals();
   }, [products]);
 
-  const sendToSocket = (data) => {
-    if (socketRef.current?.connected) {
-      socketRef.current.emit("message", { message: data });
-      console.log("Sent to Socket.IO:", { message: data });
+  const sendToWebSocket = (data) => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      if (data.error) {
+        wsRef.current.send(
+          JSON.stringify({
+            message: {
+              order_type: "new",
+              id: "new",
+            },
+          })
+        );
+      } else {
+        wsRef.current.send(JSON.stringify({ message: data }));
+      }
+      console.log("Sent to WebSocket:", { message: data });
     } else {
-      console.error("Socket.IO is not connected");
+      console.error("WebSocket is not connected");
     }
   };
 
   const onIndividualSubmit = async (data) => {
-    if(products.length === 0) {
+    if (products.length === 0) {
       toast.error("Сават бўш!");
       return;
     }
@@ -172,7 +177,7 @@ export default function TotalInfo() {
     let indivData = {
       ...data,
       order_type: "individual",
-      price: totalSum,
+      price: +totalSum + +deliverPrice,
       status: "new",
       order_items: products.map((pr) => ({
         product_id: pr?.id,
@@ -190,7 +195,7 @@ export default function TotalInfo() {
       const res = await postData(indivData, "/api/individual-orders", "order");
       if (res.id || res.error?.includes("created")) {
         toast.success("Буюртма мувофаққиятли яратилди!");
-        sendToSocket(res);
+        sendToWebSocket(res);
         setOpen(false);
         individualForm.reset();
         resetProduct();
@@ -216,7 +221,7 @@ export default function TotalInfo() {
   };
 
   const onLegalSubmit = async (data) => {
-    if(products.length === 0) {
+    if (products.length === 0) {
       toast.error("Сават бўш!");
       return;
     }
@@ -225,7 +230,7 @@ export default function TotalInfo() {
     let legalData = {
       ...data,
       order_type: "legal",
-      price: totalSum,
+      price: +totalSum + +deliverPrice,
       deliverprice: deliverPrice,
       status: "new",
       order_items: products.map((pr) => ({
@@ -239,7 +244,7 @@ export default function TotalInfo() {
       legalData = { ...legalData, user_id: 0 };
     }
     console.log(legalData);
-    
+
     try {
       const res = await postData(legalData, "/api/legal-orders", "order");
       if (res.id || res.error?.includes("created")) {
@@ -259,7 +264,7 @@ export default function TotalInfo() {
             body: JSON.stringify({ tag: "user" }),
           }),
         ]);
-        sendToSocket(res);
+        sendToWebSocket(res);
       }
     } catch (error) {
       console.error("Error creating order:", error);
@@ -272,13 +277,10 @@ export default function TotalInfo() {
   const OrderDetails = ({ form }) => {
     const serviceMode = form.watch("service_mode");
     const finalPrice =
-      totalSumUser + (serviceMode === "delivery" ? deliveryPrice : 0);
+      totalSum + (serviceMode === "delivery" ? deliveryPrice : 0);
 
     return (
-      <div
-        key={serviceMode} // Animation triggers only when service_mode changes
-        className="p-4 bg-gray-50 rounded-lg shadow-sm"
-      >
+      <div key={serviceMode} className="p-4 bg-gray-50 rounded-lg shadow-sm">
         <h3 className="font-semibold text-lg mb-3 text-gray-800">
           Буюртма Тавсилотлари
         </h3>
@@ -300,9 +302,6 @@ export default function TotalInfo() {
             Жами нарх: {totalSum.toLocaleString()} сум
           </p>
           <p className="text-sm text-gray-600">
-            Чегирмадан кейин: {totalSumUser.toLocaleString()} сум
-          </p>
-          <p className="text-sm text-gray-600">
             Етказиб бериш:{" "}
             {(serviceMode === "delivery" ? deliveryPrice : 0).toLocaleString()}{" "}
             сум
@@ -315,19 +314,6 @@ export default function TotalInfo() {
     );
   };
 
-  const formatPhoneNumber = (value) => {
-    // Allow only "+" and numbers, remove all other characters
-    const sanitized = value.replace(/[^+\d]/g, "");
-
-    // Ensure it starts with "+"
-    if (!sanitized.startsWith("+")) {
-      return "+";
-    }
-
-    // Limit to 13 characters (e.g., +998910800616)
-    return sanitized.slice(0, 13);
-  };
-
   return (
     <main className="w-full lg:w-[60%] h-full border p-6 rounded-lg flex flex-col gap-5 bg-white shadow-md">
       <h1 className="text-xl font-bold text-gray-800">Буюртмангиз</h1>
@@ -336,7 +322,7 @@ export default function TotalInfo() {
         <div className="flex justify-between font-medium text-gray-700">
           <span>Жами</span>
           <span className="font-bold">
-            {totalSumUser?.toLocaleString()} сум
+            {totalSum?.toLocaleString()} сум
           </span>
         </div>
         <div className="flex justify-between font-medium text-gray-700">
@@ -347,7 +333,7 @@ export default function TotalInfo() {
 
       <div className="flex justify-between font-bold text-lg text-gray-800">
         <span>Умуний</span>
-        <span>{(+totalSumUser + +deliveryPrice).toLocaleString()} сум</span>
+        <span>{(+totalSum + +deliveryPrice).toLocaleString()} сум</span>
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
@@ -359,7 +345,10 @@ export default function TotalInfo() {
             </Button>
           </motion.div>
         </DialogTrigger>
-        <DialogContent mark="false" className="max-sm:w-11/12 w-full sm:max-w-3xl rounded-lg bg-white shadow-xl">
+        <DialogContent
+          mark="false"
+          className="max-sm:w-11/12 w-full sm:max-w-3xl rounded-lg bg-white shadow-xl"
+        >
           <DialogHeader>
             <motion.div
               initial={{ opacity: 0, y: -20 }}
@@ -411,18 +400,16 @@ export default function TotalInfo() {
                               Телефон
                             </FormLabel>
                             <FormControl>
-                              <Input
-                                placeholder="+998910800616"
-                                className="border-gray-300 focus:border-primary"
-                                {...field}
-                                value={field.value || "+"} // Default to "+" if empty
-                                onChange={(e) => {
-                                  const formattedValue = formatPhoneNumber(
-                                    e.target.value
-                                  );
-                                  field.onChange(formattedValue);
-                                }}
-                                maxLength={13} // Limits input to +998910800616 length
+                              <PhoneInput
+                                defaultCountry="UZ"
+                                placeholder="+998 91 080 06 16"
+                                international
+                                withCountryCallingCode
+                                value={field.value || ""}
+                                onChange={field.onChange}
+                                className="input-phone1 w-full p-2 border border-gray-300 rounded-md focus:border-primary focus:ring-primary"
+                                countryCallingCodeEditable={false}
+                                focusInputOnCountrySelection
                               />
                             </FormControl>
                             <FormMessage />

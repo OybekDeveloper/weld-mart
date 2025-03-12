@@ -11,7 +11,7 @@ import Link from "next/link";
 import { socialMedias } from "@/lib/utils";
 export default function LoginFormComponent({ brands, statis }) {
   return (
-    <Container className="pt-16 md:pt-12 lg:pt-20 font-montserrat w-11/12 min-h-screen  lg:pb-[96px] flex max-lg:flex-col justify-around gap-5">
+    <Container className="font-montserrat w-11/12 min-h-[calc(100vh-32px)]  lg:pb-[96px] flex max-lg:flex-col justify-around gap-5">
       <section className="w-full lg:w-1/2 flex justify-center flex-col gap-5 items-start 2xl:pl-24">
         <Image
           src={"/logo.svg"}

@@ -31,7 +31,6 @@ export default function Header({ authData }) {
   const { newOrders, reload } = useAdminSocket();
   const [newOrdersData, setNewOrdersData] = useState([]);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const { playSound } = useAudio();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -40,11 +39,6 @@ export default function Header({ authData }) {
         if (order) {
           const filterOrder = order.filter((or) => or.status == "new");
           if (filterOrder?.length > 0) {
-            playSound("sound1");
-            toast.success("Сизда янги буюртма келди!!", {
-              position: "top-center",
-              duration: 5000,
-            });
             setNewOrdersData(filterOrder);
           }
         }
@@ -56,12 +50,6 @@ export default function Header({ authData }) {
     // Initial fetch
     fetchData();
 
-    // Set up polling every 10 seconds
-    const intervalId = setInterval(() => {
-      fetchData();
-    }, 5 * 60 * 1000);
-
-    return () => clearInterval(intervalId);
   }, [newOrders, reload]); // Dependencies include newOrders and reload
 
   return (

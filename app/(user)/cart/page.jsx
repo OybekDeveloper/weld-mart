@@ -5,6 +5,7 @@ import TotalInfo from "./_components/TotalInfo";
 import ProductList from "./_components/ProductList";
 import { backUrl } from "@/lib/utils";
 import { getData } from "@/actions/get";
+import BreadcrumbComponent from "@/components/shared/BreadcrumbComponent";
 
 export default async function Cart() {
   const [productsData] = await Promise.all([
@@ -12,11 +13,23 @@ export default async function Cart() {
   ]);
 
   return (
-    <Container className="font-montserrat min-h-screen w-full sm:w-11/12 flex-col justify-start items-start pt-[112px] space-y-4">
-      <h1 className="max-sm:mx-auto max-sm:w-11/12 font-medium textNormal4 pt-5">
+    <Container className="font-montserrat min-h-screen w-11/12 flex-col justify-start items-start space-y-4">
+      <BreadcrumbComponent
+        data={[
+          {
+            href: "/",
+            name: "Бош саҳифа",
+          },
+          {
+            name: "Сават",
+            href: "/cart",
+          },
+        ]}
+      />
+      <h1 className="max-sm:mx-auto w-full font-medium textNormal4 pt-3">
         Сизнинг харидларингиз
       </h1>
-      <section className="pb-10 max-sm:mx-auto max-sm:w-11/12 max-lg:flex-col w-full flex justify-start items-start gap-5">
+      <section className="pb-10 max-sm:mx-auto max-lg:flex-col w-full flex justify-start items-start gap-5">
         <ProductList productsData={productsData} />
         <TotalInfo />
       </section>

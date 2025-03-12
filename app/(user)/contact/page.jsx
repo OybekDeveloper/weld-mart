@@ -1,3 +1,4 @@
+import BreadcrumbComponent from "@/components/shared/BreadcrumbComponent";
 import Container from "@/components/shared/container";
 import { socialMedias } from "@/lib/utils";
 import { Mail, MapPin, Phone } from "lucide-react";
@@ -10,9 +11,21 @@ export default function Contact() {
     <>
       <Container
         className={
-          "pt-[128] font-montserrat justify-start gap-5 flex-col items-start w-11/12"
+          "font-montserrat justify-start gap-5 flex-col items-start w-11/12"
         }
       >
+        <BreadcrumbComponent
+          data={[
+            {
+              href: "/",
+              name: "Бош саҳифа",
+            },
+            {
+              name: "Cонтаcт",
+              href: "/contact",
+            },
+          ]}
+        />
         <section className="lg:hidden w-full flex gap-3">
           <div className="w-full flex justify-center items-center">
             <Image

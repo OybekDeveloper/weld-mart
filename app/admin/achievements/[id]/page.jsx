@@ -165,7 +165,6 @@ export default function AchievementEvent({ params }) {
       }
 
       const updatedValues = { ...values, image: imageUrl };
-      console.log("Submitting:", updatedValues);
 
       let result;
       if (isAddMode) {

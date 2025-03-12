@@ -20,8 +20,6 @@ export default function PaginationComponent({ url, currentPage, totalPages, tota
     }
   };
 
-  console.log(currentPage, totalPages);
-
   // Adjust max visible pages based on screen size
   const maxVisiblePages = typeof window !== "undefined" && window.innerWidth < 640 ? 5 : 10;
   let pages = [];

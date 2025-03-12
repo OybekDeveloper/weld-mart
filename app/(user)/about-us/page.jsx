@@ -15,10 +15,21 @@ export default async function Aboutus() {
   return (
     <Container
       className={
-        "pt-[128] font-montserrat justify-start gap-5 flex-col items-start w-11/12"
+        "font-montserrat justify-start gap-5 flex-col items-start w-11/12"
       }
     >
-      <BreadcrumbComponent />
+      <BreadcrumbComponent
+        data={[
+          {
+            href: "/",
+            name: "Бош саҳифа",
+          },
+          {
+            name: "Биз хақимизда",
+            href: "/about-us",
+          },
+        ]}
+      />
       <h1 className="textNormal5 font-medium">Биз хақимизда</h1>
       <CompanyInfo statistics={statistics} />
       <MissionStatement />

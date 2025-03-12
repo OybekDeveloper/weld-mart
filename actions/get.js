@@ -4,8 +4,6 @@ import { backUrl } from "@/lib/utils";
 
 export async function getData(endpoint, tag, revalidate) {
   const url = `${backUrl}${endpoint}`;
-  console.log(url);
-
   try {
     const response = await fetch(url, {
       method: "GET",

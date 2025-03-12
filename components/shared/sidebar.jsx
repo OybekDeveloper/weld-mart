@@ -25,7 +25,6 @@ export default function Sidebar({
   const pathname = usePathname();
   const [activeCategory, setActiveCategory] = useState(null);
   const [defaultValue, setDefaultValue] = useState([]);
-  console.log(product_type);
 
   useEffect(() => {
     // Check if we're on a category page
@@ -83,13 +82,13 @@ export default function Sidebar({
                       setActiveCategory(category.id);
                     }}
                     className={cn(
-                      "flex justify-start items-center gap-1 border-b-[1px] py-2 transition-all duration-150 ease-linear hover:text-primary",
+                      "w-full flex justify-start items-center gap-1 border-b-[1px] py-2 transition-all duration-150 ease-linear hover:text-primary",
                       category.id == (activeCategory || id) &&
                         product_type == "category" &&
                         "text-primary font-bold"
                     )}
                   >
-                     <Image
+                    <Image
                       src={category.image}
                       width={50}
                       height={50}
@@ -116,7 +115,7 @@ export default function Sidebar({
                       setActiveCategory(brand.id);
                     }}
                     className={cn(
-                      "flex justify-start items-center gap-1 border-b-[1px] py-2 transition-all duration-150 ease-linear hover:text-primary",
+                      "w-full flex justify-start items-center gap-1 border-b-[1px] py-2 transition-all duration-150 ease-linear hover:text-primary",
                       brand.id == (activeCategory || id) &&
                         product_type == "brand" &&
                         "text-primary font-bold"
@@ -134,63 +133,30 @@ export default function Sidebar({
               </main>
             </AccordionContent>
           </AccordionItem>
-
-          {/* Nested Accordion Example */}
-          {/* <AccordionItem value="category-2" className="border-none">
-            <AccordionTrigger className="pl-2 textSmall4 font-semibold">
-              Category 2
-            </AccordionTrigger>
-            <AccordionContent>
-              <Accordion type="single" collapsible className="w-full">
-                {["sub-item-3", "sub-item-4"].map((item, idx) => (
-                  <AccordionItem
-                    key={item}
-                    value={item}
-                    className="border-none"
-                  >
-                    <AccordionTrigger
-                      className={cn(
-                        "pl-6 textSmall4",
-                        activeCategory &&
-                          "data-[state=open]:text-primary data-[state=open]:font-bold"
-                      )}
-                    >
-                      {`Sub Category ${idx + 3}`}
-                    </AccordionTrigger>
-                    <AccordionContent
-                      className={cn("pl-8", activeCategory && "text-primary")}
-                    >
-                      {`Sub category content ${idx + 3}`}
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
-            </AccordionContent>
-          </AccordionItem> */}
           <AccordionItem
             onClick={handleClose}
             value="category-3"
-            className="border-b-[1px] py-2 hover:text-primary"
+            className="w-full border-b-[1px] py-2 hover:text-primary"
           >
-            <Link href="/news" className="px-2 font-medium">
+            <Link href="/news" className="w-full px-2 font-medium">
               Янгиликлар
             </Link>
           </AccordionItem>
           <AccordionItem
             onClick={handleClose}
             value="category-3"
-            className="border-b-[1px] py-2 hover:text-primary"
+            className="w-full border-b-[1px] py-2 hover:text-primary"
           >
-            <Link href="/contact" className="px-2 font-medium">
+            <Link href="/contact" className="w-full px-2 font-medium">
               Контактлар
             </Link>
           </AccordionItem>
           <AccordionItem
             onClick={handleClose}
             value="category-3"
-            className="border-b-[1px] py-2 hover:text-primary"
+            className="w-full border-b-[1px] py-2 hover:text-primary"
           >
-            <Link href="/about-us" className="px-2 font-medium">
+            <Link href="/about-us" className="w-full px-2 font-medium">
               Биз ҳақимизда
             </Link>
           </AccordionItem>
