@@ -28,7 +28,7 @@ import {
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getData } from "@/actions/get";
-import { deleteData } from "@/actions/delete"; // Import the new delete action
+import { deleteData } from "@/actions/delete";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -134,7 +134,6 @@ export default function Orders() {
         setOrders((prev) => prev.filter((o) => o.id !== orderToDelete.id));
         toast.error(`Буюртма (ID: ${orderToDelete.id}) ўчирилди`);
       }
-      // Update local state to remove the deleted order
     } catch (error) {
       console.error("Delete error:", error);
       toast.error("Буюртмани ўчиришда хатолик юз берди.");
@@ -152,6 +151,36 @@ export default function Orders() {
 
   const handleRowClick = (orderId) => {
     router.push(`/admin/orders/view/${orderId}`);
+  };
+
+  // Function to determine status label and color
+  const getStatusDisplay = (status) => {
+    switch (status) {
+      case "new":
+        return (
+          <span className="bg-green-100 text-green-800 px-2 py-1 rounded">
+            Янги заказ
+          </span>
+        );
+      case "created":
+        return (
+          <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded">
+            Заказ олинди
+          </span>
+        );
+      case "finished":
+        return (
+          <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded">
+            Заказ топширилди
+          </span>
+        );
+      default:
+        return (
+          <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded">
+            Noma'lum
+          </span>
+        );
+    }
   };
 
   if (isLoading) {
@@ -261,6 +290,7 @@ export default function Orders() {
               <TableHead>Бонус</TableHead>
               <TableHead>Буюртма тури</TableHead>
               <TableHead>Изоҳ</TableHead>
+              <TableHead>Статус</TableHead> {/* New Status Column */}
               <TableHead>Яратилган сана</TableHead>
               <TableHead>Янгиланган сана</TableHead>
               <TableHead>Амаллар</TableHead>
@@ -283,6 +313,7 @@ export default function Orders() {
                     <TableCell>{order.bonus}</TableCell>
                     <TableCell>{order.order_type}</TableCell>
                     <TableCell>{order.comment || "-"}</TableCell>
+                    <TableCell>{getStatusDisplay(order.status)}</TableCell> {/* Display Status */}
                     <TableCell>
                       {new Date(order.created_at).toLocaleDateString()}
                     </TableCell>

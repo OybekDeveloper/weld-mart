@@ -12,6 +12,7 @@ import {
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import Image from "next/image";
 
 export default function Sidebar({
   className,
@@ -25,7 +26,7 @@ export default function Sidebar({
   const [activeCategory, setActiveCategory] = useState(null);
   const [defaultValue, setDefaultValue] = useState([]);
   console.log(product_type);
-  
+
   useEffect(() => {
     // Check if we're on a category page
     const isCategoryPage = pathname.startsWith("/category/");
@@ -69,7 +70,9 @@ export default function Sidebar({
             <AccordionTrigger className="pl-2 textSmall4 font-medium">
               Каталог
             </AccordionTrigger>
-            <AccordionContent className={`relative data-[open=open]:animate-accordion-down`}>
+            <AccordionContent
+              className={`relative data-[open=open]:animate-accordion-down`}
+            >
               <main className="pl-4 flex flex-col gap-2">
                 {categoriesData?.map((category, idx) => (
                   <Link
@@ -80,12 +83,18 @@ export default function Sidebar({
                       setActiveCategory(category.id);
                     }}
                     className={cn(
-                      "block border-b-[1px] py-2 transition-all duration-150 ease-linear hover:text-primary",
+                      "flex justify-start items-center gap-1 border-b-[1px] py-2 transition-all duration-150 ease-linear hover:text-primary",
                       category.id == (activeCategory || id) &&
                         product_type == "category" &&
                         "text-primary font-bold"
                     )}
                   >
+                     <Image
+                      src={category.image}
+                      width={50}
+                      height={50}
+                      alt={category.name}
+                    />
                     {category.name}
                   </Link>
                 ))}
@@ -107,12 +116,18 @@ export default function Sidebar({
                       setActiveCategory(brand.id);
                     }}
                     className={cn(
-                      "block border-b-[1px] py-2 transition-all duration-150 ease-linear hover:text-primary",
+                      "flex justify-start items-center gap-1 border-b-[1px] py-2 transition-all duration-150 ease-linear hover:text-primary",
                       brand.id == (activeCategory || id) &&
                         product_type == "brand" &&
                         "text-primary font-bold"
                     )}
                   >
+                    <Image
+                      src={brand.image}
+                      width={50}
+                      height={50}
+                      alt={brand.name}
+                    />
                     {brand.name}
                   </Link>
                 ))}

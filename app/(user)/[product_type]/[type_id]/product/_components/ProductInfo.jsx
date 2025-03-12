@@ -4,13 +4,25 @@ import CustomImage from "@/components/shared/customImage";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useProductStore } from "@/store";
-import { Minus, Plus, Star } from "lucide-react";
+import { Minus, Plus, Star, X } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
+import { DialogDescription, DialogTitle } from "@radix-ui/react-dialog";
 
 export default function ProductInfo({ productData }) {
   const [mainImage, setMainImage] = useState(null);
   const [showFullDescription, setShowFullDescription] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [zoomPosition, setZoomPosition] = useState({ x: 50, y: 50 });
+  const [isScaled, setIsScaled] = useState(false); // Toggle scale state
   const { products, setProducts, incrementCount, decrementCount } =
     useProductStore();
 
@@ -37,7 +49,7 @@ export default function ProductInfo({ productData }) {
     discount,
   } = productData;
 
-  const findProduct = products.find((pr) => pr.id == productData?.id);
+  const findProduct = products.find((pr) => pr.id === productData?.id);
 
   const truncatedLength = 200;
   const isLongDescription = description.length > truncatedLength;
@@ -67,7 +79,41 @@ export default function ProductInfo({ productData }) {
     }
   };
 
-  const discountSum = price * (1 - discount / 100);
+  let discountSum = null;
+  if (discount) {
+    discountSum = price * (1 - discount / 100);
+  }
+
+  // Click-to-scale handling
+  const handleImageClick = (e) => {
+    e.stopPropagation();
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+    if (!isScaled) {
+      // Scale up by 10% at the clicked position
+      setZoomPosition({ x, y });
+      setIsScaled(true);
+    } else {
+      // Reset to original state
+      setIsScaled(false);
+      setZoomPosition({ x: 50, y: 50 }); // Reset to center
+    }
+  };
+
+  const handleModalChange = (open) => {
+    setIsOpen(open);
+    setIsScaled(false);
+    setZoomPosition({ x: 50, y: 50 }); // Reset position
+  };
+
+  // Animation variants for modal
+  const modalVariants = {
+    hidden: { opacity: 0, scale: 0.8 },
+    visible: { opacity: 1, scale: 1 },
+    exit: { opacity: 0, scale: 0.8 },
+  };
 
   return (
     <section className="w-11/12 mx-auto flex flex-col md:flex-row gap-6 mb-12">
@@ -100,17 +146,63 @@ export default function ProductInfo({ productData }) {
             </div>
           )}
         </div>
-        <div className="w-full relative overflow-hidden h-[250px] sm:h-[400px] rounded-md">
-          <CustomImage
-            width={500}
-            height={400}
-            src={mainImage?.image || "/product.svg"}
-            alt={`${name} - Main image`}
-            className="object-contain w-full h-full rounded-md"
-            loading="eager"
-            priority
-          />
-        </div>
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+          <DialogTrigger asChild>
+            <div className="w-full relative overflow-hidden h-[250px] sm:h-[400px] rounded-md cursor-pointer">
+              <CustomImage
+                width={500}
+                height={400}
+                src={mainImage?.image || "/product.svg"}
+                alt={`${name} - Main image`}
+                className="object-contain w-full h-full rounded-md transition-opacity"
+                loading="eager"
+                priority
+              />
+            </div>
+          </DialogTrigger>
+          <DialogContent className="p-0 ring-0 border-0 shadow-none w-full h-full bg-transparent">
+            <DialogHeader>
+              <DialogTitle className="hidden">title</DialogTitle>
+              <DialogDescription className="hidden">
+                description
+              </DialogDescription>
+            </DialogHeader>
+            <AnimatePresence>
+              {isOpen && (
+                <motion.div
+                  variants={modalVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  transition={{ duration: 0.3 }}
+                  className="relative w-full h-[80vh] overflow-hidden cursor-pointer"
+                  onClick={handleImageClick}
+                >
+                  <Image
+                    width={1200}
+                    height={800}
+                    src={mainImage?.image || "/product.svg"}
+                    alt={`${name} - Scaled image`}
+                    className="w-full h-full object-contain transition-transform duration-300 ease-in-out"
+                    style={{
+                      transform: isScaled ? "scale(1.3)" : "scale(1)",
+                      transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%`,
+                    }}
+                    priority
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute top-4 right-4 bg-gray-800/80 hover:bg-gray-800 text-white rounded-full p-2"
+                onClick={() => handleModalChange(false)}
+              >
+                <X size={24} />
+              </Button>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Product Details */}
@@ -138,7 +230,7 @@ export default function ProductInfo({ productData }) {
               <h1 className={`${discountSum && "line-through text-black/20"}`}>
                 {price.toLocaleString()} сум
               </h1>
-              {discountSum && <h1>{discountSum} сум</h1>}
+              {discountSum && <h1>{discountSum.toLocaleString()} сум</h1>}
             </div>
             {discount && (
               <span className="font-medium textSmall3 px-2 text-red-500 rounded-md bg-red-100">
@@ -187,12 +279,13 @@ export default function ProductInfo({ productData }) {
           <h1 className="w-full sm:w-1/3 textNormall3">Мавжуд маҳсулот сони</h1>
           <span className="w-full sm:w-2/3 font-bold">{quantity} дона</span>
         </div>
+
         {/* Add to Cart & Quantity Control */}
         <div className="flex w-full items-center gap-2">
           <button
             onClick={handleAddToCart}
             className="textSmall3 w-full bg-primary text-white py-3 sm:py-2 md:px-6 rounded-md hover:bg-primary-dark transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-            disabled={quantity == 0 || !quantity}
+            disabled={quantity === 0 || !quantity}
           >
             Саватга қўшиш
           </button>

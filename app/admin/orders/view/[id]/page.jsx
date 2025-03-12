@@ -17,7 +17,6 @@ import {
 import { Loader2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import Image from "next/image";
-import { useAuth } from "@/context/AuthContext";
 import { useAdminSocket } from "@/context/AdmnSocketContext";
 
 export default function ViewOrder() {
@@ -26,6 +25,7 @@ export default function ViewOrder() {
   const [order, setOrder] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const { reloadFunc } = useAdminSocket();
+
   useEffect(() => {
     const fetchOrder = async () => {
       try {
@@ -60,6 +60,27 @@ export default function ViewOrder() {
     }
   }, [id]);
 
+  const handleCompleteOrder = async () => {
+    if (order.status === "finished") {
+      toast.info("Буюртма аллақачон якунланган.");
+      return;
+    }
+
+    try {
+      const updatedOrder = { ...order, status: "finished" };
+      const res = await putData(updatedOrder, `/api/orders/${id}`, "order");
+
+      if (res) {
+        setOrder(updatedOrder);
+        reloadFunc();
+        toast.success(`Буюртма #${id} якунланди!`);
+      }
+    } catch (error) {
+      console.error("Failed to complete order:", error);
+      toast.error("Буюртмани якунлашда хатолик юз берди.");
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -82,6 +103,36 @@ export default function ViewOrder() {
       </div>
     );
   }
+
+  const getStatusDisplay = (status) => {
+    switch (status) {
+      case "new":
+        return (
+          <span className="bg-green-100 text-green-800 px-2 py-1 rounded">
+            Янги заказ
+          </span>
+        );
+      case "created":
+        return (
+          <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded">
+            Заказ олинди
+          </span>
+        );
+      case "finished":
+        return (
+          <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded">
+            Заказ топширилди
+          </span>
+        );
+      default:
+        return (
+          <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded">
+            Noma'lum
+          </span>
+        );
+    }
+  };
+
 
   const {
     order_type,
@@ -116,11 +167,21 @@ export default function ViewOrder() {
               Буюртма #{id} -{" "}
               {order_type === "individual" ? "Жисмоний шахс" : "Юридик шахс"}
             </CardTitle>
-            <div
-              variant={order_type === "individual" ? "default" : "secondary"}
-              className="text-lg px-4 py-1"
-            >
-              {order_type === "individual" ? "Жеке" : "Ташкилот"}
+            <div className="flex gap-4 items-center">
+              <div
+                variant={order_type === "individual" ? "default" : "secondary"}
+                className="text-lg px-4 py-1"
+              >
+                {order_type === "individual" ? "Жеке" : "Ташкилот"}
+              </div>
+              <Button
+                variant="success"
+                className="bg-primary text-white"
+                onClick={handleCompleteOrder}
+                disabled={status === "finished"}
+              >Жеке
+                Буюртмани якунлаш
+              </Button>
             </div>
           </div>
         </CardHeader>
@@ -131,7 +192,7 @@ export default function ViewOrder() {
           </div>
           <div>
             <p className="text-sm text-gray-500">Status</p>
-            <p className="text-lg font-semibold">{status}</p>
+            <p className="text-lg font-semibold">{getStatusDisplay(status)}</p>
           </div>
           <div>
             <p className="text-sm text-gray-500">Телефон</p>

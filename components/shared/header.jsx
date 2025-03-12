@@ -77,7 +77,7 @@ export default function Header({ categoriesData, brandsData }) {
               <SheetTrigger asChild>
                 <Menu size={32} className="lg:hidden" />
               </SheetTrigger>
-              <SheetContent side="left" className="">
+              <SheetContent side="left" className="w-full">
                 <SheetHeader className={"hidden"}>
                   <SheetTitle>Are you absolutely sure?</SheetTitle>
                   <SheetDescription>
