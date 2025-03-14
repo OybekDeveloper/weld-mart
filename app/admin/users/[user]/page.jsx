@@ -23,17 +23,17 @@ import { postData } from "@/actions/post";
 import { putData } from "@/actions/put";
 
 const formSchema = z.object({
-  name: z.string().min(1, "Name is required"),
+  name: z.string().min(1, "Имя обязательно"),
   phone: z
     .string()
-    .min(1, "Phone is required")
-    .regex(/^\+?[1-9]\d{1,14}$/, "Invalid phone number format"),
-  password: z.string().optional(), // Optional in edit mode
-  bonus: z.number().min(0, "Bonus cannot be negative"),
+    .min(1, "Телефон обязателен")
+    .regex(/^\+?[1-9]\d{1,14}$/, "Неверный формат номера телефона"),
+  password: z.string().optional(), // Необязательно в режиме редактирования
+  bonus: z.number().min(0, "Бонус не может быть отрицательным"),
 });
 
 export default function UserEvent({ params }) {
-  const { user: userId } = use(params); // Dynamic route param for user ID
+  const { user: userId } = use(params); // Динамический параметр маршрута для ID пользователя
   const router = useRouter();
   const isAddMode = userId === "add";
   const [isLoading, setIsLoading] = useState(!isAddMode);
@@ -49,7 +49,7 @@ export default function UserEvent({ params }) {
     },
   });
 
-  // Fetch user data for edit mode
+  // Получение данных пользователя для режима редактирования
   useEffect(() => {
     if (!isAddMode && userId !== "add") {
       const fetchUser = async () => {
@@ -63,13 +63,13 @@ export default function UserEvent({ params }) {
             form.reset({
               name: user?.name || "",
               phone: user?.phone || "",
-              password: "", // Don't pre-fill password for security
+              password: "", // Не заполняем пароль для безопасности
               bonus: user?.bonus || 0,
             });
           }
         } catch (error) {
-          console.error("Failed to fetch user", error);
-          toast.error("Failed to load user data.");
+          console.error("Не удалось загрузить пользователя", error);
+          toast.error("Не удалось загрузить данные пользователя.");
         } finally {
           setIsLoading(false);
         }
@@ -84,22 +84,22 @@ export default function UserEvent({ params }) {
     try {
       setSubmitLoading(true);
 
-      // Prepare values for submission
+      // Подготовка значений для отправки
       const updatedValues = { ...values };
 
-      // In add mode, password is required
+      // В режиме добавления пароль обязателен
       if (isAddMode && !updatedValues.password) {
-        toast.error("Парол киритинг (мажбурий)");
+        toast.error("Введите пароль (обязательно)");
         setSubmitLoading(false);
         return;
       }
 
-      // In edit mode, exclude password if not provided
+      // В режиме редактирования исключаем пароль, если он не указан
       if (!isAddMode && !updatedValues.password) {
         delete updatedValues.password;
       }
 
-      console.log("Submitting:", updatedValues);
+      console.log("Отправка:", updatedValues);
 
       let result;
       if (isAddMode) {
@@ -108,22 +108,22 @@ export default function UserEvent({ params }) {
         result = await putData(updatedValues, `/api/users/${userId}`, "user");
       }
       console.log(result);
-      console.log("API response:", result);
+      console.log("Ответ API:", result);
 
       if (result && !result.error) {
         if (isAddMode) {
-          toast.success("Фойдаланувчи мувофаққиятли қўшилди");
+          toast.success("Пользователь успешно добавлен");
           form.reset();
         } else {
-          toast.info("Фойдаланувчи мувофаққиятли янгиланди");
+          toast.info("Пользователь успешно обновлен");
         }
         router.push("/admin/users");
       } else if (result.error) {
         toast.error(result.error);
       }
     } catch (error) {
-      console.error("Form submission error:", error);
-      toast.error("Форма юборилмади. Қайта уриниб кўринг.");
+      console.error("Ошибка отправки формы:", error);
+      toast.error("Форма не отправлена. Попробуйте еще раз.");
     } finally {
       setSubmitLoading(false);
     }
@@ -143,13 +143,13 @@ export default function UserEvent({ params }) {
         onClick={() => window.history.back()}
         className="hover:bg-primary hover:opacity-75"
       >
-        Орқага қайтиш
+        Вернуться назад
       </Button>
       <div className="max-w-3xl mx-auto py-10">
         <h1 className="text-2xl font-bold mb-6">
           {isAddMode
-            ? "Янги фойдаланувчи қўшиш"
-            : `Фойдаланувчини таҳрирлаш (ID: ${userId || "номаълум"})`}
+            ? "Добавить нового пользователя"
+            : `Редактировать пользователя (ID: ${userId || "неизвестно"})`}
         </h1>
 
         <Form {...form}>
@@ -159,10 +159,10 @@ export default function UserEvent({ params }) {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Исм</FormLabel>
+                  <FormLabel>Имя</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="Фойдаланувчи исмини киритинг"
+                      placeholder="Введите имя пользователя"
                       {...field}
                     />
                   </FormControl>
@@ -179,12 +179,12 @@ export default function UserEvent({ params }) {
                   <FormLabel>Телефон</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="Телефон рақамини киритинг (масалан, +998901234567)"
+                      placeholder="Введите номер телефона (например, +79876543210)"
                       {...field}
                     />
                   </FormControl>
                   <FormDescription>
-                    Халқаро форматда киритинг (масалан, +998901234567).
+                    Введите в международном формате (например, +79876543210).
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -196,22 +196,22 @@ export default function UserEvent({ params }) {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Парол</FormLabel>
+                  <FormLabel>Пароль</FormLabel>
                   <FormControl>
                     <Input
                       type="password"
                       placeholder={
                         isAddMode
-                          ? "Парол киритинг"
-                          : "Янги парол киритинг (ихтиёрий)"
+                          ? "Введите пароль"
+                          : "Введите новый пароль (необязательно)"
                       }
                       {...field}
                     />
                   </FormControl>
                   <FormDescription>
                     {isAddMode
-                      ? "Янги фойдаланувчилар учун мажбурий."
-                      : "Агар мавжуд паролни сақлаб қолмоқчи бўлсангиз, бўш қолдиринг."}
+                      ? "Обязательно для новых пользователей."
+                      : "Оставьте пустым, если хотите сохранить текущий пароль."}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -227,7 +227,7 @@ export default function UserEvent({ params }) {
                   <FormControl>
                     <Input
                       type="number"
-                      placeholder="Бонус миқдорини киритинг"
+                      placeholder="Введите количество бонусов"
                       step="0.01"
                       {...field}
                       onChange={(e) =>
@@ -245,9 +245,9 @@ export default function UserEvent({ params }) {
               {submitLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : isAddMode ? (
-                "Фойдаланувчи қўшиш"
+                "Добавить пользователя"
               ) : (
-                "Фойдаланувчини янгилаш"
+                "Обновить пользователя"
               )}
             </Button>
           </form>

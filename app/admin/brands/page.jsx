@@ -19,36 +19,52 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox"; // Added Checkbox import
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getData } from "@/actions/get";
-import { deleteData } from "@/actions/delete"; // Added import
-import { Loader2 } from "lucide-react";
-import { toast } from "sonner"; // Added import for toast notifications
+import { deleteData } from "@/actions/delete";
+import { Loader2, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import Pagination from "../_components/Pagination";
+
+// General filter function with a single search term
+const filterItems = (items, searchTerm) => {
+  if (!searchTerm) return items;
+
+  const lowerSearchTerm = searchTerm.toLowerCase();
+  return items.filter((item) => {
+    const fields = {
+      id: item.id?.toString() || "",
+      name: item.name?.toString() || "",
+      created_at: new Date(item.created_at).toLocaleDateString() || "",
+      updated_at: new Date(item.updated_at).toLocaleDateString() || "",
+    };
+    return Object.values(fields).some((value) =>
+      value.toLowerCase().includes(lowerSearchTerm)
+    );
+  });
+};
 
 export default function Brands() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [brandToDelete, setBrandToDelete] = useState(null);
+  const [brandsToDelete, setBrandsToDelete] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [filters, setFilters] = useState({
-    id: "",
-    name: "",
-    createdAt: "",
-    updatedAt: "",
-  });
+  const [searchTerm, setSearchTerm] = useState("");
   const [brands, setBrands] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedBrands, setSelectedBrands] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
         const response = await getData("/api/brands", "brand");
-        setBrands(response.brands || []); // Fallback to empty array if undefined
+        setBrands(response.brands || []);
       } catch (error) {
         console.log(error);
-        toast.error("Брендларни юклашда хатолик юз берди");
+        toast.error("Ошибка при загрузке брендов");
       } finally {
         setIsLoading(false);
       }
@@ -57,72 +73,70 @@ export default function Brands() {
   }, []);
 
   const itemsPerPage = 10;
-
-  // Filter logic
-  const filteredBrands = brands
-    ?.slice()
-    ?.reverse()
-    ?.filter((brand) => {
-      const matchesId =
-        filters.id === "" || brand.id.toString().includes(filters.id);
-      const matchesName = brand.name
-        .toLowerCase()
-        .includes(filters.name.toLowerCase());
-      const matchesCreatedAt =
-        filters.createdAt === "" ||
-        new Date(brand.created_at)
-          .toLocaleDateString()
-          .includes(filters.createdAt);
-      const matchesUpdatedAt =
-        filters.updatedAt === "" ||
-        new Date(brand.updated_at)
-          .toLocaleDateString()
-          .includes(filters.updatedAt);
-
-      return matchesId && matchesName && matchesCreatedAt && matchesUpdatedAt;
-    });
-
-  // Pagination logic
+  const filteredBrands = filterItems(brands.slice().reverse(), searchTerm);
   const totalPages = Math.ceil(filteredBrands.length / itemsPerPage);
   const paginatedBrands = filteredBrands.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
-  const handleDeleteClick = (brand) => {
-    setBrandToDelete(brand);
+  const handleDeleteClick = (brands) => {
+    setBrandsToDelete(Array.isArray(brands) ? brands : [brands]);
     setIsDeleteModalOpen(true);
   };
 
   const handleConfirmDelete = async () => {
-    if (brandToDelete?.id) {
-      try {
-        const res = await deleteData(
-          `/api/brands/${brandToDelete.id}`,
-          "brand"
+    if (!brandsToDelete.length) return;
+
+    try {
+      const deletePromises = brandsToDelete.map((brand) =>
+        deleteData(`/api/brands/${brand.id}`, "brand")
+      );
+      const results = await Promise.all(deletePromises);
+      const allSuccessful = results.every((res) => res.success);
+
+      if (allSuccessful) {
+        setBrands((prev) =>
+          prev.filter((b) => !brandsToDelete.some((d) => d.id === b.id))
         );
-        if (res.success) {
-          // Remove the deleted brand from the state
-          setBrands((prevBrands) =>
-            prevBrands.filter((b) => b.id !== brandToDelete.id)
-          );
-          toast.error("Бренд мувофаққиятли ўчирилди");
-        } else {
-          toast.error("Брендни ўчиришда хатолик юз берди");
-        }
-      } catch (error) {
-        console.log(error);
-        toast.error("Брендни ўчиришда хатолик юз берди");
+        setSelectedBrands([]);
+        toast.success(
+          `Бренд${brandsToDelete.length > 1 ? "ы" : ""} успешно удален${
+            brandsToDelete.length > 1 ? "ы" : ""
+          }`
+        );
+      } else {
+        toast.error("Ошибка при удалении одного или нескольких брендов");
       }
+    } catch (error) {
+      console.error("Delete error:", error);
+      toast.error("Ошибка при удалении брендов");
+    } finally {
+      setIsDeleteModalOpen(false);
+      setBrandsToDelete([]);
     }
-    setIsDeleteModalOpen(false);
-    setBrandToDelete(null);
   };
 
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target;
-    setFilters((prev) => ({ ...prev, [name]: value }));
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
     setCurrentPage(1);
+    setSelectedBrands([]);
+  };
+
+  const handleSelectBrand = (brandId) => {
+    setSelectedBrands((prev) =>
+      prev.includes(brandId)
+        ? prev.filter((id) => id !== brandId)
+        : [...prev, brandId]
+    );
+  };
+
+  const handleSelectAll = (checked) => {
+    if (checked) {
+      setSelectedBrands(paginatedBrands.map((brand) => brand.id));
+    } else {
+      setSelectedBrands([]);
+    }
   };
 
   if (isLoading) {
@@ -136,72 +150,69 @@ export default function Brands() {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Брендлар</h1>
-        <Button className="hover:bg-primary hover:opacity-75" asChild>
-          <Link href="/admin/brands/add">Бренд қўшиш</Link>
-        </Button>
+        <h1 className="text-2xl font-bold">Бренды</h1>
+        <div className="flex gap-2">
+          {selectedBrands.length > 0 && (
+            <Button
+              variant="destructive"
+              onClick={() =>
+                handleDeleteClick(
+                  brands.filter((b) => selectedBrands.includes(b.id))
+                )
+              }
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Удалить выбранные ({selectedBrands.length})
+            </Button>
+          )}
+          <Button className="hover:bg-primary hover:opacity-75" asChild>
+            <Link href="/admin/brands/add">Добавить бренд</Link>
+          </Button>
+        </div>
       </div>
 
-      {/* Filters */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div>
-          <Label htmlFor="id">ID</Label>
-          <Input
-            id="id"
-            name="id"
-            value={filters.id}
-            onChange={handleFilterChange}
-            placeholder="ID бўйича фильтрлаш"
-            type="number"
-          />
-        </div>
-        <div>
-          <Label htmlFor="name">Номи</Label>
-          <Input
-            id="name"
-            name="name"
-            value={filters.name}
-            onChange={handleFilterChange}
-            placeholder="Номи бўйича фильтрлаш"
-          />
-        </div>
-        <div>
-          <Label htmlFor="createdAt">Яратилган сана</Label>
-          <Input
-            id="createdAt"
-            name="createdAt"
-            value={filters.createdAt}
-            onChange={handleFilterChange}
-            placeholder="Яратилган сана бўйича фильтрлаш"
-          />
-        </div>
-        <div>
-          <Label htmlFor="updatedAt">Янгиланган сана</Label>
-          <Input
-            id="updatedAt"
-            name="updatedAt"
-            value={filters.updatedAt}
-            onChange={handleFilterChange}
-            placeholder="Янгиланган сана бўйича фильтрлаш"
-          />
-        </div>
+      {/* Single Common Filter */}
+      <div className="mb-6">
+        <Label htmlFor="search">Поиск</Label>
+        <Input
+          id="search"
+          value={searchTerm}
+          onChange={handleSearchChange}
+          placeholder="Поиск по всем полям (ID, название, даты...)"
+          className="max-w-md"
+        />
       </div>
 
       {/* Table */}
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead>
+              <Checkbox
+                checked={
+                  selectedBrands.length === paginatedBrands.length &&
+                  paginatedBrands.length > 0
+                }
+                onCheckedChange={handleSelectAll}
+              />
+            </TableHead>
             <TableHead>ID</TableHead>
-            <TableHead>Номи</TableHead>
-            <TableHead>Расм</TableHead>
-            <TableHead>Яратилган сана</TableHead>
-            <TableHead>Янгиланган сана</TableHead>
-            <TableHead>Амаллар</TableHead>
+            <TableHead>Название</TableHead>
+            <TableHead>Изображение</TableHead>
+            <TableHead>Дата создания</TableHead>
+            <TableHead>Дата обновления</TableHead>
+            <TableHead>Действия</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {paginatedBrands.map((brand) => (
             <TableRow key={brand.id}>
+              <TableCell onClick={(e) => e.stopPropagation()}>
+                <Checkbox
+                  checked={selectedBrands.includes(brand.id)}
+                  onCheckedChange={() => handleSelectBrand(brand.id)}
+                />
+              </TableCell>
               <TableCell>{brand.id}</TableCell>
               <TableCell>{brand.name}</TableCell>
               <TableCell>
@@ -219,17 +230,19 @@ export default function Brands() {
               <TableCell>
                 {new Date(brand.updated_at).toLocaleDateString()}
               </TableCell>
-              <TableCell>
+              <TableCell onClick={(e) => e.stopPropagation()}>
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" asChild>
-                    <Link href={`/admin/brands/${brand.id}`}>Ўзгартириш</Link>
+                    <Link href={`/admin/brands/${brand.id}`}>
+                      Редактировать
+                    </Link>
                   </Button>
                   <Button
                     variant="destructive"
                     size="sm"
                     onClick={() => handleDeleteClick(brand)}
                   >
-                    Ўчириш
+                    Удалить
                   </Button>
                 </div>
               </TableCell>
@@ -239,36 +252,23 @@ export default function Brands() {
       </Table>
 
       {/* Pagination */}
-      <div className="mt-6">
-        <div className="flex justify-between items-center">
-          <Button
-            variant="outline"
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage((prev) => prev - 1)}
-          >
-            Орқага
-          </Button>
-          <span>
-            Саҳифа {currentPage} / {totalPages}
-          </span>
-          <Button
-            variant="outline"
-            disabled={currentPage === totalPages}
-            onClick={() => setCurrentPage((prev) => prev + 1)}
-          >
-            Кейингиси
-          </Button>
-        </div>
-      </div>
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
 
       {/* Delete Confirmation Modal */}
       <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Ўчиришни тасдиқланг</DialogTitle>
+            <DialogTitle>Подтверждение удаления</DialogTitle>
             <DialogDescription>
-              Ҳақиқатан ҳам "{brandToDelete?.name}" ни ўчириб ташламоқчимисиз?
-              Бу амални ортга қайтариб бўлмайди.
+              Вы уверены, что хотите удалить{" "}
+              {brandsToDelete.length > 1
+                ? `${brandsToDelete.length} брендов`
+                : `бренд "${brandsToDelete[0]?.name}"`}
+              ? Это действие необратимо.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -276,10 +276,10 @@ export default function Brands() {
               variant="outline"
               onClick={() => setIsDeleteModalOpen(false)}
             >
-              Бекор қилиш
+              Отмена
             </Button>
             <Button variant="destructive" onClick={handleConfirmDelete}>
-              Ўчириш
+              Удалить
             </Button>
           </DialogFooter>
         </DialogContent>

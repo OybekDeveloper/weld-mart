@@ -25,6 +25,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Checkbox } from "@/components/ui/checkbox"; // Added Checkbox import
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getData } from "@/actions/get";
@@ -32,34 +33,49 @@ import { deleteData } from "@/actions/delete";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import Pagination from "../_components/Pagination"; // Added Pagination component
+
+// General filter function with a single search term
+const filterItems = (items, searchTerm) => {
+  if (!searchTerm) return items;
+
+  const lowerSearchTerm = searchTerm.toLowerCase();
+  return items.filter((item) => {
+    const fields = {
+      id: item.id?.toString() || "",
+      name: item.name?.toString() || "",
+      phone: item.phone?.toString() || "",
+      price: item.price?.toString() || "",
+      order_type: item.order_type?.toString() || "",
+      organization: item.organization?.toString() || "",
+      created_at: new Date(item.created_at).toLocaleDateString() || "",
+      updated_at: new Date(item.updated_at).toLocaleDateString() || "",
+    };
+    return Object.values(fields).some((value) =>
+      value.toLowerCase().includes(lowerSearchTerm)
+    );
+  });
+};
 
 export default function Orders() {
   const router = useRouter();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [orderToDelete, setOrderToDelete] = useState(null);
+  const [ordersToDelete, setOrdersToDelete] = useState([]); // Changed to array for multi-delete
   const [currentPage, setCurrentPage] = useState(1);
-  const [filters, setFilters] = useState({
-    id: "",
-    name: "",
-    phone: "",
-    price: "",
-    orderType: "",
-    createdAt: "",
-    updatedAt: "",
-  });
+  const [searchTerm, setSearchTerm] = useState(""); // Single search term
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedOrders, setSelectedOrders] = useState([]); // For multi-select
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
         const response = await getData("/api/orders", "order");
-        setOrders(response); // Assuming the API returns an array directly
-        console.log(response);
+        setOrders(response || []);
       } catch (error) {
         console.log(error);
-        toast.error("Failed to load orders.");
+        toast.error("Ошибка при загрузке заказов");
       } finally {
         setIsLoading(false);
       }
@@ -69,115 +85,100 @@ export default function Orders() {
 
   const itemsPerPage = 10;
 
-  // Filter logic
-  const filteredOrders = orders
-    ?.slice()
-    ?.reverse()
-    .filter((order) => {
-      const matchesId =
-        filters.id === "" || order.id.toString().includes(filters.id);
-      const matchesName =
-        filters.name === "" ||
-        (order.name &&
-          order.name.toLowerCase().includes(filters.name.toLowerCase()));
-      const matchesPhone =
-        filters.phone === "" ||
-        (order.phone && order.phone.includes(filters.phone));
-      const matchesPrice =
-        filters.price === "" || order.price.toString().includes(filters.price);
-      const matchesOrderType =
-        filters.orderType === "" ||
-        order.order_type
-          .toLowerCase()
-          .includes(filters.orderType.toLowerCase());
-      const matchesCreatedAt =
-        filters.createdAt === "" ||
-        new Date(order.created_at)
-          .toLocaleDateString()
-          .includes(filters.createdAt);
-      const matchesUpdatedAt =
-        filters.updatedAt === "" ||
-        new Date(order.updated_at)
-          .toLocaleDateString()
-          .includes(filters.updatedAt);
-
-      return (
-        matchesId &&
-        matchesName &&
-        matchesPhone &&
-        matchesPrice &&
-        matchesOrderType &&
-        matchesCreatedAt &&
-        matchesUpdatedAt
-      );
-    });
-
-  // Pagination logic
+  // Filter and pagination logic
+  const filteredOrders = filterItems(orders.slice().reverse(), searchTerm);
   const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
   const paginatedOrders = filteredOrders.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
-  const handleDeleteClick = (order) => {
-    setOrderToDelete(order);
+  const handleDeleteClick = (orders) => {
+    setOrdersToDelete(Array.isArray(orders) ? orders : [orders]); // Handle single or multiple
     setIsDeleteModalOpen(true);
   };
 
   const handleConfirmDelete = async () => {
-    if (!orderToDelete) return;
+    if (!ordersToDelete.length) return;
 
     try {
-      const res = await deleteData(`/api/orders/${orderToDelete?.id}`, "order");
-      console.log(res);
-      if (res.success) {
-        setOrders((prev) => prev.filter((o) => o.id !== orderToDelete.id));
-        toast.error(`Буюртма (ID: ${orderToDelete.id}) ўчирилди`);
+      const deletePromises = ordersToDelete.map((order) =>
+        deleteData(`/api/orders/${order.id}`, "order")
+      );
+      const results = await Promise.all(deletePromises);
+      const allSuccessful = results.every((res) => res.success);
+
+      if (allSuccessful) {
+        setOrders((prev) =>
+          prev.filter((o) => !ordersToDelete.some((d) => d.id === o.id))
+        );
+        setSelectedOrders([]); // Clear selection
+        toast.success(
+          `Заказ${ordersToDelete.length > 1 ? "ы" : ""} успешно удален${
+            ordersToDelete.length > 1 ? "ы" : ""
+          }`
+        );
+      } else {
+        toast.error("Ошибка при удалении одного или нескольких заказов");
       }
     } catch (error) {
       console.error("Delete error:", error);
-      toast.error("Буюртмани ўчиришда хатолик юз берди.");
+      toast.error("Ошибка при удалении заказов");
     } finally {
       setIsDeleteModalOpen(false);
-      setOrderToDelete(null);
+      setOrdersToDelete([]);
     }
   };
 
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target;
-    setFilters((prev) => ({ ...prev, [name]: value }));
-    setCurrentPage(1); // Reset to first page when filters change
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(1);
   };
 
   const handleRowClick = (orderId) => {
     router.push(`/admin/orders/view/${orderId}`);
   };
 
-  // Function to determine status label and color
+  const handleSelectOrder = (orderId) => {
+    setSelectedOrders((prev) =>
+      prev.includes(orderId)
+        ? prev.filter((id) => id !== orderId)
+        : [...prev, orderId]
+    );
+  };
+
+  const handleSelectAll = (checked) => {
+    if (checked) {
+      setSelectedOrders(paginatedOrders.map((order) => order.id));
+    } else {
+      setSelectedOrders([]);
+    }
+  };
+
   const getStatusDisplay = (status) => {
     switch (status) {
       case "new":
         return (
           <span className="bg-green-100 text-green-800 px-2 py-1 rounded">
-            Янги заказ
+            Новый заказ
           </span>
         );
       case "created":
         return (
           <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded">
-            Заказ олинди
+            Заказ принят
           </span>
         );
       case "finished":
         return (
           <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded">
-            Заказ топширилди
+            Заказ завершен
           </span>
         );
       default:
         return (
           <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded">
-            Noma'lum
+            Неизвестно
           </span>
         );
     }
@@ -195,105 +196,65 @@ export default function Orders() {
     <TooltipProvider>
       <div>
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Буюртмалар</h1>
-          <Button className="hover:bg-primary hover:opacity-75" asChild>
-            <Link href="/admin/orders/add">Буюртма қўшиш</Link>
-          </Button>
-        </div>
-
-        {/* Филтрлар */}
-        <div className="grid grid-cols-1 md:grid-cols-7 gap-4 mb-6">
-          <div>
-            <Label htmlFor="id">ID</Label>
-            <Input
-              id="id"
-              name="id"
-              value={filters.id}
-              onChange={handleFilterChange}
-              placeholder="ID бўйича фильтрлаш"
-              type="number"
-            />
-          </div>
-          <div>
-            <Label htmlFor="name">Исми</Label>
-            <Input
-              id="name"
-              name="name"
-              value={filters.name}
-              onChange={handleFilterChange}
-              placeholder="Исм бўйича фильтрлаш"
-            />
-          </div>
-          <div>
-            <Label htmlFor="phone">Телефон</Label>
-            <Input
-              id="phone"
-              name="phone"
-              value={filters.phone}
-              onChange={handleFilterChange}
-              placeholder="Телефон рақами бўйича фильтрлаш"
-            />
-          </div>
-          <div>
-            <Label htmlFor="price">Нарх</Label>
-            <Input
-              id="price"
-              name="price"
-              value={filters.price}
-              onChange={handleFilterChange}
-              placeholder="Нарх бўйича фильтрлаш"
-              type="number"
-            />
-          </div>
-          <div>
-            <Label htmlFor="orderType">Буюртма тури</Label>
-            <Input
-              id="orderType"
-              name="orderType"
-              value={filters.orderType}
-              onChange={handleFilterChange}
-              placeholder="Буюртма тури бўйича фильтрлаш"
-            />
-          </div>
-          <div>
-            <Label htmlFor="createdAt">Яратилган сана</Label>
-            <Input
-              id="createdAt"
-              name="createdAt"
-              value={filters.createdAt}
-              onChange={handleFilterChange}
-              placeholder="Яратилган сана бўйича фильтрлаш"
-            />
-          </div>
-          <div>
-            <Label htmlFor="updatedAt">Янгиланган сана</Label>
-            <Input
-              id="updatedAt"
-              name="updatedAt"
-              value={filters.updatedAt}
-              onChange={handleFilterChange}
-              placeholder="Янгиланган сана бўйича фильтрлаш"
-            />
+          <h1 className="text-2xl font-bold">Заказы</h1>
+          <div className="flex gap-2">
+            {selectedOrders.length > 0 && (
+              <div className="mb-4">
+                <Button
+                  variant="destructive"
+                  onClick={() =>
+                    handleDeleteClick(
+                      orders.filter((o) => selectedOrders.includes(o.id))
+                    )
+                  }
+                >
+                  Удалить выбранные ({selectedOrders.length})
+                </Button>
+              </div>
+            )}
+            <Button className="hover:bg-primary hover:opacity-75" asChild>
+              <Link href="/admin/orders/add">Добавить заказ</Link>
+            </Button>
           </div>
         </div>
 
-        {/* Жадвал */}
+        {/* Single Search Filter */}
+        <div className="mb-6">
+          <Label htmlFor="search">Поиск</Label>
+          <Input
+            id="search"
+            value={searchTerm}
+            onChange={handleSearchChange}
+            placeholder="Поиск по всем полям (ID, имя, телефон, цена...)"
+            className="max-w-md"
+          />
+        </div>
+
+        {/* Multi-Delete Button */}
+
+        {/* Table */}
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>
+                <Checkbox
+                  checked={selectedOrders.length === paginatedOrders.length}
+                  onCheckedChange={handleSelectAll}
+                />
+              </TableHead>
               <TableHead>ID</TableHead>
-              <TableHead>Фойдаланувчи ID</TableHead>
-              <TableHead>Исми</TableHead>
+              <TableHead>ID пользователя</TableHead>
+              <TableHead>Имя</TableHead>
               <TableHead>Телефон</TableHead>
-              <TableHead>Ташкилот</TableHead>
-              <TableHead>Нарх</TableHead>
+              <TableHead>Организация</TableHead>
+              <TableHead>Цена</TableHead>
               <TableHead>Бонус</TableHead>
-              <TableHead>Буюртма тури</TableHead>
-              <TableHead>Изоҳ</TableHead>
-              <TableHead>Статус</TableHead> {/* New Status Column */}
-              <TableHead>Яратилган сана</TableHead>
-              <TableHead>Янгиланган сана</TableHead>
-              <TableHead>Амаллар</TableHead>
+              <TableHead>Тип заказа</TableHead>
+              <TableHead>Комментарий</TableHead>
+              <TableHead>Статус</TableHead>
+              <TableHead>Дата создания</TableHead>
+              <TableHead>Дата обновления</TableHead>
+              <TableHead>Действия</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -304,32 +265,36 @@ export default function Orders() {
                     onClick={() => handleRowClick(order.id)}
                     className="cursor-pointer hover:bg-gray-100"
                   >
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <Checkbox
+                        checked={selectedOrders.includes(order.id)}
+                        onCheckedChange={() => handleSelectOrder(order.id)}
+                      />
+                    </TableCell>
                     <TableCell>{order.id}</TableCell>
                     <TableCell>{order.user_id}</TableCell>
                     <TableCell>{order.name || "-"}</TableCell>
                     <TableCell>{order.phone || "-"}</TableCell>
                     <TableCell>{order.organization || "-"}</TableCell>
-                    <TableCell>{order.price.toLocaleString()} сўм</TableCell>
+                    <TableCell>{order.price.toLocaleString()} сум</TableCell>
                     <TableCell>{order.bonus}</TableCell>
                     <TableCell>{order.order_type}</TableCell>
                     <TableCell>{order.comment || "-"}</TableCell>
-                    <TableCell>{getStatusDisplay(order.status)}</TableCell> {/* Display Status */}
+                    <TableCell>{getStatusDisplay(order.status)}</TableCell>
                     <TableCell>
                       {new Date(order.created_at).toLocaleDateString()}
                     </TableCell>
                     <TableCell>
                       {new Date(order.updated_at).toLocaleDateString()}
                     </TableCell>
-                    <TableCell
-                      onClick={(e) => e.stopPropagation()} // Prevent row click from triggering
-                    >
+                    <TableCell onClick={(e) => e.stopPropagation()}>
                       <div className="flex gap-2">
                         <Button variant="outline" size="sm" asChild>
                           <Link
                             onClick={(e) => e.stopPropagation()}
                             href={`/admin/orders/${order.id}`}
                           >
-                            Таҳрирлаш
+                            Редактировать
                           </Link>
                         </Button>
                         <Button
@@ -337,19 +302,19 @@ export default function Orders() {
                           size="sm"
                           onClick={() => handleDeleteClick(order)}
                         >
-                          Ўчириш
+                          Удалить
                         </Button>
                       </div>
                     </TableCell>
                   </TableRow>
                 </TooltipTrigger>
                 <TooltipContent className="p-4 bg-white text-black shadow-lg rounded-lg max-w-md">
-                  <h3 className="font-bold mb-2">Буюртма элементлари:</h3>
+                  <h3 className="font-bold mb-2">Элементы заказа:</h3>
                   <ul className="list-disc pl-4">
                     {order.order_items.map((item, idx) => (
                       <li key={idx}>
-                        <strong>{item.name}</strong> - Миқдор:{" "}
-                        {item.order_quantity}, Нарх: {item.price} сўм
+                        <strong>{item.name}</strong> - Количество:{" "}
+                        {item.order_quantity}, Цена: {item.price} сум
                       </li>
                     ))}
                   </ul>
@@ -359,40 +324,28 @@ export default function Orders() {
           </TableBody>
         </Table>
 
-        {/* Саҳифалаш */}
-        <div className="mt-6">
-          <div className="flex justify-between items-center">
-            <Button
-              variant="outline"
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage((prev) => prev - 1)}
-            >
-              Олдинги
-            </Button>
-            <span>
-              Саҳифа {currentPage} / {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              disabled={currentPage === totalPages}
-              onClick={() => setCurrentPage((prev) => prev + 1)}
-            >
-              Кейинги
-            </Button>
-          </div>
-        </div>
+        {/* Pagination */}
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
 
-        {/* Ўчириш тасдиқлаш модали */}
+        {/* Delete Confirmation Modal */}
         <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Ўчиришни тасдиқлаш</DialogTitle>
+              <DialogTitle>Подтверждение удаления</DialogTitle>
               <DialogDescription>
-                Сиз ростдан ҳам буюртмани (ID: {orderToDelete?.id}) -{" "}
-                {orderToDelete?.order_type === "individual"
-                  ? `Исм: ${orderToDelete?.name}`
-                  : `Ташкилот: ${orderToDelete?.organization}`}{" "}
-                ўчирмоқчимисиз? Бу амални қайтариб бўлмайди.
+                Вы действительно хотите удалить{" "}
+                {ordersToDelete.length > 1
+                  ? `${ordersToDelete.length} заказов`
+                  : `заказ (ID: ${ordersToDelete[0]?.id}) - ${
+                      ordersToDelete[0]?.order_type === "individual"
+                        ? `Имя: ${ordersToDelete[0]?.name}`
+                        : `Организация: ${ordersToDelete[0]?.organization}`
+                    }`}
+                ? Это действие необратимо.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
@@ -400,10 +353,10 @@ export default function Orders() {
                 variant="outline"
                 onClick={() => setIsDeleteModalOpen(false)}
               >
-                Бекор қилиш
+                Отмена
               </Button>
               <Button variant="destructive" onClick={handleConfirmDelete}>
-                Ўчириш
+                Удалить
               </Button>
             </DialogFooter>
           </DialogContent>

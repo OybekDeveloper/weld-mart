@@ -19,37 +19,52 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox"; // Added Checkbox import
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getData } from "@/actions/get";
-import { deleteData } from "@/actions/delete"; // Added import
-import { Loader2 } from "lucide-react";
-import { toast } from "sonner"; // Added import for toast notifications
+import { deleteData } from "@/actions/delete";
+import { Loader2, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { truncateText } from "@/lib/utils";
+import Pagination from "../_components/Pagination";
+
+const filterItems = (items, searchTerm) => {
+  if (!searchTerm) return items;
+
+  const lowerSearchTerm = searchTerm.toLowerCase();
+  return items.filter((item) => {
+    const fields = {
+      id: item.id?.toString() || "",
+      text: item.text?.toString() || "",
+      created_at: new Date(item.created_at).toLocaleDateString() || "",
+      updated_at: new Date(item.updated_at).toLocaleDateString() || "",
+    };
+    return Object.values(fields).some((value) =>
+      value.toLowerCase().includes(lowerSearchTerm)
+    );
+  });
+};
 
 export default function News() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [newsToDelete, setNewsToDelete] = useState(null);
+  const [newsToDelete, setNewsToDelete] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [filters, setFilters] = useState({
-    id: "",
-    text: "",
-    createdAt: "",
-    updatedAt: "",
-  });
+  const [searchTerm, setSearchTerm] = useState("");
   const [news, setNews] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedNews, setSelectedNews] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
         const response = await getData("/api/news", "new");
-        setNews(response || []); // Fallback to empty array if undefined
+        setNews(response || []);
       } catch (error) {
         console.log(error);
-        toast.error("Янгиликларни юклашда хатолик юз берди");
+        toast.error("Ошибка при загрузке новостей");
       } finally {
         setIsLoading(false);
       }
@@ -58,69 +73,70 @@ export default function News() {
   }, []);
 
   const itemsPerPage = 10;
-
-  // Filter logic
-  const filteredNews = news
-    ?.slice()
-    ?.reverse()
-    ?.filter((item) => {
-      const matchesId =
-        filters.id === "" || item.id.toString().includes(filters.id);
-      const matchesText = item.text
-        .toLowerCase()
-        .includes(filters.text.toLowerCase());
-      const matchesCreatedAt =
-        filters.createdAt === "" ||
-        new Date(item.created_at)
-          .toLocaleDateString()
-          .includes(filters.createdAt);
-      const matchesUpdatedAt =
-        filters.updatedAt === "" ||
-        new Date(item.updated_at)
-          .toLocaleDateString()
-          .includes(filters.updatedAt);
-
-      return matchesId && matchesText && matchesCreatedAt && matchesUpdatedAt;
-    });
-
-  // Pagination logic
+  const filteredNews = filterItems(news.slice().reverse(), searchTerm);
   const totalPages = Math.ceil(filteredNews.length / itemsPerPage);
   const paginatedNews = filteredNews.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
-  const handleDeleteClick = (newsItem) => {
-    setNewsToDelete(newsItem);
+  const handleDeleteClick = (newsItems) => {
+    setNewsToDelete(Array.isArray(newsItems) ? newsItems : [newsItems]);
     setIsDeleteModalOpen(true);
   };
 
   const handleConfirmDelete = async () => {
-    if (newsToDelete?.id) {
-      try {
-        const res = await deleteData(`/api/news/${newsToDelete.id}`, "new");
-        if (res.success) {
-          // Remove the deleted news item from the state
-          setNews((prevNews) =>
-            prevNews.filter((n) => n.id !== newsToDelete.id)
-          );
-          toast.error("Янгилик мувофаққиятли ўчирилди");
-        } else {
-          toast.error("Янгиликни ўчиришда хатолик юз берди");
-        }
-      } catch (error) {
-        console.log(error);
-        toast.error("Янгиликни ўчиришда хатолик юз берди");
+    if (!newsToDelete.length) return;
+
+    try {
+      const deletePromises = newsToDelete.map((item) =>
+        deleteData(`/api/news/${item.id}`, "new")
+      );
+      const results = await Promise.all(deletePromises);
+      const allSuccessful = results.every((res) => res.success);
+
+      if (allSuccessful) {
+        setNews((prev) =>
+          prev.filter((n) => !newsToDelete.some((d) => d.id === n.id))
+        );
+        setSelectedNews([]);
+        toast.success(
+          `Новост${newsToDelete.length > 1 ? "и" : "ь"} успешно удален${
+            newsToDelete.length > 1 ? "ы" : "а"
+          }`
+        );
+      } else {
+        toast.error("Ошибка при удалении одной или нескольких новостей");
       }
+    } catch (error) {
+      console.error("Delete error:", error);
+      toast.error("Ошибка при удалении новостей");
+    } finally {
+      setIsDeleteModalOpen(false);
+      setNewsToDelete([]);
     }
-    setIsDeleteModalOpen(false);
-    setNewsToDelete(null);
   };
 
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target;
-    setFilters((prev) => ({ ...prev, [name]: value }));
-    setCurrentPage(1); // Reset to first page when filters change
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(1);
+    setSelectedNews([]);
+  };
+
+  const handleSelectNews = (newsId) => {
+    setSelectedNews((prev) =>
+      prev.includes(newsId)
+        ? prev.filter((id) => id !== newsId)
+        : [...prev, newsId]
+    );
+  };
+
+  const handleSelectAll = (checked) => {
+    if (checked) {
+      setSelectedNews(paginatedNews.map((item) => item.id));
+    } else {
+      setSelectedNews([]);
+    }
   };
 
   if (isLoading) {
@@ -134,74 +150,67 @@ export default function News() {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Янгиликлар</h1>
-        <Button className="hover:bg-primary hover:opacity-75" asChild>
-          <Link href="/admin/news/add">Янгиликлар қўшиш</Link>
-        </Button>
-      </div>
-
-      {/* Filters */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div>
-          <Label htmlFor="id">ID</Label>
-          <Input
-            id="id"
-            name="id"
-            value={filters.id}
-            onChange={handleFilterChange}
-            placeholder="Filter by ID"
-            type="number"
-          />
-        </div>
-        <div>
-          <Label htmlFor="text">Матн</Label>
-          <Input
-            id="text"
-            name="text"
-            value={filters.text}
-            onChange={handleFilterChange}
-            placeholder="Матн бўйича филтерлаш"
-          />
-        </div>
-        <div>
-          <Label htmlFor="createdAt">Яратилган сана</Label>
-          <Input
-            id="createdAt"
-            name="createdAt"
-            value={filters.createdAt}
-            onChange={handleFilterChange}
-            placeholder="Яратилган сана бўйича филтерлаш"
-          />
-        </div>
-        <div>
-          <Label htmlFor="updatedAt">Янгиланган сана</Label>
-          <Input
-            id="updatedAt"
-            name="updatedAt"
-            value={filters.updatedAt}
-            onChange={handleFilterChange}
-            placeholder="Янгиланган сана бўйича филтерлаш"
-          />
+        <h1 className="text-2xl font-bold">Новости</h1>
+        <div className="flex gap-2">
+          {selectedNews.length > 0 && (
+            <Button
+              variant="destructive"
+              onClick={() =>
+                handleDeleteClick(news.filter((n) => selectedNews.includes(n.id)))
+              }
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Удалить выбранные ({selectedNews.length})
+            </Button>
+          )}
+          <Button className="hover:bg-primary hover:opacity-75" asChild>
+            <Link href="/admin/news/add">Добавить новость</Link>
+          </Button>
         </div>
       </div>
 
-      {/* Table */}
+      <div className="mb-6">
+        <Label htmlFor="search">Поиск</Label>
+        <Input
+          id="search"
+          value={searchTerm}
+          onChange={handleSearchChange}
+          placeholder="Поиск по всем полям (ID, текст, даты...)"
+          className="max-w-md"
+        />
+      </div>
+
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead>
+              <Checkbox
+                checked={
+                  selectedNews.length === paginatedNews.length &&
+                  paginatedNews.length > 0
+                }
+                onCheckedChange={handleSelectAll}
+              />
+            </TableHead>
             <TableHead>ID</TableHead>
-            <TableHead>Матн</TableHead>
-            <TableHead>Расм</TableHead>
-            <TableHead>Яратилган сана</TableHead>
-            <TableHead>Янгиланган сана</TableHead>
-            <TableHead>Амаллар</TableHead>
+            <TableHead>Текст</TableHead>
+            <TableHead>Изображение</TableHead>
+            <TableHead>Дата создания</TableHead>
+            <TableHead>Дата обновления</TableHead>
+            <TableHead>Действия</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {paginatedNews.map((item) => (
             <TableRow key={item.id}>
+              <TableCell onClick={(e) => e.stopPropagation()}>
+                <Checkbox
+                  checked={selectedNews.includes(item.id)}
+                  onCheckedChange={() => handleSelectNews(item.id)}
+                />
+              </TableCell>
               <TableCell>{item.id}</TableCell>
-              <TableCell>{truncateText(item.text,100)}</TableCell>
+              <TableCell>{truncateText(item.text, 100)}</TableCell>
               <TableCell>
                 <Image
                   src={item.image}
@@ -217,17 +226,17 @@ export default function News() {
               <TableCell>
                 {new Date(item.updated_at).toLocaleDateString()}
               </TableCell>
-              <TableCell>
+              <TableCell onClick={(e) => e.stopPropagation()}>
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" asChild>
-                    <Link href={`/admin/news/${item.id}`}>Ўзгартириш</Link>
+                    <Link href={`/admin/news/${item.id}`}>Редактировать</Link>
                   </Button>
                   <Button
                     variant="destructive"
                     size="sm"
                     onClick={() => handleDeleteClick(item)}
                   >
-                    Ўчириш
+                    Удалить
                   </Button>
                 </div>
               </TableCell>
@@ -236,37 +245,22 @@ export default function News() {
         </TableBody>
       </Table>
 
-      {/* Pagination */}
-      <div className="mt-6">
-        <div className="flex justify-between items-center">
-          <Button
-            variant="outline"
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage((prev) => prev - 1)}
-          >
-            Орқага
-          </Button>
-          <span>
-            Саҳифа {currentPage} / {totalPages}
-          </span>
-          <Button
-            variant="outline"
-            disabled={currentPage === totalPages}
-            onClick={() => setCurrentPage((prev) => prev + 1)}
-          >
-            Олдинга
-          </Button>
-        </div>
-      </div>
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
 
-      {/* Delete Confirmation Modal */}
       <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Ўчиришни тасдиқланг</DialogTitle>
+            <DialogTitle>Подтверждение удаления</DialogTitle>
             <DialogDescription>
-              Ҳақиқатан ҳам "{newsToDelete?.id}" ID ли янгиликни ўчириб
-              ташламоқчимисиз? Бу амални ортга қайтариб бўлмайди.
+              Вы уверены, что хотите удалить{" "}
+              {newsToDelete.length > 1
+                ? `${newsToDelete.length} новостей`
+                : `новость (ID: ${newsToDelete[0]?.id} - Текст: ${truncateText(newsToDelete[0]?.text || "", 50)})`}
+              ? Это действие необратимо.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -274,10 +268,10 @@ export default function News() {
               variant="outline"
               onClick={() => setIsDeleteModalOpen(false)}
             >
-              Бекор қилиш
+              Отмена
             </Button>
             <Button variant="destructive" onClick={handleConfirmDelete}>
-              Ўчириш
+              Удалить
             </Button>
           </DialogFooter>
         </DialogContent>

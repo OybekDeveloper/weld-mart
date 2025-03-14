@@ -15,26 +15,24 @@ import {
   FormMessage,
   FormDescription,
 } from "@/components/ui/form";
-import { Editor } from "@tinymce/tinymce-react";
+import { Input } from "@/components/ui/input";
 import { getData } from "@/actions/get";
 import { Loader2, CloudUpload, X } from "lucide-react";
 import { FileUploader, FileInput } from "@/components/ui/file-uploader";
 import { useRouter } from "next/navigation";
 import { backUrl } from "@/lib/utils";
-import { Textarea } from "@/components/ui/textarea";
 import { postData } from "@/actions/post";
 import { putData } from "@/actions/put";
-import { Input } from "@/components/ui/input";
 
 const formSchema = z.object({
-  text: z.string().min(1, "Таснифи талаб қилинади"),
-  image: z.string().url("URL формати нотўғри").min(1, "Расм талаб қилинади"),
+  url: z.string().min(1, "URL обязателен"),
+  image: z.string().url("Неверный формат URL").min(1, "Изображение обязательно"),
 });
 
-export default function NewsEvent({ params }) {
-  const { news: newsId } = use(params);
+export default function BannerEvent({ params }) {
+  const { bannerId } = use(params);
   const router = useRouter();
-  const isAddMode = newsId === "add";
+  const isAddMode = bannerId === "add";
   const [isLoading, setIsLoading] = useState(!isAddMode);
   const [imagePreview, setImagePreview] = useState(null);
   const [submitLoading, setSubmitLoading] = useState(false);
@@ -43,60 +41,51 @@ export default function NewsEvent({ params }) {
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      text: "",
+      url: "",
       image: "",
     },
   });
 
-  const editorConfig = {
-    height: 300,
-    menubar: false,
-    toolbar:
-      "undo redo | formatselect | bold italic underline | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image | code",
-    content_style:
-      "body { font-family:Helvetica,Arial,sans-serif; font-size:14px }",
-  };
-
   const dropZoneConfig = {
-    accept: { "image/*": [".svg", ".png", ".jpg", ".jpeg", ".gif"] },
+    accept: { "image/*": [".webp", ".svg", ".png", ".jpg", ".jpeg", ".gif"] },
     multiple: false,
     maxFiles: 1,
     maxSize: 4 * 1024 * 1024,
   };
 
   useEffect(() => {
-    if (!isAddMode && newsId) {
-      const fetchNews = async () => {
+    if (!isAddMode && bannerId) {
+      const fetchBanner = async () => {
         try {
           setIsLoading(true);
-          const news = await getData(`/api/news/${newsId}`);
+          const banner = await getData(`/api/banners/${bannerId}`, "banner");
           form.reset({
-            text: news?.text || "",
-            image: news?.image || "",
+            url: banner?.url || "",
+            image: banner?.image || "",
           });
-          if (news?.image) {
+          if (banner?.image) {
             setImagePreview({
-              url: news.image,
-              preview: news.image,
+              url: banner.image,
+              preview: banner.image,
               isUploaded: true,
             });
           }
         } catch (error) {
-          console.error("Failed to fetch news", error);
-          toast.error("Янгилик маълумотларини юклаш муваффақиятсиз бўлди.");
+          console.error("Не удалось загрузить баннер", error);
+          toast.error("Не удалось загрузить данные баннера.");
         } finally {
           setIsLoading(false);
         }
       };
-      fetchNews();
+      fetchBanner();
     } else {
       setIsLoading(false);
     }
-  }, [newsId, isAddMode, form]);
+  }, [bannerId, isAddMode, form]);
 
   const uploadImage = async (file) => {
     const formData = new FormData();
-    formData.append("image", file, "news.webp");
+    formData.append("image", file, "banner.webp");
 
     const requestOptions = {
       method: "POST",
@@ -106,7 +95,7 @@ export default function NewsEvent({ params }) {
 
     const response = await fetch("http://127.0.0.1:8080/upload", requestOptions);
     if (!response.ok) {
-      throw new Error(`Image upload failed! status: ${response.status}`);
+      throw new Error(`Ошибка загрузки изображения! статус: ${response.status}`);
     }
     const result = await response.json();
     return `${backUrl}${result.path}`;
@@ -123,7 +112,7 @@ export default function NewsEvent({ params }) {
         form.setValue("image", url);
       } catch (error) {
         console.error("Image upload failed:", error);
-        toast.error("Расмни юклаш муваффақиятсиз бўлди");
+        toast.error("Не удалось загрузить изображение");
       }
     }
   };
@@ -150,26 +139,26 @@ export default function NewsEvent({ params }) {
       setSubmitLoading(true);
       let result;
       if (isAddMode) {
-        result = await postData(values, "/api/news", "new");
+        result = await postData(values, "/api/banners", "banner");
       } else {
-        result = await putData(values, `/api/news/${newsId}`, "new");
+        result = await putData(values, `/api/banners/${bannerId}`, "banner");
       }
 
-      if (result && !result.error) {
+      if (!result.error && result) {
         if (isAddMode) {
-          toast.success("Янгилик мувофаққиятли қўшилди");
+          toast.success("Баннер успешно добавлен");
           form.reset();
           setImagePreview(null);
         } else {
-          toast.info("Янгилик мувофаққиятли янгиланди");
+          toast.info("Баннер успешно обновлен");
         }
-        router.push("/admin/news");
+        router.push("/admin/banners");
       } else if (result.error) {
         toast.error(result.error);
       }
     } catch (error) {
-      console.error("Form submission error:", error);
-      toast.error("Форма юборилмади. Қайта уриниб кўринг.");
+      console.error("Ошибка отправки формы:", error);
+      toast.error("Форма не отправлена. Попробуйте снова.");
     } finally {
       setSubmitLoading(false);
     }
@@ -189,31 +178,25 @@ export default function NewsEvent({ params }) {
         onClick={() => window.history.back()}
         className="hover:bg-primary hover:opacity-75"
       >
-        Орқага қайтиш
+        Вернуться назад
       </Button>
       <div className="max-w-3xl mx-auto py-10">
         <h1 className="text-2xl font-bold mb-6">
           {isAddMode
-            ? "Янги янгилик қўшиш"
-            : `Янгиликни таҳрирлаш (ID: ${newsId || "номаълум"})`}
+            ? "Добавить новый баннер"
+            : `Редактировать баннер (ID: ${bannerId || "неизвестно"})`}
         </h1>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             <FormField
               control={form.control}
-              name="text"
+              name="url"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Таснифи</FormLabel>
+                  <FormLabel>URL</FormLabel>
                   <FormControl>
-                    <Textarea
-                      placeholder="Таснифи ёзинг"
-                      value={field.value}
-                      onChange={field.onChange}
-                      rows={5}
-                      className="resize-y"
-                    />
+                    <Input placeholder="Введите URL баннера" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -225,7 +208,7 @@ export default function NewsEvent({ params }) {
               name="image"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Расм</FormLabel>
+                  <FormLabel>Изображение</FormLabel>
                   <FormControl>
                     <div className="space-y-4">
                       <FileUploader
@@ -242,12 +225,12 @@ export default function NewsEvent({ params }) {
                             <CloudUpload className="text-gray-500 w-10 h-10" />
                             <p className="mb-1 text-sm text-gray-500 dark:text-gray-400">
                               <span className="font-semibold">
-                                Юклаш учун босинг
+                                Нажмите для загрузки
                               </span>{" "}
-                              ёки тортиб келтиринг
+                              или перетащите
                             </p>
                             <p className="text-xs text-gray-500 dark:text-gray-400">
-                              SVG, PNG, JPG ёки GIF (макс 4MB)
+                              SVG, PNG, JPG или GIF (макс. 4MB)
                             </p>
                           </div>
                         </FileInput>
@@ -264,7 +247,7 @@ export default function NewsEvent({ params }) {
                           onClick={addUrl}
                           disabled={!currentUrlInput}
                         >
-                          URL қўшиш
+                          Добавить URL
                         </Button>
                       </div>
 
@@ -289,7 +272,7 @@ export default function NewsEvent({ params }) {
                     </div>
                   </FormControl>
                   <FormDescription>
-                    Бир расмни юкланг ёки URL киритинг (мажбурий).
+                    Загрузите одно изображение или укажите URL (обязательно).
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -300,9 +283,9 @@ export default function NewsEvent({ params }) {
               {submitLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : isAddMode ? (
-                "Янгилик қўшиш"
+                "Добавить баннер"
               ) : (
-                "Янгиликни янгилаш"
+                "Обновить баннер"
               )}
             </Button>
           </form>

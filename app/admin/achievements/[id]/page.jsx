@@ -1,4 +1,3 @@
-// pages/admin/achievements/[achievement].jsx
 "use client";
 
 import { useState, useEffect, use } from "react";
@@ -19,13 +18,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { getData } from "@/actions/get";
-import { Loader2, CloudUpload, Paperclip, X } from "lucide-react";
-import {
-  FileUploader,
-  FileInput,
-  FileUploaderContent,
-  FileUploaderItem,
-} from "@/components/ui/file-uploader";
+import { Loader2, CloudUpload, X } from "lucide-react";
+import { FileUploader, FileInput } from "@/components/ui/file-uploader";
 import { useRouter } from "next/navigation";
 import { backUrl } from "@/lib/utils";
 import SubmitButton from "@/components/shared/submitButton";
@@ -35,7 +29,7 @@ import { putData } from "@/actions/put";
 const formSchema = z.object({
   title: z.string().min(1, "Сарлавҳа талаб қилинади"),
   description: z.string().min(1, "Таснифи талаб қилинади"),
-  image: z.any(),
+  image: z.string().url("URL формати нотўғри").min(1, "Расм талаб қилинади"),
 });
 
 export default function AchievementEvent({ params }) {
@@ -43,8 +37,9 @@ export default function AchievementEvent({ params }) {
   const router = useRouter();
   const isAddMode = id === "add";
   const [isLoading, setIsLoading] = useState(!isAddMode);
-  const [files, setFiles] = useState([]);
+  const [imagePreview, setImagePreview] = useState(null);
   const [submitLoading, setSubmitLoading] = useState(false);
+  const [currentUrlInput, setCurrentUrlInput] = useState("");
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -61,7 +56,7 @@ export default function AchievementEvent({ params }) {
     },
     multiple: false,
     maxFiles: 1,
-    maxSize: 4 * 1024 * 1024, // 4MB
+    maxSize: 4 * 1024 * 1024,
   };
 
   useEffect(() => {
@@ -79,14 +74,11 @@ export default function AchievementEvent({ params }) {
             image: achievement?.image || "",
           });
           if (achievement?.image) {
-            setFiles([
-              {
-                file: null,
-                url: achievement.image,
-                preview: achievement.image,
-                name: "Existing Image",
-              },
-            ]);
+            setImagePreview({
+              url: achievement.image,
+              preview: achievement.image,
+              isUploaded: true,
+            });
           }
         } catch (error) {
           console.error("Failed to fetch achievement", error);
@@ -101,38 +93,9 @@ export default function AchievementEvent({ params }) {
     }
   }, [id, isAddMode, form]);
 
-  const handleFileUpload = (uploadedFiles) => {
-    if (uploadedFiles && uploadedFiles.length > 0) {
-      const file = uploadedFiles[0];
-      const newFileObj = {
-        file,
-        url: null,
-        preview: URL.createObjectURL(file),
-        name: file.name,
-      };
-      setFiles([newFileObj]);
-      form.setValue("image", "");
-    }
-  };
-
-  const removeFile = () => {
-    if (files.length > 0) {
-      const file = files[0];
-      if (file.preview && !file.url) {
-        URL.revokeObjectURL(file.preview);
-      }
-      setFiles([]);
-      form.setValue("image", "");
-    }
-  };
-
-  const uploadFile = async (fileToUpload) => {
-    if (!fileToUpload.file) {
-      return fileToUpload.url;
-    }
-
+  const uploadImage = async (file) => {
     const formData = new FormData();
-    formData.append("image", fileToUpload.file, "achievement");
+    formData.append("image", file, "achievement.webp");
 
     const requestOptions = {
       method: "POST",
@@ -140,10 +103,7 @@ export default function AchievementEvent({ params }) {
       redirect: "follow",
     };
 
-    const response = await fetch(
-      "http://127.0.0.1:8080/upload",
-      requestOptions
-    );
+    const response = await fetch("http://127.0.0.1:8080/upload", requestOptions);
     if (!response.ok) {
       throw new Error(`Image upload failed! status: ${response.status}`);
     }
@@ -151,43 +111,56 @@ export default function AchievementEvent({ params }) {
     return `${backUrl}${result.path}`;
   };
 
-  async function onSubmit(values) {
-    if (files.length === 0 && isAddMode) {
-      toast.error("Расм юкланмади");
-      return;
+  const handleFileUpload = async (uploadedFiles) => {
+    if (uploadedFiles && uploadedFiles.length > 0) {
+      try {
+        const file = uploadedFiles[0];
+        const preview = URL.createObjectURL(file);
+        const url = await uploadImage(file);
+        const newImage = { url, preview, isUploaded: true };
+        setImagePreview(newImage);
+        form.setValue("image", url);
+      } catch (error) {
+        console.error("Image upload failed:", error);
+        toast.error("Расмни юклаш муваффақиятсиз бўлди");
+      }
     }
+  };
 
+  const addUrl = () => {
+    if (currentUrlInput) {
+      const newImage = { url: currentUrlInput, preview: currentUrlInput, isUploaded: true };
+      setImagePreview(newImage);
+      form.setValue("image", currentUrlInput);
+      setCurrentUrlInput("");
+    }
+  };
+
+  const removeImage = () => {
+    if (imagePreview && !imagePreview.isUploaded) {
+      URL.revokeObjectURL(imagePreview.preview);
+    }
+    setImagePreview(null);
+    form.setValue("image", "");
+  };
+
+  async function onSubmit(values) {
     try {
       setSubmitLoading(true);
-      let imageUrl = values.image;
-      if (files.length > 0) {
-        imageUrl = await uploadFile(files[0]);
-      }
-
-      const updatedValues = { ...values, image: imageUrl };
-
       let result;
       if (isAddMode) {
-        result = await postData(
-          updatedValues,
-          "/api/achievements",
-          "achievement"
-        );
+        result = await postData(values, "/api/achievements", "achievement");
       } else {
-        result = await putData(
-          updatedValues,
-          `/api/achievements/${id}`,
-          "achievement"
-        );
+        result = await putData(values, `/api/achievements/${id}`, "achievement");
       }
-      console.log("API response:", result);
 
       if (result.error) {
         toast.error(result.error);
       } else if (!result.error && result) {
         if (isAddMode) {
           toast.success("Ютуқ мувофаққиятли қўшилди");
-          setFiles([]);
+          form.reset();
+          setImagePreview(null);
         } else {
           toast.info("Ютуқ мувофаққиятли янгиланди");
         }
@@ -270,54 +243,69 @@ export default function AchievementEvent({ params }) {
                 <FormItem>
                   <FormLabel>Расм</FormLabel>
                   <FormControl>
-                    <FileUploader
-                      value={files}
-                      onValueChange={handleFileUpload}
-                      dropzoneOptions={dropZoneConfig}
-                      className="relative bg-background rounded-lg p-2"
-                    >
-                      <FileInput
-                        id="imageInput"
-                        className="outline-dashed outline-1 outline-slate-500"
+                    <div className="space-y-4">
+                      <FileUploader
+                        value={[]}
+                        onValueChange={handleFileUpload}
+                        dropzoneOptions={dropZoneConfig}
+                        className="relative bg-background rounded-lg p-2"
                       >
-                        <div className="flex items-center justify-center flex-col p-8 w-full">
-                          <CloudUpload className="text-gray-500 w-10 h-10" />
-                          <p className="mb-1 text-sm text-gray-500 dark:text-gray-400">
-                            <span className="font-semibold">
-                              Юклаш учун босинг
-                            </span>{" "}
-                            ёки расмни суриб келтиринг
-                          </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            SVG, PNG, JPG ёки GIF (макс 4MB)
-                          </p>
+                        <FileInput
+                          id="imageInput"
+                          className="outline-dashed outline-1 outline-slate-500"
+                        >
+                          <div className="flex items-center justify-center flex-col p-8 w-full">
+                            <CloudUpload className="text-gray-500 w-10 h-10" />
+                            <p className="mb-1 text-sm text-gray-500 dark:text-gray-400">
+                              <span className="font-semibold">
+                                Юклаш учун босинг
+                              </span>{" "}
+                              ёки расмни суриб келтиринг
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              SVG, PNG, JPG ёки GIF (макс 4MB)
+                            </p>
+                          </div>
+                        </FileInput>
+                      </FileUploader>
+
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="https://example.com/image.jpg"
+                          value={currentUrlInput}
+                          onChange={(e) => setCurrentUrlInput(e.target.value)}
+                        />
+                        <Button
+                          type="button"
+                          onClick={addUrl}
+                          disabled={!currentUrlInput}
+                        >
+                          URL қўшиш
+                        </Button>
+                      </div>
+
+                      {imagePreview && (
+                        <div className="relative w-24 h-24">
+                          <img
+                            src={imagePreview.preview}
+                            alt="Предпросмотр"
+                            className="w-full h-full object-cover rounded-md"
+                          />
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="icon"
+                            className="absolute top-1 right-1 h-6 w-6"
+                            onClick={removeImage}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
                         </div>
-                      </FileInput>
-                      <FileUploaderContent>
-                        {files &&
-                          files.length > 0 &&
-                          files.map((file, i) => (
-                            <FileUploaderItem key={i} index={i}>
-                              <Paperclip className="h-4 w-4 stroke-current" />
-                              <span className="max-w-full truncate">
-                                {file.name}
-                              </span>
-                              <Button
-                                type="button"
-                                variant="destructive"
-                                size="icon"
-                                className="h-6 w-6 ml-2"
-                                onClick={removeFile}
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            </FileUploaderItem>
-                          ))}
-                      </FileUploaderContent>
-                    </FileUploader>
+                      )}
+                    </div>
                   </FormControl>
                   <FormDescription>
-                    Юклаш учун расм файлини танланг.
+                    Бир расмни юкланг ёки URL киритинг (мажбурий).
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

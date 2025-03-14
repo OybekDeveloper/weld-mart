@@ -6,10 +6,10 @@ export default function FeatureInfo({ productData }) {
     <Tabs defaultValue="info" className="w-11/12 mx-auto">
       <TabsList className="w-full">
         <TabsTrigger className="w-full textSmall3" value="info">
-          Тавсиф
+          Описание
         </TabsTrigger>
         <TabsTrigger className="w-full textSmall3" value="feature">
-          Хусусиятлари
+          Характеристики
         </TabsTrigger>
         <TabsTrigger className="w-full textSmall3" value="parametr">
           Гарантия
@@ -17,15 +17,15 @@ export default function FeatureInfo({ productData }) {
       </TabsList>
       
       <TabsContent value="info">
-        <div dangerouslySetInnerHTML={{ __html: productData?.info || "Маълумот йўқ" }} />
+        <div dangerouslySetInnerHTML={{ __html: productData?.info || "Нет информации" }} />
       </TabsContent>
       
       <TabsContent value="feature">
-        <div dangerouslySetInnerHTML={{ __html: productData?.feature || "Маълумот йўқ" }} />
+        <div dangerouslySetInnerHTML={{ __html: productData?.feature || "Нет информации" }} />
       </TabsContent>
       
       <TabsContent value="parametr">
-        {productData?.guarantee || "Маълумот йўқ"}
+        {productData?.guarantee || "Нет информации"}
       </TabsContent>
     </Tabs>
   );

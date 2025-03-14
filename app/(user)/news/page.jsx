@@ -20,15 +20,15 @@ export default async function News() {
         data={[
           {
             href: "/",
-            name: "Бош саҳифа",
+            name: "Главная страница",
           },
           {
-            name: "Янгиликлар",
+            name: "Новости",
             href: "/news",
           }
         ]}
       />
-      <h1 className="textNormal5 font-medium">Блог ва янгиликлар.</h1>
+      <h1 className="textNormal5 font-medium">Блог и новости.</h1>
       {randomNews && <FeaturedNews news={randomNews} />}
       <NewsGrid newsItems={news} />
     </Container>

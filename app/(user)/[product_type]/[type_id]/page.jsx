@@ -11,20 +11,22 @@ export default async function BrandPage({ searchParams, params }) {
   const limit = 4;
   const skip = (page - 1) * limit; // Correct skip calculation (page 1 = skip 0)
 
-  const [categories, products, brands, typeData] = await Promise.all([
-    getData("/api/categories", "category"),
-    getData(
-      `/api/products?limit=${limit}&skip=${skip}&${
-        product_type == "brand" ? "brand_id" : "category_id"
-      }=${type_id}`,
-      "product"
-    ),
-    getData("/api/brands", "brand"),
-    getData(
-      `/api/${product_type == "brand" ? "brands" : "categories"}/${type_id}`,
-      product_type
-    ),
-  ]);
+  const [categories, products, brands, typeData, allProducts] =
+    await Promise.all([
+      getData("/api/categories", "category"),
+      getData(
+        `/api/products?limit=${limit}&skip=${skip}&${
+          product_type == "brand" ? "brand_id" : "category_id"
+        }=${type_id}`,
+        "product"
+      ),
+      getData("/api/brands", "brand"),
+      getData(
+        `/api/${product_type == "brand" ? "brands" : "categories"}/${type_id}`,
+        product_type
+      ),
+      getData("/api/products", "product"),
+    ]);
 
   return (
     <Container className="font-montserrat w-full flex-col relative flex justify-start items-start gap-3">
@@ -38,6 +40,8 @@ export default async function BrandPage({ searchParams, params }) {
           brandsData={brands?.brands}
           id={type_id}
           className="top-[145px] max-h-[calc(100vh-145px)]"
+          allProducts={allProducts?.products}
+          sidebarBottom={true}
         />
         <CategoryList
           product_type={product_type}

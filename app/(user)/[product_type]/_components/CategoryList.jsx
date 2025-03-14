@@ -17,7 +17,7 @@ export default function CategoryList({
   const [sortOption, setSortOption] = useState("default");
   const [isOpen, setIsOpen] = useState(false);
 
-  // Sort products based on selected option
+  // Сортировка продуктов в зависимости от выбранного параметра
   const sortedProducts = [...(fetchData?.products || [])].sort((a, b) => {
     switch (sortOption) {
       case "name_asc":
@@ -39,19 +39,19 @@ export default function CategoryList({
 
   const sortOptions = [
     { value: "default", label: "Стандарт" },
-    { value: "name_asc", label: "Ном (A-Я)" },
-    { value: "name_desc", label: "Ном (Я-A)" },
-    { value: "price_asc", label: "Нарх (ўсиш)" },
-    { value: "price_desc", label: "Нарх (камиш)" },
-    { value: "rating_asc", label: "Рейтинг (ўсиш)" },
-    { value: "rating_desc", label: "Рейтинг (камиш)" },
+    { value: "name_asc", label: "Название (A-Я)" },
+    { value: "name_desc", label: "Название (Я-A)" },
+    { value: "price_asc", label: "Цена (по возрастанию)" },
+    { value: "price_desc", label: "Цена (по убыванию)" },
+    { value: "rating_asc", label: "Рейтинг (по возрастанию)" },
+    { value: "rating_desc", label: "Рейтинг (по убыванию)" },
   ];
 
   return (
     <main className="w-11/12 mx-auto lg:w-full flex-1 lg:max-w-[calc(100vw-340px)] 2xl:max-w-[1100px] lg:pl-5 space-y-2 md:space-y-5">
       <section className="lg:px-0 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 text-black/80">
         <h1 className="font-medium text-primary text-lg sm:textNormal4">
-          Акция ва янгиликлар
+          Акции и новости
         </h1>
         <div className="relative w-full sm:w-auto">
           <button
@@ -60,7 +60,7 @@ export default function CategoryList({
           >
             <span className="font-medium truncate">
               {sortOptions.find((opt) => opt.value === sortOption)?.label ||
-                "Саралаш"}
+                "Сортировка"}
             </span>
             {isOpen ? (
               <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />

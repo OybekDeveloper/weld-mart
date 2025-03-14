@@ -10,7 +10,7 @@ export default function FeaturedNews({ news }) {
     <section className="w-full flex gap-10 justify-center items-center max-lg:flex-col-reverse md:mb-8">
       <div className="w-full space-y-2">
         <h1 className="font-medium text-primary textSmall3">
-          Янгилик{" "}
+          Новость{" "}
           <span className="font-[400] text-black/40">
             {new Date(news.created_at).toLocaleDateString("ru-RU")}
           </span>
@@ -21,7 +21,7 @@ export default function FeaturedNews({ news }) {
         <div className="relative w-full aspect-[16/7]">
           <CustomImage
             src={news.image}
-            alt="news image"
+            alt="изображение новости"
             fill
             className="object-cover rounded-md"
           />

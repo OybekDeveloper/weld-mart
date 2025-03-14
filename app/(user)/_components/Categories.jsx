@@ -16,13 +16,13 @@ export default function Categories({ productsData }) {
     <main className="carousel-container space-y-3">
       <section className="px-4 lg:px-0 flex justify-between items-center gap-5 text-black/80">
         <h1 className="font-medium textNormal3 sm:textNormal4">
-          Акция ва янгиликлар
+          Акции и новости
         </h1>
         <Link
           className="textSmall2 flex justify-center items-center gap-1"
           href={"/category/1"}
         >
-          Батафсил
+          Подробнее
           <ChevronRight size={18} />
         </Link>
       </section>

@@ -28,10 +28,10 @@ export function HRassikaTable({ hrassikas }) {
         <TableHeader>
           <TableRow>
             <TableHead>ID</TableHead>
-            <TableHead>Сарлавҳа</TableHead>
-            <TableHead>Матн</TableHead>
-            <TableHead>Яратилган вақти</TableHead>
-            <TableHead>Янгиланган вақти</TableHead>
+            <TableHead>Заголовок</TableHead>
+            <TableHead>Текст</TableHead>
+            <TableHead>Дата создания</TableHead>
+            <TableHead>Дата обновления</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -60,28 +60,28 @@ export function HRassikaTable({ hrassikas }) {
                 </DialogHeader>
                 <div className="space-y-4">
                   <div>
-                    <h4 className="text-sm font-medium">Матн</h4>
+                    <h4 className="text-sm font-medium">Текст</h4>
                     <p className="text-sm text-muted-foreground">
                       {selectedHRassika?.body}
                     </p>
                   </div>
                   <div>
-                    <h4 className="text-sm font-medium">Яратилган вақти</h4>
+                    <h4 className="text-sm font-medium">Дата создания</h4>
                     <p className="text-sm text-muted-foreground">
                       {selectedHRassika?.created_at &&
                         format(
                           new Date(selectedHRassika.created_at),
-                          "PPP 'да' p"
+                          "PPP 'в' p"
                         )}
                     </p>
                   </div>
                   <div>
-                    <h4 className="text-sm font-medium">Янгиланган вақти</h4>
+                    <h4 className="text-sm font-medium">Дата обновления</h4>
                     <p className="text-sm text-muted-foreground">
                       {selectedHRassika?.updated_at &&
                         format(
                           new Date(selectedHRassika.updated_at),
-                          "PPP 'да' p"
+                          "PPP 'в' p"
                         )}
                     </p>
                   </div>

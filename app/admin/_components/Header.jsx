@@ -43,22 +43,22 @@ export default function Header({ authData }) {
           }
         }
       } catch (error) {
-        console.error("Error fetching orders:", error);
+        console.error("Ошибка при получении заказов:", error);
       }
     };
 
-    // Initial fetch
+    // Начальная загрузка
     fetchData();
 
-  }, [newOrders, reload]); // Dependencies include newOrders and reload
+  }, [newOrders, reload]); // Зависимости включают newOrders и reload
 
   return (
     <header className="fixed top-0 left-0 right-0 bg-white shadow-sm h-16 flex items-center justify-between px-6 z-10">
       <Link href="/">
-        <Image src="/logo.svg" alt="Company Logo" width={150} height={40} />
+        <Image src="/logo.svg" alt="Логотип компании" width={150} height={40} />
       </Link>
       <div className="flex items-center gap-4">
-        {/* Notification Bell with Sheet */}
+        {/* Колокольчик уведомлений с боковой панелью */}
         <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
           <SheetTrigger asChild>
             <div className="relative cursor-pointer">
@@ -75,21 +75,21 @@ export default function Header({ authData }) {
           </SheetTrigger>
           <SheetContent>
             <SheetHeader>
-              <SheetTitle>Янги буюртмалар</SheetTitle>
+              <SheetTitle>Новые заказы</SheetTitle>
             </SheetHeader>
-            <div className="mt-4">
+            <div className="mt-4 overflow-y-auto max-h-[90vh]">
               {newOrdersData?.length === 0 ? (
-                <p className="text-gray-500">Буюртмалар мавжуд эмас.</p>
+                <p className="text-gray-500">Заказов нет.</p>
               ) : (
                 <ul className="space-y-2">
-                  {newOrdersData?.map((order, index) => (
+                  {newOrdersData?.slice()?.reverse()?.map((order, index) => (
                     <Link
                       href={`/admin/orders/view/${order.id}`}
                       key={index}
                       className="w-full flex justify-start flex-col items-start gap-2 p-2 bg-gray-50 rounded-md hover:bg-black/10"
                       onClick={() => setIsSheetOpen(false)}
                     >
-                      <p>Order #{order.id || index + 1}</p>
+                      <p>Заказ #{order.id || index + 1}</p>
                       <h1>{order?.name ? order?.name : order?.organization}</h1>
                     </Link>
                   ))}
@@ -99,7 +99,7 @@ export default function Header({ authData }) {
           </SheetContent>
         </Sheet>
 
-        {/* User Dropdown */}
+        {/* Выпадающее меню пользователя */}
         <DropdownMenu>
           <DropdownMenuTrigger>
             <Avatar>

@@ -18,10 +18,10 @@ export default function Contact() {
           data={[
             {
               href: "/",
-              name: "Бош саҳифа",
+              name: "Главная страница",
             },
             {
-              name: "Cонтаcт",
+              name: "Контакты",
               href: "/contact",
             },
           ]}
@@ -33,7 +33,7 @@ export default function Contact() {
               className="mx-auto"
               width={400}
               height={300}
-              alt="logo"
+              alt="логотип"
             />
           </div>
           <div className="flex flex-col justify-center items-center gap-3">
@@ -52,19 +52,17 @@ export default function Contact() {
             })}
           </div>
         </section>
-        <h1 className="textNormal5 font-medium">Биз билан боғланинг.</h1>
+        <h1 className="textNormal5 font-medium">Свяжитесь с нами.</h1>
         <section className="flex justify-center items-center">
           <div className="w-full space-y-4">
             <h1 className="textSmall4 font-medium">
-              Саволларингиз борми йоки йордам керакми? Биз билан почта йоки
-              телефон рақамимиз орқали боғланинг. Ёрдам беришга таййормиз.
+              У вас есть вопросы или нужна помощь? Свяжитесь с нами по почте или
+              телефону. Мы готовы помочь.
             </h1>
-            <h1 className="textNormall4 font-bold">
-              Сизга ёрдам беришдан мамнунмиз!
-            </h1>
+            <h1 className="textNormall4 font-bold">Мы рады вам помочь!</h1>
             <div className="flex">
               <div className="w-full space-y-3">
-                <h1 className="textSmall4 font-medium">Бош идора:</h1>
+                <h1 className="textSmall4 font-medium">Головной офис:</h1>
                 <div className="flex flex-col gap-2 textSmall3">
                   <div className="flex justify-start items-center gap-2">
                     <div>
@@ -80,15 +78,22 @@ export default function Contact() {
                     </div>
                     <p>weldmartuz@gmail.com</p>
                   </div>
-                  <div className="flex justify-start items-center gap-2">
+                  <Link
+                    target="_blank"
+                    href="https://www.google.com/maps?q=41.36173881280273,69.24032755414049"
+                    className="flex justify-start items-center gap-2 cursor-pointer"
+                  >
                     <div>
                       <MapPin />
                     </div>
-                    <p>Город Ташкент Яшнабадский р-н Улица Боткина 1-а</p>
-                  </div>
+                    <p>
+                      ГОРОД ТАШКЕНТ, АЛМАЗАРСКИЙ РАЙОН, GULSAROY MFY, OLTINSOY
+                      KO'CHASI, 7-AUY
+                    </p>
+                  </Link>
                 </div>
               </div>
-              <div className="w-full space-y-3">
+              {/* <div className="w-full space-y-3">
                 <h1 className="textSmall4 font-medium">Филиал:</h1>
                 <div className="flex flex-col gap-2 textSmall3">
                   <div className="flex justify-start items-center gap-2">
@@ -109,10 +114,10 @@ export default function Contact() {
                     <div>
                       <MapPin />
                     </div>
-                    <p>Город Ташкент Яшнабадский р-н Улица Боткина 1-а</p>
+                    <p>Город Ташкент, Яшнабадский район, улица Боткина 1-а</p>
                   </div>
                 </div>
-              </div>
+              </div> */}
             </div>
           </div>
           <div className="max-lg:hidden w-full flex juctify-center items-center">
@@ -121,7 +126,7 @@ export default function Contact() {
               className="mx-auto"
               width={400}
               height={300}
-              alt="logo"
+              alt="логотип"
             />
           </div>
         </section>
@@ -141,9 +146,10 @@ export default function Contact() {
           })}
         </div>
       </Container>
+
       <div className="w-[90vw] mx-auto h-[300] sm:h-[400px] mt-5 rounded-xl overflow-hidden border">
         <iframe
-          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d191884.83987166354!2d69.1145573106644!3d41.282737946188796!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x38ae8b0cc379e9c3%3A0xa5a9323b4aa5cb98!2z0KLQvnNoa2VudCwgT8q7emJla2lzdG9u!5e0!3m2!1suz!2s!4v1740941171899!5m2!1suz!2s"
+          src="https://www.google.com/maps/embed?pb=!1m13!1m8!1m3!1d748.6420752364812!2d69.24032755414049!3d41.36173881280273!3m2!1i1024!2i768!4f13.1!3m2!1m1!2zNDHCsDIxJzQxLjciTiA2OcKwMTQnMjUuMyJF!5e0!3m2!1sru!2s!4v1741970544347!5m2!1sru!2s"
           className="w-full h-full"
           style={{ border: 0 }}
           allowFullScreen

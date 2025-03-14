@@ -24,11 +24,11 @@ export default function Footer() {
 
   const handleSendEmail = async () => {
     if (!email) {
-      setError("Почта манзили киритинг");
+      setError("Введите адрес электронной почты");
       return;
     }
     if (!validateEmail(email)) {
-      setError("Тўғри почта манзили киритинг");
+      setError("Введите корректный адрес электронной почты");
       return;
     }
     setError("");
@@ -44,12 +44,12 @@ export default function Footer() {
       console.log(res);
 
       if (res) {
-        toast.success("E-mail муваффақиятли юборилди!");
+        toast.success("E-mail успешно отправлен!");
         setEmail("");
       }
     } catch (error) {
       console.log(error);
-      toast.error("Юборишда хатолик юз берди");
+      toast.error("Ошибка при отправке");
     } finally {
       setIsLoading(false);
     }
@@ -71,7 +71,7 @@ export default function Footer() {
       >
         <section className="max-w-2xl max-md:flex-col p-5 md:p-3 w-11/12 sm:w-[70%] bg-primary rounded-xl md:rounded-md absolute min-h-32 flex gap-3 -top-24 md:-top-16 left-auto right-auto">
           <h1 className="textNormal4 text-white font-bold max-sm:text-center">
-            СУНГИ ЯНГИЛИК ВА ТАКЛИФЛАРИМИЗНИ ЎТКАЗИБ ЮБОРМАНГ
+            НЕ ПРОПУСТИТЕ НАШИ ПОСЛЕДНИЕ НОВОСТИ И ПРЕДЛОЖЕНИЯ
           </h1>
           <div className="space-y-3 text-black/70 w-full">
             <div className="rounded-xl bg-white justify-start flex items-center p-2 h-10 gap-2">
@@ -79,7 +79,7 @@ export default function Footer() {
               <input
                 type="email"
                 className="w-full outline-none"
-                placeholder="Почта манзилингизни киритинг"
+                placeholder="Введите ваш e-mail"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
@@ -91,7 +91,7 @@ export default function Footer() {
               className="rounded-xl p-2 w-full bg-white hover:bg-white text-black/70"
               disabled={loading}
             >
-              {loading ? "Юкланмоқда..." : "Обуна болинг"}
+              {loading ? "Загрузка..." : "Подписаться"}
             </Button>
           </div>
         </section>
@@ -105,45 +105,40 @@ export default function Footer() {
               src="/logo.svg"
               loading="eager"
             />
-            <p>Slogan Slogan Slogan Slogan Slogan Slogan Slogan</p>
+            <p>Слоган Слоган Слоган Слоган Слоган Слоган Слоган</p>
           </div>
           <div className="w-full lg:flex justify-center items-center flex-col space-y-3">
-            <h1>САХИФАЛАР</h1>
+            <h1>СТРАНИЦЫ</h1>
             <ul className="space-y-1">
               <li>
-                <a href="#" className="text-black/70">
-                  Бош сахифа
-                </a>
+                <Link href="/" className="text-black/70">
+                  Главная
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-black/70">
-                  Каталог
-                </a>
+                <Link href="/news" className="text-black/70">
+                  Новости
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-black/70">
-                  Янгиликлар
-                </a>
+                <Link href="/contact" className="text-black/70">
+                  Контакт
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-black/70">
-                  Биз хақимизда
-                </a>
+                <Link href="/about-us" className="text-black/70">
+                  О нас
+                </Link>
               </li>
             </ul>
           </div>
           <div className="w-full lg:flex justify-end items-end lg:text-end flex-col space-y-3">
-            <h1 className="">ЁРДАМ</h1>
+            <h1 className="">ПОДДЕРЖКА</h1>
             <ul className="space-y-1">
               <li>
-                <a href="#" className="text-black/70">
-                  Фойдаланиш шартлари
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-black/70">
-                  Махфийлик сиёсати
-                </a>
+                <Link href="/privacy-policy" className="text-black/70">
+                  Политика конфиденциальности
+                </Link>
               </li>
             </ul>
           </div>
@@ -151,7 +146,7 @@ export default function Footer() {
         <div className="w-full h-[1px] bg-black/30" />
         <section className="flex max-sm:flex-col justify-between items-center w-full pb-5 gap-4">
           <h1 className="w-full font-medium text-black/40 max-sm:text-center">
-            weldmart © 2022-2025, Барча хуқуқлар химояланган
+            weldmart © 2022-2025, Все права защищены
           </h1>
           <div className="w-full mx-auto flex justify-center sm:justify-end gap-4 items-end">
             {socialMedias?.map((social, idx) => (

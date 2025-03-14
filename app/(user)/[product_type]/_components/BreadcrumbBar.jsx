@@ -15,7 +15,7 @@ export function BreadcrumbBar({ typeData }) {
     <Breadcrumb className="z-10 relative">
       <BreadcrumbList>
         <BreadcrumbItem>
-          <Link href="/">Бош сахифа</Link>
+          <Link href="/">Главная страница</Link>
         </BreadcrumbItem>
         <BreadcrumbSeparator>
           <Slash />

@@ -35,30 +35,30 @@ import {
 } from "@/components/ui/command";
 
 const formSchema = z.object({
-  email: z.string().email("Valid email is required"),
-  user_id: z.any().optional(), // Changed to user_id and made optional
+  email: z.string().email("Требуется действительный email"),
+  user_id: z.any().optional(), // Изменено на user_id и сделано необязательным
 });
 
 export default function MailingListEvent({ params }) {
-  const { id: mailingId } = use(params); // Dynamic route param for mailing ID
+  const { id: mailingId } = use(params); // Динамический параметр маршрута для ID рассылки
   const router = useRouter();
   const isAddMode = mailingId === "add";
   const [isLoading, setIsLoading] = useState(!isAddMode);
   const [submitLoading, setSubmitLoading] = useState(false);
-  const [users, setUsers] = useState([]); // State for fetched users
-  const [isUsersLoading, setIsUsersLoading] = useState(true); // Track user fetching state
-  const [userSearch, setUserSearch] = useState(""); // State for search input
-  const [open, setOpen] = useState(false); // State for Popover open/closed
+  const [users, setUsers] = useState([]); // Состояние для загруженных пользователей
+  const [isUsersLoading, setIsUsersLoading] = useState(true); // Отслеживание состояния загрузки пользователей
+  const [userSearch, setUserSearch] = useState(""); // Состояние для ввода поиска
+  const [open, setOpen] = useState(false); // Состояние для открытия/закрытия Popover
 
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       email: "",
-      user_id: "", // Changed to user_id
+      user_id: "", // Изменено на user_id
     },
   });
 
-  // Fetch users for the dropdown
+  // Загрузка пользователей для выпадающего списка
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -66,8 +66,8 @@ export default function MailingListEvent({ params }) {
         const userData = await getData("/api/users", "user");
         setUsers(userData || []);
       } catch (error) {
-        console.error("Failed to fetch users", error);
-        toast.error("Failed to load user list.");
+        console.error("Не удалось загрузить пользователей", error);
+        toast.error("Не удалось загрузить список пользователей.");
       } finally {
         setIsUsersLoading(false);
       }
@@ -75,7 +75,7 @@ export default function MailingListEvent({ params }) {
     fetchUsers();
   }, []);
 
-  // Fetch existing mailing data if in edit mode
+  // Загрузка существующих данных рассылки в режиме редактирования
   useEffect(() => {
     if (!isAddMode && mailingId) {
       const fetchMailing = async () => {
@@ -87,11 +87,11 @@ export default function MailingListEvent({ params }) {
           );
           form.reset({
             email: mailing?.email || "",
-            user_id: mailing?.user_id || "", // Changed to user_id
+            user_id: mailing?.user_id || "", // Изменено на user_id
           });
         } catch (error) {
-          console.error("Failed to fetch mailing data", error);
-          toast.error("Failed to load mailing data.");
+          console.error("Не удалось загрузить данные рассылки", error);
+          toast.error("Не удалось загрузить данные рассылки.");
         } finally {
           setIsLoading(false);
         }
@@ -102,7 +102,7 @@ export default function MailingListEvent({ params }) {
     }
   }, [mailingId, isAddMode, form]);
 
-  // Filter users based on search input
+  // Фильтрация пользователей на основе поискового ввода
   const filteredUsers = users.filter((user) =>
     `${user.name || ""} ${user.id}`
       .toLowerCase()
@@ -120,7 +120,7 @@ export default function MailingListEvent({ params }) {
         result = await postData(
           {
             email: values.email,
-            user_id: values.user_id ? values?.user_id : 0, // Changed to us er_id
+            user_id: values.user_id ? values?.user_id : 0, // Изменено на user_id
           },
           "/api/rassikas",
           "rassilka"
@@ -129,7 +129,7 @@ export default function MailingListEvent({ params }) {
         result = await putData(
           {
             email: values.email,
-            user_id: values.user_id ? values?.user_id : 0, // Changed to user_id
+            user_id: values.user_id ? values?.user_id : 0, // Изменено на user_id
           },
           `/api/rassikas/${mailingId}`,
           "rassilka"
@@ -138,18 +138,18 @@ export default function MailingListEvent({ params }) {
 
       if (result && !result.error) {
         if (isAddMode) {
-          toast.success("Mailing list entry added successfully");
+          toast.success("Запись в список рассылки успешно добавлена");
           form.reset();
         } else {
-          toast.info("Mailing list entry updated successfully");
+          toast.info("Запись в список рассылки успешно обновлена");
         }
         router.push("/admin/mailing-list");
       } else if (result.error) {
         toast.error(result.error);
       }
     } catch (error) {
-      console.error("Form submission error:", error);
-      toast.error("Failed to submit form. Please try again.");
+      console.error("Ошибка отправки формы:", error);
+      toast.error("Не удалось отправить форму. Попробуйте снова.");
     } finally {
       setSubmitLoading(false);
     }
@@ -169,13 +169,13 @@ export default function MailingListEvent({ params }) {
         onClick={() => window.history.back()}
         className="hover:bg-primary hover:opacity-75"
       >
-        Go Back
+        Вернуться назад
       </Button>
       <div className="max-w-3xl mx-auto py-10">
         <h1 className="text-2xl font-bold mb-6">
           {isAddMode
-            ? "Add New Mailing List Entry"
-            : `Edit Mailing List Entry (ID: ${mailingId || "unknown"})`}
+            ? "Добавить новую запись в список рассылки"
+            : `Редактировать запись списка рассылки (ID: ${mailingId || "неизвестно"})`}
         </h1>
 
         <Form {...form}>
@@ -189,7 +189,7 @@ export default function MailingListEvent({ params }) {
                   <FormControl>
                     <Input
                       type="email"
-                      placeholder="Enter email address"
+                      placeholder="Введите адрес электронной почты"
                       {...field}
                     />
                   </FormControl>
@@ -200,10 +200,10 @@ export default function MailingListEvent({ params }) {
 
             <FormField
               control={form.control}
-              name="user_id" // Changed to user_id
+              name="user_id" // Изменено на user_id
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Фойдаланувчи (optional)</FormLabel>
+                  <FormLabel>Пользователь (необязательно)</FormLabel>
                   <Popover open={open} onOpenChange={setOpen}>
                     <PopoverTrigger asChild>
                       <FormControl>
@@ -215,8 +215,8 @@ export default function MailingListEvent({ params }) {
                         >
                           {field.value
                             ? users.find((user) => user.id === field.value)
-                                ?.name || "Unnamed User"
-                            : "Фойдаланувчини танланг"}
+                                ?.name || "Безымянный пользователь"
+                            : "Выберите пользователя"}
                           <span className="ml-2">▼</span>
                         </Button>
                       </FormControl>
@@ -224,29 +224,29 @@ export default function MailingListEvent({ params }) {
                     <PopoverContent className="w-[300px] p-0">
                       <Command>
                         <CommandInput
-                          placeholder="Фойдаланувчиларни қидириш..."
+                          placeholder="Поиск пользователей..."
                           className="h-9"
                           value={userSearch}
                           onValueChange={setUserSearch}
                         />
                         <CommandList>
                           {isUsersLoading ? (
-                            <CommandEmpty>Loading users...</CommandEmpty>
+                            <CommandEmpty>Загрузка пользователей...</CommandEmpty>
                           ) : users.length === 0 ? (
-                            <CommandEmpty>No users available</CommandEmpty>
+                            <CommandEmpty>Нет доступных пользователей</CommandEmpty>
                           ) : (
                             <>
                               <CommandGroup>
-                                {/* Add an option to clear selection */}
+                                {/* Добавлена опция для очистки выбора */}
                                 <CommandItem
                                   value="none"
                                   onSelect={() => {
-                                    field.onChange(""); // Clear the selection
+                                    field.onChange(""); // Очистить выбор
                                     setOpen(false);
                                   }}
                                 >
                                   <div className="flex justify-between w-full">
-                                    <span>None</span>
+                                    <span>Нет</span>
                                   </div>
                                 </CommandItem>
                                 {filteredUsers.map((user) => (
@@ -259,7 +259,7 @@ export default function MailingListEvent({ params }) {
                                     }}
                                   >
                                     <div className="flex justify-between w-full">
-                                      <span>{user.name || "Unnamed User"}</span>
+                                      <span>{user.name || "Безымянный пользователь"}</span>
                                       <span>ID: {user.id}</span>
                                     </div>
                                   </CommandItem>
@@ -267,7 +267,7 @@ export default function MailingListEvent({ params }) {
                               </CommandGroup>
                               {filteredUsers.length === 0 && (
                                 <CommandEmpty>
-                                  No users found matching "{userSearch}"
+                                  Пользователи по запросу "{userSearch}" не найдены
                                 </CommandEmpty>
                               )}
                             </>
@@ -289,9 +289,9 @@ export default function MailingListEvent({ params }) {
               {submitLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : isAddMode ? (
-                "Add Mailing Entry"
+                "Добавить запись в рассылку"
               ) : (
-                "Update Mailing Entry"
+                "Обновить запись в рассылке"
               )}
             </Button>
           </form>

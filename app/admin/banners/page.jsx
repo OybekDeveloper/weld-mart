@@ -19,36 +19,56 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox"; // Added Checkbox import
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getData } from "@/actions/get";
 import { deleteData } from "@/actions/delete";
-import { Loader2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import Pagination from "../_components/Pagination";
+
+// General filter function with a single search term
+const filterItems = (items, searchTerm) => {
+  if (!searchTerm) return items;
+
+  const lowerSearchTerm = searchTerm.toLowerCase();
+  return items.filter((item) => {
+    const fields = {
+      id: item.id?.toString() || "",
+      url: item.url?.toString() || "",
+      created_at: item.created_at
+        ? new Date(item.created_at).toLocaleDateString()
+        : "",
+      updated_at: item.updated_at
+        ? new Date(item.updated_at).toLocaleDateString()
+        : "",
+    };
+    return Object.values(fields).some((value) =>
+      value.toLowerCase().includes(lowerSearchTerm)
+    );
+  });
+};
 
 export default function Banner() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [bannerToDelete, setBannerToDelete] = useState(null);
+  const [bannersToDelete, setBannersToDelete] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [filters, setFilters] = useState({
-    id: "",
-    url: "",
-    createdAt: "",
-    updatedAt: "",
-  });
+  const [searchTerm, setSearchTerm] = useState("");
   const [banners, setBanners] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedBanners, setSelectedBanners] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
         const response = await getData("/api/banners", "banner");
-        setBanners(response || []); // Fallback to empty array
+        setBanners(response || []);
       } catch (error) {
-        console.log(error);
-        toast.error("Баннерларни юклашда хатолик юз берди");
+        console.error("Error fetching banners:", error);
+        toast.error("Ошибка при загрузке баннеров");
       } finally {
         setIsLoading(false);
       }
@@ -57,71 +77,70 @@ export default function Banner() {
   }, []);
 
   const itemsPerPage = 10;
-
-  // Filter logic
-  const filteredBanners = banners
-    ?.slice()
-    ?.reverse()
-    ?.filter((banner) => {
-      const matchesId =
-        filters.id === "" || banner.id.toString().includes(filters.id);
-      const matchesUrl = banner.url
-        .toLowerCase()
-        .includes(filters.url.toLowerCase());
-      const matchesCreatedAt =
-        filters.createdAt === "" ||
-        new Date(banner.created_at)
-          .toLocaleDateString()
-          .includes(filters.createdAt);
-      const matchesUpdatedAt =
-        filters.updatedAt === "" ||
-        new Date(banner.updated_at)
-          .toLocaleDateString()
-          .includes(filters.updatedAt);
-
-      return matchesId && matchesUrl && matchesCreatedAt && matchesUpdatedAt;
-    });
-
-  // Pagination logic
+  const filteredBanners = filterItems(banners.slice().reverse(), searchTerm);
   const totalPages = Math.ceil(filteredBanners.length / itemsPerPage);
   const paginatedBanners = filteredBanners.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
-  const handleDeleteClick = (banner) => {
-    setBannerToDelete(banner);
+  const handleDeleteClick = (banners) => {
+    setBannersToDelete(Array.isArray(banners) ? banners : [banners]);
     setIsDeleteModalOpen(true);
   };
 
   const handleConfirmDelete = async () => {
-    if (bannerToDelete?.id) {
-      try {
-        const res = await deleteData(
-          `/api/banners/${bannerToDelete.id}`,
-          "banner"
+    if (!bannersToDelete.length) return;
+
+    try {
+      const deletePromises = bannersToDelete.map((banner) =>
+        deleteData(`/api/banners/${banner.id}`, "banner")
+      );
+      const results = await Promise.all(deletePromises);
+      const allSuccessful = results.every((res) => res.success);
+
+      if (allSuccessful) {
+        setBanners((prev) =>
+          prev.filter((b) => !bannersToDelete.some((d) => d.id === b.id))
         );
-        if (res.success) {
-          setBanners((prevBanners) =>
-            prevBanners.filter((b) => b.id !== bannerToDelete.id)
-          );
-          toast.success("Баннер мувофаққиятли ўчирилди");
-        } else {
-          toast.error("Баннерни ўчиришда хатолик юз берди");
-        }
-      } catch (error) {
-        console.log(error);
-        toast.error("Баннерни ўчиришда хатолик юз берди");
+        setSelectedBanners([]);
+        toast.success(
+          `Баннер${bannersToDelete.length > 1 ? "ы" : ""} успешно удален${
+            bannersToDelete.length > 1 ? "ы" : ""
+          }`
+        );
+      } else {
+        toast.error("Ошибка при удалении одного или нескольких баннеров");
       }
+    } catch (error) {
+      console.error("Delete error:", error);
+      toast.error("Ошибка при удалении баннеров");
+    } finally {
+      setIsDeleteModalOpen(false);
+      setBannersToDelete([]);
     }
-    setIsDeleteModalOpen(false);
-    setBannerToDelete(null);
   };
 
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target;
-    setFilters((prev) => ({ ...prev, [name]: value }));
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
     setCurrentPage(1);
+    setSelectedBanners([]);
+  };
+
+  const handleSelectBanner = (bannerId) => {
+    setSelectedBanners((prev) =>
+      prev.includes(bannerId)
+        ? prev.filter((id) => id !== bannerId)
+        : [...prev, bannerId]
+    );
+  };
+
+  const handleSelectAll = (checked) => {
+    if (checked) {
+      setSelectedBanners(paginatedBanners.map((banner) => banner.id));
+    } else {
+      setSelectedBanners([]);
+    }
   };
 
   if (isLoading) {
@@ -135,72 +154,69 @@ export default function Banner() {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Баннерлар</h1>
-        <Button className="hover:bg-primary hover:opacity-75" asChild>
-          <Link href="/admin/banners/add">Баннер қўшиш</Link>
-        </Button>
+        <h1 className="text-2xl font-bold">Баннеры</h1>
+        <div className="flex gap-2">
+          {selectedBanners.length > 0 && (
+            <Button
+              variant="destructive"
+              onClick={() =>
+                handleDeleteClick(
+                  banners.filter((b) => selectedBanners.includes(b.id))
+                )
+              }
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Удалить выбранные ({selectedBanners.length})
+            </Button>
+          )}
+          <Button className="hover:bg-primary hover:opacity-75" asChild>
+            <Link href="/admin/banners/add">Добавить баннер</Link>
+          </Button>
+        </div>
       </div>
 
-      {/* Filters */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div>
-          <Label htmlFor="id">ID</Label>
-          <Input
-            id="id"
-            name="id"
-            value={filters.id}
-            onChange={handleFilterChange}
-            placeholder="ID бўйича фильтрлаш"
-            type="number"
-          />
-        </div>
-        <div>
-          <Label htmlFor="url">URL</Label>
-          <Input
-            id="url"
-            name="url"
-            value={filters.url}
-            onChange={handleFilterChange}
-            placeholder="URL бўйича фильтрлаш"
-          />
-        </div>
-        <div>
-          <Label htmlFor="createdAt">Яратилган сана</Label>
-          <Input
-            id="createdAt"
-            name="createdAt"
-            value={filters.createdAt}
-            onChange={handleFilterChange}
-            placeholder="Яратилган сана бўйича фильтрлаш"
-          />
-        </div>
-        <div>
-          <Label htmlFor="updatedAt">Янгиланган сана</Label>
-          <Input
-            id="updatedAt"
-            name="updatedAt"
-            value={filters.updatedAt}
-            onChange={handleFilterChange}
-            placeholder="Янгиланган сана бўйича фильтрлаш"
-          />
-        </div>
+      {/* Single Common Filter */}
+      <div className="mb-6">
+        <Label htmlFor="search">Поиск</Label>
+        <Input
+          id="search"
+          value={searchTerm}
+          onChange={handleSearchChange}
+          placeholder="Поиск по всем полям (ID, URL, даты...)"
+          className="max-w-md"
+        />
       </div>
 
       {/* Table */}
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead>
+              <Checkbox
+                checked={
+                  selectedBanners.length === paginatedBanners.length &&
+                  paginatedBanners.length > 0
+                }
+                onCheckedChange={handleSelectAll}
+              />
+            </TableHead>
             <TableHead>ID</TableHead>
             <TableHead>URL</TableHead>
-            <TableHead>Расм</TableHead>
-            <TableHead>Яратилган сана</TableHead>
-            <TableHead>Янгиланган сана</TableHead>
-            <TableHead>Амаллар</TableHead>
+            <TableHead>Изображение</TableHead>
+            <TableHead>Дата создания</TableHead>
+            <TableHead>Дата обновления</TableHead>
+            <TableHead>Действия</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {paginatedBanners.map((banner) => (
             <TableRow key={banner.id}>
+              <TableCell onClick={(e) => e.stopPropagation()}>
+                <Checkbox
+                  checked={selectedBanners.includes(banner.id)}
+                  onCheckedChange={() => handleSelectBanner(banner.id)}
+                />
+              </TableCell>
               <TableCell>{banner.id}</TableCell>
               <TableCell>{banner.url}</TableCell>
               <TableCell>
@@ -213,22 +229,28 @@ export default function Banner() {
                 />
               </TableCell>
               <TableCell>
-                {new Date(banner.created_at).toLocaleDateString()}
+                {banner.created_at
+                  ? new Date(banner.created_at).toLocaleDateString()
+                  : "-"}
               </TableCell>
               <TableCell>
-                {new Date(banner.updated_at).toLocaleDateString()}
+                {banner.updated_at
+                  ? new Date(banner.updated_at).toLocaleDateString()
+                  : "-"}
               </TableCell>
-              <TableCell>
+              <TableCell onClick={(e) => e.stopPropagation()}>
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" asChild>
-                    <Link href={`/admin/banners/${banner.id}`}>Ўзгартириш</Link>
+                    <Link href={`/admin/banners/${banner.id}`}>
+                      Редактировать
+                    </Link>
                   </Button>
                   <Button
                     variant="destructive"
                     size="sm"
                     onClick={() => handleDeleteClick(banner)}
                   >
-                    Ўчириш
+                    Удалить
                   </Button>
                 </div>
               </TableCell>
@@ -238,36 +260,23 @@ export default function Banner() {
       </Table>
 
       {/* Pagination */}
-      <div className="mt-6">
-        <div className="flex justify-between items-center">
-          <Button
-            variant="outline"
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage((prev) => prev - 1)}
-          >
-            Орқага
-          </Button>
-          <span>
-            Саҳифа {currentPage} / {totalPages}
-          </span>
-          <Button
-            variant="outline"
-            disabled={currentPage === totalPages}
-            onClick={() => setCurrentPage((prev) => prev + 1)}
-          >
-            Кейингиси
-          </Button>
-        </div>
-      </div>
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
 
       {/* Delete Confirmation Modal */}
       <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Ўчиришни тасдиқланг</DialogTitle>
+            <DialogTitle>Подтверждение удаления</DialogTitle>
             <DialogDescription>
-              Ҳақиқатан ҳам "{bannerToDelete?.url}" баннерини ўчириб
-              ташламоқчимисиз? Бу амални ортга қайтариб бўлмайди.
+              Вы уверены, что хотите удалить{" "}
+              {bannersToDelete.length > 1
+                ? `${bannersToDelete.length} баннеров`
+                : `баннер "${bannersToDelete[0]?.url}"`}
+              ? Это действие необратимо.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -275,10 +284,10 @@ export default function Banner() {
               variant="outline"
               onClick={() => setIsDeleteModalOpen(false)}
             >
-              Бекор қилиш
+              Отмена
             </Button>
             <Button variant="destructive" onClick={handleConfirmDelete}>
-              Ўчириш
+              Удалить
             </Button>
           </DialogFooter>
         </DialogContent>

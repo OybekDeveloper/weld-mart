@@ -18,33 +18,29 @@ import {
 import { Input } from "@/components/ui/input";
 import { Editor } from "@tinymce/tinymce-react";
 import { getData } from "@/actions/get";
-import { Loader2, CloudUpload, Paperclip, X } from "lucide-react";
-import {
-  FileUploader,
-  FileInput,
-  FileUploaderContent,
-  FileUploaderItem,
-} from "@/components/ui/file-uploader";
+import { Loader2, CloudUpload, X } from "lucide-react";
+import { FileUploader, FileInput } from "@/components/ui/file-uploader";
 import { useRouter } from "next/navigation";
-import { backUrl } from "@/lib/utils"; // Assuming this exists
+import { backUrl } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { postData } from "@/actions/post";
 import { putData } from "@/actions/put";
 
 const formSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  country: z.string().min(1, "Country is required"),
-  description: z.string().min(1, "Description is required"),
-  image: z.any(), // Updated to optional for edit mode
+  name: z.string().min(1, "Номи талаб қилинади"),
+  country: z.string().min(1, "Мамлакат талаб қилинади"),
+  description: z.string().min(1, "Таснифи талаб қилинади"),
+  image: z.string().url("URL формати нотўғри").min(1, "Расм талаб қилинади"),
 });
 
 export default function BrandEvent({ params }) {
-  const { brand: brandId } = use(params); // Changed from use(params)
+  const { id: brandId } = use(params);
   const router = useRouter();
   const isAddMode = brandId === "add";
   const [isLoading, setIsLoading] = useState(!isAddMode);
-  const [files, setFiles] = useState([]); // State for selected file
+  const [imagePreview, setImagePreview] = useState(null);
   const [submitLoading, setSubmitLoading] = useState(false);
+  const [currentUrlInput, setCurrentUrlInput] = useState("");
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -56,7 +52,6 @@ export default function BrandEvent({ params }) {
     },
   });
 
-  // TinyMCE configuration for description
   const editorConfig = {
     height: 300,
     menubar: false,
@@ -66,12 +61,11 @@ export default function BrandEvent({ params }) {
       "body { font-family:Helvetica,Arial,sans-serif; font-size:14px }",
   };
 
-  // Dropzone configuration
   const dropZoneConfig = {
     accept: { "image/*": [".svg", ".png", ".jpg", ".jpeg", ".gif"] },
-    multiple: false, // Single file only
+    multiple: false,
     maxFiles: 1,
-    maxSize: 4 * 1024 * 1024, // 4MB limit
+    maxSize: 4 * 1024 * 1024,
   };
 
   useEffect(() => {
@@ -87,18 +81,15 @@ export default function BrandEvent({ params }) {
             image: brand?.image || "",
           });
           if (brand?.image) {
-            setFiles([
-              {
-                file: null,
-                url: brand.image,
-                preview: brand.image,
-                name: "Existing Image",
-              },
-            ]);
+            setImagePreview({
+              url: brand.image,
+              preview: brand.image,
+              isUploaded: true,
+            });
           }
         } catch (error) {
           console.error("Failed to fetch brand", error);
-          toast.error("Failed to load brand data.");
+          toast.error("Бренд маълумотларини юклаш муваффақиятсиз бўлди.");
         } finally {
           setIsLoading(false);
         }
@@ -109,40 +100,9 @@ export default function BrandEvent({ params }) {
     }
   }, [brandId, isAddMode, form]);
 
-  // Handle file upload
-  const handleFileUpload = (newFiles) => {
-    if (newFiles && newFiles.length > 0) {
-      const file = newFiles[0];
-      const newFileObj = {
-        file,
-        url: null,
-        preview: URL.createObjectURL(file),
-        name: file.name,
-      };
-      setFiles([newFileObj]);
-      form.setValue("image", ""); // Clear until upload completes
-    }
-  };
-
-  const removeFile = () => {
-    if (files.length > 0) {
-      const file = files[0];
-      if (file.preview && !file.url) {
-        URL.revokeObjectURL(file.preview);
-      }
-      setFiles([]);
-      form.setValue("image", "");
-    }
-  };
-
-  // Upload file and return URL (called on submit)
-  const uploadFile = async (fileToUpload) => {
-    if (!fileToUpload.file) {
-      return fileToUpload.url; // Return existing URL if no new file
-    }
-
+  const uploadImage = async (file) => {
     const formData = new FormData();
-    formData.append("image", fileToUpload.file, "brand.webp");
+    formData.append("image", file, "brand.webp");
 
     const requestOptions = {
       method: "POST",
@@ -150,54 +110,62 @@ export default function BrandEvent({ params }) {
       redirect: "follow",
     };
 
-    const response = await fetch(
-      "http://127.0.0.1:8080/upload",
-      requestOptions
-    );
+    const response = await fetch("http://127.0.0.1:8080/upload", requestOptions);
     if (!response.ok) {
       throw new Error(`Image upload failed! status: ${response.status}`);
     }
     const result = await response.json();
-    return `${backUrl}${result.path}`; // Adjust based on your API response
+    return `${backUrl}${result.path}`;
+  };
+
+  const handleFileUpload = async (newFiles) => {
+    if (newFiles && newFiles.length > 0) {
+      try {
+        const file = newFiles[0];
+        const preview = URL.createObjectURL(file);
+        const url = await uploadImage(file);
+        const newImage = { url, preview, isUploaded: true };
+        setImagePreview(newImage);
+        form.setValue("image", url);
+      } catch (error) {
+        console.error("Image upload failed:", error);
+        toast.error("Расмни юклаш муваффақиятсиз бўлди");
+      }
+    }
+  };
+
+  const addUrl = () => {
+    if (currentUrlInput) {
+      const newImage = { url: currentUrlInput, preview: currentUrlInput, isUploaded: true };
+      setImagePreview(newImage);
+      form.setValue("image", currentUrlInput);
+      setCurrentUrlInput("");
+    }
+  };
+
+  const removeImage = () => {
+    if (imagePreview && !imagePreview.isUploaded) {
+      URL.revokeObjectURL(imagePreview.preview);
+    }
+    setImagePreview(null);
+    form.setValue("image", "");
   };
 
   async function onSubmit(values) {
-    if (files.length === 0 && isAddMode) {
-      toast.error("Расм юкланмади");
-      return;
-    }
-
     try {
       setSubmitLoading(true);
-
-      // Upload image if present
-      let imageUrl = values.image;
-      if (files.length > 0) {
-        imageUrl = await uploadFile(files[0]);
-      }
-
-      // Combine form values with image URL
-      const updatedValues = { ...values, image: imageUrl };
-      console.log("Submitting:", updatedValues);
-
-      // Send request to API
       let result;
       if (isAddMode) {
-        result = await postData(updatedValues, "/api/brands", "brand");
+        result = await postData(values, "/api/brands", "brand");
       } else {
-        result = await putData(
-          updatedValues,
-          `/api/brands/${brandId}`,
-          "brand"
-        );
+        result = await putData(values, `/api/brands/${brandId}`, "brand");
       }
-      console.log("API response:", result);
 
       if (result && !result.error) {
         if (isAddMode) {
           toast.success("Бренд мувофаққиятли қўшилди");
           form.reset();
-          setFiles([]);
+          setImagePreview(null);
         } else {
           toast.info("Бренд мувофаққиятли янгиланди");
         }
@@ -265,6 +233,7 @@ export default function BrandEvent({ params }) {
                 </FormItem>
               )}
             />
+
             <FormField
               control={form.control}
               name="description"
@@ -292,54 +261,69 @@ export default function BrandEvent({ params }) {
                 <FormItem>
                   <FormLabel>Расм</FormLabel>
                   <FormControl>
-                    <FileUploader
-                      value={files}
-                      onValueChange={handleFileUpload}
-                      dropzoneOptions={dropZoneConfig}
-                      className="relative bg-background rounded-lg p-2"
-                    >
-                      <FileInput
-                        id="imageInput"
-                        className="outline-dashed outline-1 outline-slate-500"
+                    <div className="space-y-4">
+                      <FileUploader
+                        value={[]}
+                        onValueChange={handleFileUpload}
+                        dropzoneOptions={dropZoneConfig}
+                        className="relative bg-background rounded-lg p-2"
                       >
-                        <div className="flex items-center justify-center flex-col p-8 w-full">
-                          <CloudUpload className="text-gray-500 w-10 h-10" />
-                          <p className="mb-1 text-sm text-gray-500 dark:text-gray-400">
-                            <span className="font-semibold">
-                              Юклаш учун босинг
-                            </span>{" "}
-                            ёки судраб туширинг
-                          </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            SVG, PNG, JPG ёки GIF (макс 4MB)
-                          </p>
+                        <FileInput
+                          id="imageInput"
+                          className="outline-dashed outline-1 outline-slate-500"
+                        >
+                          <div className="flex items-center justify-center flex-col p-8 w-full">
+                            <CloudUpload className="text-gray-500 w-10 h-10" />
+                            <p className="mb-1 text-sm text-gray-500 dark:text-gray-400">
+                              <span className="font-semibold">
+                                Юклаш учун босинг
+                              </span>{" "}
+                              ёки судраб туширинг
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              SVG, PNG, JPG ёки GIF (макс 4MB)
+                            </p>
+                          </div>
+                        </FileInput>
+                      </FileUploader>
+
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="https://example.com/image.jpg"
+                          value={currentUrlInput}
+                          onChange={(e) => setCurrentUrlInput(e.target.value)}
+                        />
+                        <Button
+                          type="button"
+                          onClick={addUrl}
+                          disabled={!currentUrlInput}
+                        >
+                          URL қўшиш
+                        </Button>
+                      </div>
+
+                      {imagePreview && (
+                        <div className="relative w-24 h-24">
+                          <img
+                            src={imagePreview.preview}
+                            alt="Предпросмотр"
+                            className="w-full h-full object-cover rounded-md"
+                          />
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="icon"
+                            className="absolute top-1 right-1 h-6 w-6"
+                            onClick={removeImage}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
                         </div>
-                      </FileInput>
-                      <FileUploaderContent>
-                        {files &&
-                          files.length > 0 &&
-                          files.map((file, i) => (
-                            <FileUploaderItem key={i} index={i}>
-                              <Paperclip className="h-4 w-4 stroke-current" />
-                              <span className="max-w-full truncate">
-                                {file.name}
-                              </span>
-                              <Button
-                                type="button"
-                                variant="destructive"
-                                size="icon"
-                                className="h-6 w-6 ml-2"
-                                onClick={removeFile}
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            </FileUploaderItem>
-                          ))}
-                      </FileUploaderContent>
-                    </FileUploader>
+                      )}
+                    </div>
                   </FormControl>
                   <FormDescription>
-                    Юклаш учун расм танланг (мажбурий).
+                    Бир расмни юкланг ёки URL киритинг (мажбурий).
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

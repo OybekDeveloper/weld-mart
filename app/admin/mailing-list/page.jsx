@@ -24,23 +24,36 @@ import { Textarea } from "@/components/ui/textarea";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getData } from "@/actions/get";
-import { History, Loader2 } from "lucide-react";
+import { History, Loader2, Trash2 } from "lucide-react";
 import { deleteData } from "@/actions/delete";
 import { toast } from "sonner";
 import { postData } from "@/actions/post";
+import Pagination from "../_components/Pagination";
+
+const filterItems = (items, searchTerm) => {
+  if (!searchTerm) return items;
+
+  const lowerSearchTerm = searchTerm.toLowerCase();
+  return items.filter((item) => {
+    const fields = {
+      id: item.id?.toString() || "",
+      email: item.email?.toString() || "",
+      user_id: item.user_id?.toString() || "",
+      created_at: new Date(item.created_at).toLocaleDateString() || "",
+      updated_at: new Date(item.updated_at).toLocaleDateString() || "",
+    };
+    return Object.values(fields).some((value) =>
+      value.toLowerCase().includes(lowerSearchTerm)
+    );
+  });
+};
 
 export default function MailingList() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [itemsToDelete, setItemsToDelete] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [filters, setFilters] = useState({
-    id: "",
-    email: "",
-    userId: "",
-    createdAt: "",
-    updatedAt: "",
-  });
+  const [searchTerm, setSearchTerm] = useState("");
   const [mailingList, setMailingList] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedItems, setSelectedItems] = useState([]);
@@ -53,10 +66,10 @@ export default function MailingList() {
       try {
         setIsLoading(true);
         const response = await getData("/api/rassikas", "rassilka");
-        setMailingList(response);
+        setMailingList(response || []);
       } catch (error) {
         console.log(error);
-        toast.error("Failed to load mailing list");
+        toast.error("Ошибка при загрузке списка рассылки");
       } finally {
         setIsLoading(false);
       }
@@ -65,79 +78,55 @@ export default function MailingList() {
   }, []);
 
   const itemsPerPage = 10;
-
-  // Filter logic
-  const filteredMailingList = mailingList
-    ?.slice()
-    ?.reverse()
-    ?.filter((item) => {
-      const matchesId =
-        filters.id === "" || item.id.toString().includes(filters.id);
-      const matchesEmail = item.email
-        .toLowerCase()
-        .includes(filters.email.toLowerCase());
-      const matchesUserId =
-        filters.userId === "" ||
-        item.user_id?.toString().includes(filters.userId);
-      const matchesCreatedAt =
-        filters.createdAt === "" ||
-        new Date(item.created_at)
-          .toLocaleDateString()
-          .includes(filters.createdAt);
-      const matchesUpdatedAt =
-        filters.updatedAt === "" ||
-        new Date(item.updated_at)
-          .toLocaleDateString()
-          .includes(filters.updatedAt);
-
-      return (
-        matchesId &&
-        matchesEmail &&
-        matchesUserId &&
-        matchesCreatedAt &&
-        matchesUpdatedAt
-      );
-    });
-
-  // Pagination logic
+  const filteredMailingList = filterItems(mailingList.slice().reverse(), searchTerm);
   const totalPages = Math.ceil(filteredMailingList.length / itemsPerPage);
   const paginatedMailingList = filteredMailingList.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
-  const handleDeleteClick = () => {
-    setItemsToDelete(selectedItems);
+  const handleDeleteClick = (items) => {
+    setItemsToDelete(Array.isArray(items) ? items : [items]);
     setIsDeleteModalOpen(true);
   };
 
   const handleConfirmDelete = async () => {
-    try {
-      if (itemsToDelete.length > 1) {
-        const deletePromises = itemsToDelete.map((item) =>
-          deleteData(`/api/rassikas/${item.id}`, "rassilka")
-        );
-        await Promise.all(deletePromises);
-        toast.success(`Successfully deleted ${itemsToDelete.length} items`);
-      } else if (itemsToDelete.length === 1) {
-        await deleteData(`/api/rassikas/${itemsToDelete[0].id}`, "rassilka");
-        toast.success(`Successfully deleted item ${itemsToDelete[0].id}`);
-      }
+    if (!itemsToDelete.length) return;
 
-      setMailingList((prev) =>
-        prev.filter((item) => !itemsToDelete.some((del) => del.id === item.id))
+    try {
+      const deletePromises = itemsToDelete.map((item) =>
+        deleteData(`/api/rassikas/${item.id}`, "rassilka")
       );
-      setSelectedItems([]);
+      const results = await Promise.all(deletePromises);
+      const allSuccessful = results.every((res) => res.success);
+
+      if (allSuccessful) {
+        setMailingList((prev) =>
+          prev.filter((item) => !itemsToDelete.some((d) => d.id === item.id))
+        );
+        setSelectedItems([]);
+        toast.success(
+          `Элемент${itemsToDelete.length > 1 ? "ы" : ""} успешно удален${
+            itemsToDelete.length > 1 ? "ы" : ""
+          }`
+        );
+      } else {
+        toast.error("Ошибка при удалении одного или нескольких элементов");
+      }
+    } catch (error) {
+      console.error("Delete error:", error);
+      toast.error("Ошибка при удалении элементов");
+    } finally {
       setIsDeleteModalOpen(false);
       setItemsToDelete([]);
-    } catch (error) {
-      console.error("Deletion error:", error);
-      toast.error("Failed to delete items. Please try again.");
     }
   };
 
   const handleSendEmailClick = () => {
-    if (selectedItems.length === 0) return;
+    if (selectedItems.length === 0) {
+      toast.warning("Выберите хотя бы один адрес для отправки");
+      return;
+    }
     setEmailTitle("");
     setEmailDescription("");
     setIsEmailModalOpen(true);
@@ -145,7 +134,7 @@ export default function MailingList() {
 
   const handleSendEmail = async () => {
     if (!emailTitle || !emailDescription) {
-      toast.error("Please provide both title and description");
+      toast.error("Пожалуйста, укажите заголовок и описание");
       return;
     }
 
@@ -169,39 +158,45 @@ export default function MailingList() {
         "rassilka"
       );
 
-      console.log(hrassikas);
-
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        throw new Error(result.error || "Failed to send emails");
+        throw new Error(result.error || "Не удалось отправить письма");
       }
 
       toast.success(
-        `Successfully sent emails to ${selectedItems.length} recipients`
+        `Успешно отправлено писем: ${selectedItems.length} получателям`
       );
       setIsEmailModalOpen(false);
       setSelectedItems([]);
     } catch (error) {
-      console.error("Email sending error:", error);
-      toast.error("Failed to send emails. Please try again.");
+      console.error("Ошибка отправки писем:", error);
+      toast.error("Не удалось отправить письма. Попробуйте снова.");
     } finally {
       setIsSending(false);
     }
   };
 
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target;
-    setFilters((prev) => ({ ...prev, [name]: value }));
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
     setCurrentPage(1);
+    setSelectedItems([]);
   };
 
-  const handleCheckboxChange = (item, checked) => {
+  const handleSelectItem = (itemId) => {
     setSelectedItems((prev) =>
-      checked
-        ? [...prev, item]
-        : prev.filter((selected) => selected.id !== item.id)
+      prev.some((item) => item.id === itemId)
+        ? prev.filter((item) => item.id !== itemId)
+        : [...prev, mailingList.find((item) => item.id === itemId)]
     );
+  };
+
+  const handleSelectAll = (checked) => {
+    if (checked) {
+      setSelectedItems([...paginatedMailingList]);
+    } else {
+      setSelectedItems([]);
+    }
   };
 
   if (isLoading) {
@@ -215,94 +210,47 @@ export default function MailingList() {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Почта рўйхати</h1>
+        <h1 className="text-2xl font-bold">Список рассылки</h1>
         <div className="flex gap-2">
           <Button className="hover:bg-primary hover:opacity-75" asChild>
-            <Link className="" href="/admin/mailing-list/history">
-              <History />
-              Рассилка Тарихи
+            <Link href="/admin/mailing-list/history">
+              <History className="mr-2 h-4 w-4" />
+              История рассылки
             </Link>
           </Button>
           <Button className="hover:bg-primary hover:opacity-75" asChild>
-            <Link className="" href="/admin/mailing-list/add">
-              Почта қўшиш
-            </Link>
+            <Link href="/admin/mailing-list/add">Добавить email</Link>
           </Button>
-          <Button
-            variant="destructive"
-            disabled={selectedItems.length === 0}
-            onClick={handleDeleteClick}
-          >
-            Танланганларни ўчириш
-          </Button>
-
+          {selectedItems.length > 0 && (
+            <Button
+              variant="destructive"
+              onClick={() => handleDeleteClick(selectedItems)}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Удалить выбранные ({selectedItems.length})
+            </Button>
+          )}
           <Button
             variant="outline"
             disabled={selectedItems.length === 0}
             onClick={handleSendEmailClick}
           >
-            Хат юбориш
+            Отправить письмо ({selectedItems.length})
           </Button>
         </div>
       </div>
 
-      {/* Филтрлар */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
-        <div>
-          <Label htmlFor="id">ID</Label>
-          <Input
-            id="id"
-            name="id"
-            value={filters.id}
-            onChange={handleFilterChange}
-            placeholder="ID бўйича фильтрлаш"
-            type="number"
-          />
-        </div>
-        <div>
-          <Label htmlFor="email">Почта</Label>
-          <Input
-            id="email"
-            name="email"
-            value={filters.email}
-            onChange={handleFilterChange}
-            placeholder="Email бўйича фильтрлаш"
-          />
-        </div>
-        <div>
-          <Label htmlFor="userId">Фойдаланувчи ID</Label>
-          <Input
-            id="userId"
-            name="userId"
-            value={filters.userId}
-            onChange={handleFilterChange}
-            placeholder="Фойдаланувчи ID бўйича фильтрлаш"
-            type="number"
-          />
-        </div>
-        <div>
-          <Label htmlFor="createdAt">Яратилган санаси</Label>
-          <Input
-            id="createdAt"
-            name="createdAt"
-            value={filters.createdAt}
-            onChange={handleFilterChange}
-            placeholder="Яратилган сана бўйича фильтрлаш"
-          />
-        </div>
-        <div>
-          <Label htmlFor="updatedAt">Янгиланган санаси</Label>
-          <Input
-            id="updatedAt"
-            name="updatedAt"
-            value={filters.updatedAt}
-            onChange={handleFilterChange}
-            placeholder="Янгиланган сана бўйича фильтрлаш"
-          />
-        </div>
+      <div className="mb-6">
+        <Label htmlFor="search">Поиск</Label>
+        <Input
+          id="search"
+          value={searchTerm}
+          onChange={handleSearchChange}
+          placeholder="Поиск по всем полям (ID, email, даты...)"
+          className="max-w-md"
+        />
       </div>
 
-      {/* Жадвал */}
       <Table>
         <TableHeader>
           <TableRow>
@@ -310,34 +258,26 @@ export default function MailingList() {
               <Checkbox
                 checked={
                   paginatedMailingList.length > 0 &&
-                  paginatedMailingList.every((item) =>
-                    selectedItems.some((selected) => selected.id === item.id)
-                  )
+                  selectedItems.length === paginatedMailingList.length
                 }
-                onCheckedChange={(checked) =>
-                  setSelectedItems(checked ? [...paginatedMailingList] : [])
-                }
+                onCheckedChange={handleSelectAll}
               />
             </TableHead>
             <TableHead>ID</TableHead>
-            <TableHead>Почта</TableHead>
-            <TableHead>Фойдаланувчи ID</TableHead>
-            <TableHead>Яратилган сана</TableHead>
-            <TableHead>Янгиланган сана</TableHead>
-            <TableHead>Амаллар</TableHead>
+            <TableHead>Email</TableHead>
+            <TableHead>ID пользователя</TableHead>
+            <TableHead>Дата создания</TableHead>
+            <TableHead>Дата обновления</TableHead>
+            <TableHead>Действия</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {paginatedMailingList.map((item) => (
             <TableRow key={item.id}>
-              <TableCell>
+              <TableCell onClick={(e) => e.stopPropagation()}>
                 <Checkbox
-                  checked={selectedItems.some(
-                    (selected) => selected.id === item.id
-                  )}
-                  onCheckedChange={(checked) =>
-                    handleCheckboxChange(item, checked)
-                  }
+                  checked={selectedItems.some((i) => i.id === item.id)}
+                  onCheckedChange={() => handleSelectItem(item.id)}
                 />
               </TableCell>
               <TableCell>{item.id}</TableCell>
@@ -349,17 +289,14 @@ export default function MailingList() {
               <TableCell>
                 {new Date(item.updated_at).toLocaleDateString()}
               </TableCell>
-              <TableCell>
+              <TableCell onClick={(e) => e.stopPropagation()}>
                 <div className="flex gap-2">
                   <Button
                     variant="destructive"
                     size="sm"
-                    onClick={() => {
-                      setItemsToDelete([item]);
-                      setIsDeleteModalOpen(true);
-                    }}
+                    onClick={() => handleDeleteClick(item)}
                   >
-                    Ўчириш
+                    Удалить
                   </Button>
                 </div>
               </TableCell>
@@ -368,37 +305,22 @@ export default function MailingList() {
         </TableBody>
       </Table>
 
-      {/* Саҳифалаш */}
-      <div className="mt-6">
-        <div className="flex justify-between items-center">
-          <Button
-            variant="outline"
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage((prev) => prev - 1)}
-          >
-            Олдинги
-          </Button>
-          <span>
-            Саҳифа {currentPage} / {totalPages}
-          </span>
-          <Button
-            variant="outline"
-            disabled={currentPage === totalPages}
-            onClick={() => setCurrentPage((prev) => prev + 1)}
-          >
-            Кейинги
-          </Button>
-        </div>
-      </div>
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
 
-      {/* Ўчиришни тасдиқлаш ойнаси */}
       <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Ўчиришни тасдиқлаш</DialogTitle>
+            <DialogTitle>Подтверждение удаления</DialogTitle>
             <DialogDescription>
-              Сиз ростдан ҳам {itemsToDelete.length} та танланган элементини
-              ўчирмоқчимисиз? Бу амални қайтариб бўлмайди.
+              Вы действительно хотите удалить{" "}
+              {itemsToDelete.length > 1
+                ? `${itemsToDelete.length} элементов`
+                : `элемент (ID: ${itemsToDelete[0]?.id} - Email: ${itemsToDelete[0]?.email})`}
+              ? Это действие необратимо.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -406,42 +328,41 @@ export default function MailingList() {
               variant="outline"
               onClick={() => setIsDeleteModalOpen(false)}
             >
-              Бекор қилиш
+              Отмена
             </Button>
             <Button variant="destructive" onClick={handleConfirmDelete}>
-              Ўчириш
+              Удалить
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Хат юбориш ойнаси */}
       <Dialog open={isEmailModalOpen} onOpenChange={setIsEmailModalOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Хат юбориш</DialogTitle>
+            <DialogTitle>Отправка письма</DialogTitle>
             <DialogDescription>
-              Танланган {selectedItems.length} та почтага хат юбориш учун мавзу
-              ва тавсифни киритинг.
+              Введите заголовок и описание для отправки письма на{" "}
+              {selectedItems.length} выбранных адресов.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="emailTitle">Мавзу</Label>
+              <Label htmlFor="emailTitle">Заголовок</Label>
               <Input
                 id="emailTitle"
                 value={emailTitle}
                 onChange={(e) => setEmailTitle(e.target.value)}
-                placeholder="Хат мавзусини киритинг"
+                placeholder="Введите заголовок письма"
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="emailDescription">Тавсиф</Label>
+              <Label htmlFor="emailDescription">Описание</Label>
               <Textarea
                 id="emailDescription"
                 value={emailDescription}
                 onChange={(e) => setEmailDescription(e.target.value)}
-                placeholder="Хат тавсифини киритинг"
+                placeholder="Введите описание письма"
                 rows={4}
               />
             </div>
@@ -451,13 +372,13 @@ export default function MailingList() {
               variant="outline"
               onClick={() => setIsEmailModalOpen(false)}
             >
-              Бекор қилиш
+              Отмена
             </Button>
             <Button onClick={handleSendEmail} disabled={isSending}>
               {isSending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                "Юбориш"
+                "Отправить"
               )}
             </Button>
           </DialogFooter>

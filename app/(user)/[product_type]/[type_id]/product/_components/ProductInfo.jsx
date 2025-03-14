@@ -22,7 +22,7 @@ export default function ProductInfo({ productData }) {
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [zoomPosition, setZoomPosition] = useState({ x: 50, y: 50 });
-  const [isScaled, setIsScaled] = useState(false); // Toggle scale state
+  const [isScaled, setIsScaled] = useState(false);
   const { products, setProducts, incrementCount, decrementCount } =
     useProductStore();
 
@@ -35,13 +35,13 @@ export default function ProductInfo({ productData }) {
   }, [productData]);
 
   if (!productData) {
-    return <div className="text-center py-10">Loading product data...</div>;
+    return <div className="text-center py-10">Загрузка данных о продукте...</div>;
   }
 
   const {
     images = [],
-    name = "Unnamed Product",
-    description = "No description available",
+    name = "Безымянный продукт",
+    description = "Описание отсутствует",
     price = 0,
     rating = 0,
     brand,
@@ -59,7 +59,7 @@ export default function ProductInfo({ productData }) {
 
   const handleAddToCart = () => {
     if (findProduct && findProduct.count >= quantity) {
-      toast.error("Бу маҳсулот тугади!");
+      toast.error("Этот продукт закончился!");
       return;
     }
     setProducts(productData);
@@ -67,7 +67,7 @@ export default function ProductInfo({ productData }) {
 
   const handleIncrement = () => {
     if (findProduct?.count >= quantity) {
-      toast.error("Маҳсулот етарли эмас!");
+      toast.error("Продукта недостаточно!");
       return;
     }
     incrementCount(productData.id);
@@ -84,7 +84,6 @@ export default function ProductInfo({ productData }) {
     discountSum = price * (1 - discount / 100);
   }
 
-  // Click-to-scale handling
   const handleImageClick = (e) => {
     e.stopPropagation();
     const rect = e.currentTarget.getBoundingClientRect();
@@ -92,23 +91,20 @@ export default function ProductInfo({ productData }) {
     const y = ((e.clientY - rect.top) / rect.height) * 100;
 
     if (!isScaled) {
-      // Scale up by 10% at the clicked position
       setZoomPosition({ x, y });
       setIsScaled(true);
     } else {
-      // Reset to original state
       setIsScaled(false);
-      setZoomPosition({ x: 50, y: 50 }); // Reset to center
+      setZoomPosition({ x: 50, y: 50 });
     }
   };
 
   const handleModalChange = (open) => {
     setIsOpen(open);
     setIsScaled(false);
-    setZoomPosition({ x: 50, y: 50 }); // Reset position
+    setZoomPosition({ x: 50, y: 50 });
   };
 
-  // Animation variants for modal
   const modalVariants = {
     hidden: { opacity: 0, scale: 0.8 },
     visible: { opacity: 1, scale: 1 },
@@ -135,14 +131,14 @@ export default function ProductInfo({ productData }) {
                   width={100}
                   height={100}
                   src={image || "/fallback-image.jpg"}
-                  alt={`Thumbnail ${index + 1}`}
+                  alt={`Миниатюра ${index + 1}`}
                   className="object-contain aspect-square w-full h-full"
                 />
               </div>
             ))
           ) : (
             <div className="w-full h-24 bg-gray-200 rounded-md flex items-center justify-center">
-              No images
+              Нет изображений
             </div>
           )}
         </div>
@@ -153,7 +149,7 @@ export default function ProductInfo({ productData }) {
                 width={500}
                 height={400}
                 src={mainImage?.image || "/product.svg"}
-                alt={`${name} - Main image`}
+                alt={`${name} - Главное изображение`}
                 className="object-contain w-full h-full rounded-md transition-opacity"
                 loading="eager"
                 priority
@@ -162,9 +158,9 @@ export default function ProductInfo({ productData }) {
           </DialogTrigger>
           <DialogContent className="p-0 ring-0 border-0 shadow-none w-full h-full bg-transparent">
             <DialogHeader>
-              <DialogTitle className="hidden">title</DialogTitle>
+              <DialogTitle className="hidden">заголовок</DialogTitle>
               <DialogDescription className="hidden">
-                description
+                описание
               </DialogDescription>
             </DialogHeader>
             <AnimatePresence>
@@ -182,7 +178,7 @@ export default function ProductInfo({ productData }) {
                     width={1200}
                     height={800}
                     src={mainImage?.image || "/product.svg"}
-                    alt={`${name} - Scaled image`}
+                    alt={`${name} - Увеличенное изображение`}
                     className="w-full h-full object-contain transition-transform duration-300 ease-in-out"
                     style={{
                       transform: isScaled ? "scale(1.3)" : "scale(1)",
@@ -193,14 +189,14 @@ export default function ProductInfo({ productData }) {
                 </motion.div>
               )}
             </AnimatePresence>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute top-4 right-4 bg-gray-800/80 hover:bg-gray-800 text-white rounded-full p-2"
-                onClick={() => handleModalChange(false)}
-              >
-                <X size={24} />
-              </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute top-4 right-4 bg-gray-800/80 hover:bg-gray-800 text-white rounded-full p-2"
+              onClick={() => handleModalChange(false)}
+            >
+              <X size={24} />
+            </Button>
           </DialogContent>
         </Dialog>
       </div>
@@ -252,7 +248,7 @@ export default function ProductInfo({ productData }) {
               className="text-primary hover:underline mt-2"
               onClick={() => setShowFullDescription(!showFullDescription)}
             >
-              {showFullDescription ? "Епиш" : "Коьпрок коърыш"}
+              {showFullDescription ? "Скрыть" : "Показать больше"}
             </button>
           )}
         </div>
@@ -267,7 +263,7 @@ export default function ProductInfo({ productData }) {
           </span>
         </div>
         <div className="w-full flex gap-4 textSmall3">
-          <h1 className="w-full sm:w-1/3 textNormall3">Ишлаб чиқарилган</h1>
+          <h1 className="w-full sm:w-1/3 textNormall3">Произведено</h1>
           <span className="w-full sm:w-2/3 font-bold">
             {brand?.country ? brand?.country : "-"}
           </span>
@@ -276,8 +272,8 @@ export default function ProductInfo({ productData }) {
         <div className="h-[1px] w-full bg-thin" />
 
         <div className="w-full flex gap-4 textSmall3">
-          <h1 className="w-full sm:w-1/3 textNormall3">Мавжуд маҳсулот сони</h1>
-          <span className="w-full sm:w-2/3 font-bold">{quantity} дона</span>
+          <h1 className="w-full sm:w-1/3 textNormall3">Количество в наличии</h1>
+          <span className="w-full sm:w-2/3 font-bold">{quantity} шт.</span>
         </div>
 
         {/* Add to Cart & Quantity Control */}
@@ -287,7 +283,7 @@ export default function ProductInfo({ productData }) {
             className="textSmall3 w-full bg-primary text-white py-3 sm:py-2 md:px-6 rounded-md hover:bg-primary-dark transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
             disabled={quantity === 0 || !quantity}
           >
-            Саватга қўшиш
+            Добавить в корзину
           </button>
 
           {findProduct?.count > 0 && (

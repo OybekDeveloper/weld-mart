@@ -25,7 +25,7 @@ export default function SearchComponent({ variant }) {
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
-  // API chaqiruvchi effekt
+  // Эффект для вызова API
   useEffect(() => {
     const fetchSearchResults = async () => {
       if (!debouncedSearchQuery) {
@@ -68,12 +68,12 @@ export default function SearchComponent({ variant }) {
             width={100}
             height={100}
             src={"/assets/Search.svg"}
-            alt="poisk"
+            alt="поиск"
             className="w-5 h-5 max-md:w-4 max-md:h-4"
           />
           <input
             type="text"
-            placeholder="Қидирув..."
+            placeholder="Поиск..."
             className="h-full bg-transparent text-black/40 w-full border-none focus:outline-none text-sm max-md:text-xs"
             onFocus={() => setIsFocused(true)}
             onBlur={() => setTimeout(() => setIsFocused(false), 200)}
@@ -89,11 +89,11 @@ export default function SearchComponent({ variant }) {
             <div className="mb-2 pr-2 w-full max-h-80 overflow-y-auto sidebar1 pb-4">
               {isLoading ? (
                 <div className="px-3 py-1.5 text-gray-500 text-sm">
-                  Юкланмоқда...
+                  Загрузка...
                 </div>
               ) : error ? (
                 <div className="px-3 py-1.5 text-red-500 text-sm">
-                  Хатолик: {error}
+                  Ошибка: {error}
                 </div>
               ) : searchQuery.length > 0 ? (
                 searchResults.length > 0 ? (
@@ -110,7 +110,7 @@ export default function SearchComponent({ variant }) {
                           height={200}
                           property="true"
                           src={item?.images[0]}
-                          alt="img"
+                          alt="изображение"
                           className="w-full h-full object-contain"
                         />
                       </div>
@@ -142,12 +142,12 @@ export default function SearchComponent({ variant }) {
                   ))
                 ) : (
                   <div className="px-3 py-1.5 text-gray-500 text-sm max-md:text-xs">
-                    Ҳеч нарса топилмади
+                    Ничего не найдено
                   </div>
                 )
               ) : (
                 <div className="px-3 py-1.5 text-gray-500 text-sm max-md:text-xs">
-                  Излаш учун ёзинг...
+                  Введите запрос для поиска...
                 </div>
               )}
             </div>
@@ -164,8 +164,8 @@ export default function SearchComponent({ variant }) {
           </SheetTrigger>
           <SheetContent side="bottom" className="h-[70vh] px-4 py-6">
             <SheetHeader className="hidden">
-              <SheetTitle>Poisk</SheetTitle>
-              <SheetDescription>Mahsulotlarni qidiring</SheetDescription>
+              <SheetTitle>Поиск</SheetTitle>
+              <SheetDescription>Ищите товары</SheetDescription>
             </SheetHeader>
             <div className="w-full pt-4">
               <div className="relative w-full">
@@ -174,12 +174,12 @@ export default function SearchComponent({ variant }) {
                     width={100}
                     height={100}
                     src={"/assets/Search.svg"}
-                    alt="poisk"
+                    alt="поиск"
                     className="w-5 h-5"
                   />
                   <input
                     type="text"
-                    placeholder="Қидирув..."
+                    placeholder="Поиск..."
                     className="h-full bg-transparent text-black/40 w-full border-none focus:outline-none text-sm"
                     autoFocus
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -190,11 +190,11 @@ export default function SearchComponent({ variant }) {
                 <div className="mt-4 max-h-[calc(70vh-100px)] overflow-y-auto sidebar1 pr-2">
                   {isLoading ? (
                     <div className="px-3 py-2 text-gray-500 text-sm">
-                      Юкланмоқда...
+                      Загрузка...
                     </div>
                   ) : error ? (
                     <div className="px-3 py-2 text-red-500 text-sm">
-                      Хатолик: {error}
+                      Ошибка: {error}
                     </div>
                   ) : searchQuery.length > 0 ? (
                     searchResults.length > 0 ? (
@@ -211,7 +211,7 @@ export default function SearchComponent({ variant }) {
                               height={200}
                               property="true"
                               src={item?.images[0]}
-                              alt="img"
+                              alt="изображение"
                               className="w-full h-full object-contain"
                             />
                           </div>
@@ -243,12 +243,12 @@ export default function SearchComponent({ variant }) {
                       ))
                     ) : (
                       <div className="px-3 py-2 text-gray-500 text-sm">
-                        Ҳеч нарса топилмади
+                        Ничего не найдено
                       </div>
                     )
                   ) : (
                     <div className="px-3 py-2 text-gray-500 text-sm">
-                      Излаш учун ёзинг...
+                      Введите запрос для поиска...
                     </div>
                   )}
                 </div>

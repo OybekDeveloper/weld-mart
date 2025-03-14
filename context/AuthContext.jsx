@@ -3,32 +3,56 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
+import { getData } from "@/actions/get";
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [auth, setAuth] = useState(null);
+  const [auth, setAuthState] = useState(null);
   const router = useRouter();
 
+  // Custom setAuth function that updates both state and cookies
+  const setAuth = (newAuthData) => {
+    if (newAuthData) {
+      // If there's auth data, set both state and cookies
+      Cookies.set("auth", JSON.stringify(newAuthData), { expires: 7 });
+      setAuthState(newAuthData);
+    } else {
+      // If null/undefined, clear both state and cookies
+      Cookies.remove("auth");
+      setAuthState(null);
+    }
+  };
+
+  // Load initial auth state from cookies
   useEffect(() => {
     const storedAuth = Cookies.get("auth");
+    const fetchData = async (data) => {
+      try {
+        const [userData] = await Promise.all([
+          getData(`/api/users/${data?.id}`, "user"),
+        ]);
+        console.log(userData, "headeer user");
+        setAuth(userData);
+      } catch (error) {
+        console.log(error);
+      }
+    };
     if (storedAuth) {
-      setAuth(JSON.parse(storedAuth));
+      fetchData(JSON.parse(storedAuth));
     }
   }, []);
 
-  // ✅ Login funksiyasi
+  // Login function
   const login = (userData) => {
-    Cookies.set("auth", JSON.stringify(userData), { expires: 7 }); // 7 kun saqlanadi
-    setAuth(userData);
-    router.push("/"); // Login bo‘lgandan keyin Profile sahifasiga o‘tadi
+    setAuth(userData); // Use the custom setAuth
+    router.push("/"); // Redirect to home page
   };
 
-  // ✅ Logout funksiyasi
+  // Logout function
   const logout = () => {
-    Cookies.remove("auth"); // Cookie'ni o‘chirish
-    setAuth(null); // Context`ni yangilash
-    router.push("/"); // Bosh sahifaga yo‘naltirish
+    setAuth(null); // Use the custom setAuth
+    router.push("/"); // Redirect to home page
   };
 
   return (

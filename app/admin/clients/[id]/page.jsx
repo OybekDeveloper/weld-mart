@@ -15,47 +15,32 @@ import {
   FormMessage,
   FormDescription,
 } from "@/components/ui/form";
-import { Editor } from "@tinymce/tinymce-react";
 import { getData } from "@/actions/get";
 import { Loader2, CloudUpload, X } from "lucide-react";
 import { FileUploader, FileInput } from "@/components/ui/file-uploader";
 import { useRouter } from "next/navigation";
 import { backUrl } from "@/lib/utils";
-import { Textarea } from "@/components/ui/textarea";
 import { postData } from "@/actions/post";
 import { putData } from "@/actions/put";
-import { Input } from "@/components/ui/input";
 
 const formSchema = z.object({
-  text: z.string().min(1, "Таснифи талаб қилинади"),
-  image: z.string().url("URL формати нотўғри").min(1, "Расм талаб қилинади"),
+  image: z.string().url("Неверный формат URL").min(1, "Изображение обязательно"),
 });
 
-export default function NewsEvent({ params }) {
-  const { news: newsId } = use(params);
+export default function ClientEvent({ params }) {
+  const { id: clientId } = use(params);
   const router = useRouter();
-  const isAddMode = newsId === "add";
+  const isAddMode = clientId === "add";
   const [isLoading, setIsLoading] = useState(!isAddMode);
   const [imagePreview, setImagePreview] = useState(null);
   const [submitLoading, setSubmitLoading] = useState(false);
-  const [currentUrlInput, setCurrentUrlInput] = useState("");
 
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      text: "",
       image: "",
     },
   });
-
-  const editorConfig = {
-    height: 300,
-    menubar: false,
-    toolbar:
-      "undo redo | formatselect | bold italic underline | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image | code",
-    content_style:
-      "body { font-family:Helvetica,Arial,sans-serif; font-size:14px }",
-  };
 
   const dropZoneConfig = {
     accept: { "image/*": [".svg", ".png", ".jpg", ".jpeg", ".gif"] },
@@ -65,38 +50,37 @@ export default function NewsEvent({ params }) {
   };
 
   useEffect(() => {
-    if (!isAddMode && newsId) {
-      const fetchNews = async () => {
+    if (!isAddMode && clientId) {
+      const fetchClient = async () => {
         try {
           setIsLoading(true);
-          const news = await getData(`/api/news/${newsId}`);
+          const client = await getData(`/api/clients/${clientId}`, "client");
           form.reset({
-            text: news?.text || "",
-            image: news?.image || "",
+            image: client?.image || "",
           });
-          if (news?.image) {
+          if (client?.image) {
             setImagePreview({
-              url: news.image,
-              preview: news.image,
+              url: client.image,
+              preview: client.image,
               isUploaded: true,
             });
           }
         } catch (error) {
-          console.error("Failed to fetch news", error);
-          toast.error("Янгилик маълумотларини юклаш муваффақиятсиз бўлди.");
+          console.error("Ошибка загрузки клиента", error);
+          toast.error("Не удалось загрузить данные клиента.");
         } finally {
           setIsLoading(false);
         }
       };
-      fetchNews();
+      fetchClient();
     } else {
       setIsLoading(false);
     }
-  }, [newsId, isAddMode, form]);
+  }, [clientId, isAddMode, form]);
 
   const uploadImage = async (file) => {
     const formData = new FormData();
-    formData.append("image", file, "news.webp");
+    formData.append("image", file, "client.webp");
 
     const requestOptions = {
       method: "POST",
@@ -106,7 +90,7 @@ export default function NewsEvent({ params }) {
 
     const response = await fetch("http://127.0.0.1:8080/upload", requestOptions);
     if (!response.ok) {
-      throw new Error(`Image upload failed! status: ${response.status}`);
+      throw new Error(`Ошибка загрузки изображения! статус: ${response.status}`);
     }
     const result = await response.json();
     return `${backUrl}${result.path}`;
@@ -122,18 +106,9 @@ export default function NewsEvent({ params }) {
         setImagePreview(newImage);
         form.setValue("image", url);
       } catch (error) {
-        console.error("Image upload failed:", error);
-        toast.error("Расмни юклаш муваффақиятсиз бўлди");
+        console.error("Ошибка загрузки изображения:", error);
+        toast.error("Не удалось загрузить изображение");
       }
-    }
-  };
-
-  const addUrl = () => {
-    if (currentUrlInput) {
-      const newImage = { url: currentUrlInput, preview: currentUrlInput, isUploaded: true };
-      setImagePreview(newImage);
-      form.setValue("image", currentUrlInput);
-      setCurrentUrlInput("");
     }
   };
 
@@ -149,27 +124,29 @@ export default function NewsEvent({ params }) {
     try {
       setSubmitLoading(true);
       let result;
+      console.log(values);
+      
       if (isAddMode) {
-        result = await postData(values, "/api/news", "new");
+        result = await postData(values, "/api/clients", "client");
       } else {
-        result = await putData(values, `/api/news/${newsId}`, "new");
+        result = await putData(values, `/api/clients/${clientId}`, "client");
       }
 
       if (result && !result.error) {
         if (isAddMode) {
-          toast.success("Янгилик мувофаққиятли қўшилди");
+          toast.success("Клиент успешно добавлен");
           form.reset();
           setImagePreview(null);
         } else {
-          toast.info("Янгилик мувофаққиятли янгиланди");
+          toast.info("Клиент успешно обновлен");
         }
-        router.push("/admin/news");
+        router.push("/admin/clients");
       } else if (result.error) {
         toast.error(result.error);
       }
     } catch (error) {
-      console.error("Form submission error:", error);
-      toast.error("Форма юборилмади. Қайта уриниб кўринг.");
+      console.error("Ошибка отправки формы:", error);
+      toast.error("Не удалось отправить форму. Попробуйте снова.");
     } finally {
       setSubmitLoading(false);
     }
@@ -189,43 +166,23 @@ export default function NewsEvent({ params }) {
         onClick={() => window.history.back()}
         className="hover:bg-primary hover:opacity-75"
       >
-        Орқага қайтиш
+        Назад
       </Button>
       <div className="max-w-3xl mx-auto py-10">
         <h1 className="text-2xl font-bold mb-6">
           {isAddMode
-            ? "Янги янгилик қўшиш"
-            : `Янгиликни таҳрирлаш (ID: ${newsId || "номаълум"})`}
+            ? "Добавить нового клиента"
+            : `Редактировать клиента (ID: ${clientId || "неизвестно"})`}
         </h1>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             <FormField
               control={form.control}
-              name="text"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Таснифи</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Таснифи ёзинг"
-                      value={field.value}
-                      onChange={field.onChange}
-                      rows={5}
-                      className="resize-y"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
               name="image"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Расм</FormLabel>
+                  <FormLabel>Изображение</FormLabel>
                   <FormControl>
                     <div className="space-y-4">
                       <FileUploader
@@ -242,31 +199,16 @@ export default function NewsEvent({ params }) {
                             <CloudUpload className="text-gray-500 w-10 h-10" />
                             <p className="mb-1 text-sm text-gray-500 dark:text-gray-400">
                               <span className="font-semibold">
-                                Юклаш учун босинг
+                                Нажмите для загрузки
                               </span>{" "}
-                              ёки тортиб келтиринг
+                              или перетащите
                             </p>
                             <p className="text-xs text-gray-500 dark:text-gray-400">
-                              SVG, PNG, JPG ёки GIF (макс 4MB)
+                              SVG, PNG, JPG или GIF (макс. 4MB)
                             </p>
                           </div>
                         </FileInput>
                       </FileUploader>
-
-                      <div className="flex gap-2">
-                        <Input
-                          placeholder="https://example.com/image.jpg"
-                          value={currentUrlInput}
-                          onChange={(e) => setCurrentUrlInput(e.target.value)}
-                        />
-                        <Button
-                          type="button"
-                          onClick={addUrl}
-                          disabled={!currentUrlInput}
-                        >
-                          URL қўшиш
-                        </Button>
-                      </div>
 
                       {imagePreview && (
                         <div className="relative w-24 h-24">
@@ -289,7 +231,7 @@ export default function NewsEvent({ params }) {
                     </div>
                   </FormControl>
                   <FormDescription>
-                    Бир расмни юкланг ёки URL киритинг (мажбурий).
+                    Загрузите одно изображение (обязательно).
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -300,9 +242,9 @@ export default function NewsEvent({ params }) {
               {submitLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : isAddMode ? (
-                "Янгилик қўшиш"
+                "Добавить клиента"
               ) : (
-                "Янгиликни янгилаш"
+                "Обновить клиента"
               )}
             </Button>
           </form>

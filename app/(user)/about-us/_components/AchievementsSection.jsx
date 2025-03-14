@@ -11,13 +11,13 @@ import {
 import CustomImage from "@/components/shared/customImage";
 
 export default function AchievementsSection({ achievements }) {
-console.log(achievements);
+  console.log(achievements);
 
-  if(achievements.length === 0) return null;
-  
+  if (achievements.length === 0) return null;
+
   return (
     <section className="w-full">
-      <h2 className="textNormal4 mb-4">Ютуқларимиз</h2>
+      <h2 className="textNormal4 mb-4">Наши достижения</h2>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {achievements.map((achievement) => (
           <Dialog key={achievement.id}>

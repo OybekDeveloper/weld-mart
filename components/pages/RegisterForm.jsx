@@ -44,7 +44,9 @@ export default function RegisterForm() {
 
   const onSubmit = async (values) => {
     if (!values.privacy_policy) {
-      return toast.error("Илтимос фойдаланиш шартларига розилик билдиринг!!!");
+      return toast.error(
+        "Пожалуйста, согласитесь с условиями использования!!!"
+      );
     }
     setIsLoading(true);
     try {
@@ -58,7 +60,7 @@ export default function RegisterForm() {
         console.log(response);
 
         login(response);
-        toast.success("Сиз рўйхатдан ўтдингиз!");
+        toast.success("Вы зарегистрированы!");
         form.reset();
       }
     } catch (error) {
@@ -78,7 +80,7 @@ export default function RegisterForm() {
           <CustomFormField
             fieldType={FormFieldType.INPUT}
             control={form.control}
-            label="Исм"
+            label="Имя"
             name="name"
             placeholder=""
             inputClass="rounded-md border-[2px]"
@@ -86,7 +88,7 @@ export default function RegisterForm() {
           <CustomFormField
             fieldType={FormFieldType.PHONE_INPUT}
             control={form.control}
-            label="Телефон рақами"
+            label="Номер телефона"
             name="phone"
             placeholder=""
             inputClass="rounded-md border-[1px]"
@@ -112,9 +114,9 @@ export default function RegisterForm() {
               className="text-white textSmall2 cursor-pointer"
               onClick={() => setIsDialogOpen(true)}
             >
-              Аккаунт очиш билан мен{" "}
-              <span className="underline">Фойдаланиш шартлари</span> ва
-              махфийлик сийосатига розилик билдираман
+              Создавая аккаунт, я соглашаюсь с{" "}
+              <span className="underline">Условиями использования</span> и
+              Политикой конфиденциальности
             </h1>
           </div>
         </div>
@@ -123,18 +125,18 @@ export default function RegisterForm() {
             isLoading={isLoading}
             className="w-full sm:w-40 bg-white hover:bg-white text-black"
           >
-            Юборищ
+            Отправить
           </SubmitButton>
           <div className="sm:hidden w-full text-white flex items-center justify-center gap-2">
             <div className="w-full h-[1.5px] bg-white" />
-            <h1 className="textNormal3">Йоки</h1>
+            <h1 className="textNormal3">Или</h1>
             <div className="w-full h-[1.5px] bg-white" />
           </div>
           <div>
             <h1 className="max-sm:hidden text-[13px] text-white font-[400]">
-              Аккаунт мавжудми?
+              У вас уже есть аккаунт?
               <Link href={`/login`} className="hover:underline font-bold ">
-                {" Кириш"}
+                {" Войти"}
               </Link>
             </h1>
           </div>
@@ -142,7 +144,7 @@ export default function RegisterForm() {
             href={`/register`}
             className="hover:underline sm:hidden flex justify-center items-center gap-2 text-white"
           >
-            <h1 className="">Кириш</h1>
+            <h1 className="">Войти</h1>
             <ArrowUpRight />
           </Link>
         </div>
@@ -150,92 +152,87 @@ export default function RegisterForm() {
 
       {/* ShadCN Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent
-          mark="false"
-          className="w-11/12 rounded-md max-h-[80vh] overflow-y-auto"
-        >
+        <DialogContent className="w-11/12 rounded-md max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Фойдаланиш шартлари</DialogTitle>
             <DialogDescription className="hidden">dfasf</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 text-sm text-gray-700">
-            <h2 className="font-semibold text-lg">1. Кириш</h2>
-            <p>
-              Ушбу веб-сайтга киришингиз ва ундан фойдаланишингиз шу ерда
-              кўрсатилган шартларга розилик билдиришингизни англатади. Агар сиз
-              ушбу шартларга рози бўлмасангиз, илтимос, сайтдан фойдаланманг.
+          <div className="max-w-4xl mx-auto p-6 bg-white shadow-lg rounded-lg mt-10">
+            <h1 className="text-3xl font-bold text-center mb-6">
+              Условия пользования сайтом и Политика конфиденциальности
+            </h1>
+            <p className="text-gray-700 mb-4">
+              Добро пожаловать на сайт{" "}
+              <span className="font-semibold">WELDMART</span>. Пожалуйста,
+              внимательно ознакомьтесь с настоящими Условиями.
             </p>
 
-            <h2 className="font-semibold text-lg">
-              2. Фойдаланувчи мажбуриятлари
+            <h2 className="text-xl font-semibold mt-6 mb-2">
+              1. Регистрация и заказ
             </h2>
-            <p>
-              Сиз ушбу хизматдан қонунга мувофиқ ва ахлоқ меъёрларига мос
-              равишда фойдаланишингиз керак. Қуйидагилар тақиқланади:
-            </p>
-            <ul className="list-disc ml-5">
-              <li>Қонунга зид ёки ноқонуний фаолият олиб бориш;</li>
-              <li>
-                Бошқа фойдаланувчиларни хафа қилиш, таҳқирлаш ёки шаънига путур
-                етказиш;
-              </li>
-              <li>Ҳар қандай турдаги спам ёки зарарли дастурларни тарқатиш;</li>
-              <li>
-                Бошқа шахсларнинг шахсий маълумотларини рухсатсиз тўплаш ва
-                фойдаланиш.
-              </li>
-            </ul>
-
-            <h2 className="font-semibold text-lg">3. Хизматнинг чекловлари</h2>
-            <p>
-              Администраторлар хизматнинг фаолиятини таъминлаш мақсадида ушбу
-              шартларни бузган фойдаланувчиларни огоҳлантириш, блоклаш ёки
-              аккаунтини ўчириш ҳуқуқига эга.
+            <p className="text-gray-700">
+              Для оформления заказа на нашем сайте необходимо зарегистрироваться
+              и указать актуальную информацию, включая имя, контактные данные и
+              адрес доставки.
             </p>
 
-            <h2 className="font-semibold text-lg">
-              4. Маълумотларни муҳофаза қилиш
+            <h2 className="text-xl font-semibold mt-6 mb-2">
+              2. Оплата и доставка
             </h2>
-            <p>
-              Биз сиз берган шахсий маълумотларни ҳимоя қилишга ҳаракат қиламиз.
-              Бизнинг <span className="underline">Махфийлик сиёсати</span>{" "}
-              бўлимида бу ҳақда батафсил маълумот берилган.
+            <p className="text-gray-700">
+              2.1. Мы предлагаем несколько простых способов оплаты: банковские
+              карты, электронные кошельки и другие доступные методы, доступные
+              на сайте. Все платежи осуществляются в узбекских суммах (UZS) или
+              другой валюте.
+            </p>
+            <p className="text-gray-700">
+              2.2. Стоимость доставки зависит от вашего местоположения и способа
+              доставки. Точные условия будут указаны при оформлении заказа. Мы
+              доставляем товары по всей территории Узбекистана.
+            </p>
+            <p className="text-gray-700">
+              2.3. Ожидаемый срок доставки зависит от региона и наличия товара
+              на складе. Мы делаем все возможное, чтобы ваша покупка была
+              совершена в кратчайшие сроки.
             </p>
 
-            <h2 className="font-semibold text-lg">
-              5. Ҳуқуқлар ва жавобгарлик
+            <h2 className="text-xl font-semibold mt-6 mb-2">
+              3. Ответственность
             </h2>
-            <p>
-              Хизматдаги маълумотлар ҳар қандай вақтда ўзгартирилиши,
-              тўхтатилиши ёки бекор қилиниши мумкин. Биз фойдаланувчиларнинг
-              сайтдан нотўғри фойдаланиши натижасида келиб чиқадиган зарарлар
-              учун жавобгар эмасмиз.
+            <p className="text-gray-700">
+              Мы гарантируем качество товара, а в случае несоответствия или
+              брака товар будет заменен или возвращен.
             </p>
 
-            <h2 className="font-semibold text-lg">6. Ўзгаришлар</h2>
-            <p>
-              Биз ушбу шартларни вақти-вақти билан ўзгартириш ҳуқуқига эгамиз.
-              Барча ўзгаришлар сайтда эълон қилинган вақтдан бошлаб амалга
-              киритилади.
+            <h2 className="text-xl font-semibold mt-6 mb-2">
+              4. Интеллектуальная собственность
+            </h2>
+            <p className="text-gray-700">
+              Все материалы, размещенные на сайте (включая текст, изображения,
+              логотипы, видео, графику и другие элементы), являются
+              интеллектуальной собственностью ООО “WELDMART” и защищены законом
+              Республики Узбекистан об авторском праве.
+            </p>
+
+            <h2 className="text-xl font-semibold mt-6 mb-2">
+              5. Применимое законодательство
+            </h2>
+            <p className="text-gray-700">
+              Настоящие Условия регулируются требованиями Республики Узбекистан.
+              В случае возникновения споров они будут разрешены в судебном
+              порядке в соответствии с законодательством Республики Узбекистан.
+            </p>
+
+            <p className="text-center text-gray-700 font-semibold mt-6">
+              Спасибо, что выбрали нас! Мы желаем вам удачных покупок, отличного
+              настроения и качественного обслуживания!
             </p>
           </div>
-          <DialogFooter className={""}>
-            <Button
-              className=""
-              variant="secondary"
-              onClick={() => setIsDialogOpen(false)}
-            >
+          <DialogFooter>
+            <Button variant="secondary" onClick={() => setIsDialogOpen(false)}>
               Бекор қилиш
             </Button>
-            <Button
-              className="hover:bg-primary"
-              onClick={() => {
-                form.setValue("privacy_policy", true);
-                setIsDialogOpen(false);
-              }}
-            >
-              ОК
-            </Button>
+            <Button className="hover:bg-primary" onClick={() => setIsDialogOpen(false)}>ОК</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

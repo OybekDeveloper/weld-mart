@@ -25,7 +25,7 @@ export default function ProductList() {
                 key={idx}
                 className="w-full flex items-center gap-4 pb-3 mb-3 border-b"
               >
-                {/* Product Image */}
+                {/* Изображение товара */}
                 <div className="w-16 h-16 md:w-24 md:h-24 relative overflow-hidden border rounded-md">
                   <CustomImage
                     src={product?.images?.[0]}
@@ -34,9 +34,9 @@ export default function ProductList() {
                   />
                 </div>
 
-                {/* Product Info */}
+                {/* Информация о товаре */}
                 <div className="w-full flex-1 flex flex-col">
-                  {/* Product Name & Remove Button */}
+                  {/* Название товара и кнопка удаления */}
                   <div className="flex justify-between items-center">
                     <h1 className="textSmall3 font-medium">{product?.name}</h1>
                     <Button
@@ -47,7 +47,7 @@ export default function ProductList() {
                     </Button>
                   </div>
 
-                  {/* Price & Quantity Controls */}
+                  {/* Цена и управление количеством */}
                   <div className="flex justify-between items-center mt-2">
                     <div className="max-sm:flex-col max-sm:gap-1 flex sm:justify-center sm:items-center gap-3">
                       <div className="flex flex-col justify-start items-start textSmall3 font-semibold">
@@ -95,13 +95,13 @@ export default function ProductList() {
       ) : (
         <div className="flex flex-col gap-2 justify-start items-start">
           <h1 className="font-medium textNormal2 font-montserrat">
-            Маҳсулотлар мавжуд эмас
+            Товары отсутствуют
           </h1>
           <Link
             className="mt-2 bg-primary textSmall3 px-3 py-2 rounded-md text-white"
             href="/"
           >
-            Асосий мену
+            Главная страница
           </Link>
         </div>
       )}

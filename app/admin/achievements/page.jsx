@@ -1,4 +1,3 @@
-// pages/admin/achievements.jsx
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -20,36 +19,51 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getData } from "@/actions/get";
 import { deleteData } from "@/actions/delete";
-import { Loader2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import Pagination from "../_components/Pagination";
+
+const filterItems = (items, searchTerm) => {
+  if (!searchTerm) return items;
+
+  const lowerSearchTerm = searchTerm.toLowerCase();
+  return items.filter((item) => {
+    const fields = {
+      id: item.id?.toString() || "",
+      title: item.title?.toString() || "",
+      created_at: new Date(item.created_at).toLocaleDateString() || "",
+      updated_at: new Date(item.updated_at).toLocaleDateString() || "",
+    };
+    return Object.values(fields).some((value) =>
+      value.toLowerCase().includes(lowerSearchTerm)
+    );
+  });
+};
 
 export default function Achievements() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [achievementToDelete, setAchievementToDelete] = useState(null);
+  const [achievementsToDelete, setAchievementsToDelete] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [filters, setFilters] = useState({
-    id: "",
-    title: "",
-    createdAt: "",
-    updatedAt: "",
-  });
+  const [searchTerm, setSearchTerm] = useState("");
   const [achievements, setAchievements] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedAchievements, setSelectedAchievements] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
         const response = await getData("/api/achievements", "achievement");
-        setAchievements(response || []); // Fallback to empty array if undefined
+        setAchievements(response || []);
       } catch (error) {
         console.log(error);
-        toast.error("Ютуқларни юклашда хатолик юз берди");
+        toast.error("Ошибка при загрузке достижений");
       } finally {
         setIsLoading(false);
       }
@@ -58,68 +72,68 @@ export default function Achievements() {
   }, []);
 
   const itemsPerPage = 10;
-
-  // Filter logic
-  const filteredAchievements = achievements.filter((achievement) => {
-    const matchesId =
-      filters.id === "" || achievement.id.toString().includes(filters.id);
-    const matchesTitle = achievement.title
-      .toLowerCase()
-      .includes(filters.title.toLowerCase());
-    const matchesCreatedAt =
-      filters.createdAt === "" ||
-      new Date(achievement.created_at)
-        .toLocaleDateString()
-        .includes(filters.createdAt);
-    const matchesUpdatedAt =
-      filters.updatedAt === "" ||
-      new Date(achievement.updated_at)
-        .toLocaleDateString()
-        .includes(filters.updatedAt);
-
-    return matchesId && matchesTitle && matchesCreatedAt && matchesUpdatedAt;
-  });
-
-  // Pagination logic
+  const filteredAchievements = filterItems(achievements.slice().reverse(), searchTerm);
   const totalPages = Math.ceil(filteredAchievements.length / itemsPerPage);
   const paginatedAchievements = filteredAchievements.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
-  const handleDeleteClick = (achievement) => {
-    setAchievementToDelete(achievement);
+  const handleDeleteClick = (achievements) => {
+    setAchievementsToDelete(Array.isArray(achievements) ? achievements : [achievements]);
     setIsDeleteModalOpen(true);
   };
 
   const handleConfirmDelete = async () => {
-    if (achievementToDelete?.id) {
-      try {
-        const res = await deleteData(
-          `/api/achievements/${achievementToDelete.id}`,
-          "achievement"
+    if (!achievementsToDelete.length) return;
+
+    try {
+      const deletePromises = achievementsToDelete.map((achievement) =>
+        deleteData(`/api/achievements/${achievement.id}`, "achievement")
+      );
+      const results = await Promise.all(deletePromises);
+      const allSuccessful = results.every((res) => res.success);
+
+      if (allSuccessful) {
+        setAchievements((prev) =>
+          prev.filter((a) => !achievementsToDelete.some((d) => d.id === a.id))
         );
-        if (res.success) {
-          setAchievements((prevAchievements) =>
-            prevAchievements.filter((a) => a.id !== achievementToDelete.id)
-          );
-          toast.error("Ютуқ мувофаққиятли ўчирилди");
-        } else {
-          toast.error("Ютуқни ўчиришда хатолик юз берди");
-        }
-      } catch (error) {
-        console.log(error);
-        toast.error("Ютуқни ўчиришда хатолик юз берди");
+        setSelectedAchievements([]);
+        toast.success(
+          `Достижение${achievementsToDelete.length > 1 ? "ния" : ""} успешно удалено${achievementsToDelete.length > 1 ? "ы" : ""}`
+        );
+      } else {
+        toast.error("Ошибка при удалении одного или нескольких достижений");
       }
+    } catch (error) {
+      console.error("Ошибка удаления:", error);
+      toast.error("Ошибка при удалении достижений");
+    } finally {
+      setIsDeleteModalOpen(false);
+      setAchievementsToDelete([]);
     }
-    setIsDeleteModalOpen(false);
-    setAchievementToDelete(null);
   };
 
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target;
-    setFilters((prev) => ({ ...prev, [name]: value }));
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
     setCurrentPage(1);
+    setSelectedAchievements([]);
+  };
+
+  const handleSelectAchievement = (achievementId) => {
+    setSelectedAchievements((prev) =>
+      prev.includes(achievementId)
+        ? prev.filter((id) => id !== achievementId)
+        : [...prev, achievementId]
+    );
+  };
+
+  const handleSelectAll = (checked) => {
+    if (checked) {
+      setSelectedAchievements(paginatedAchievements.map((achievement) => achievement.id));
+    } else {
+      setSelectedAchievements([]);
+    }
   };
 
   if (isLoading) {
@@ -133,72 +147,67 @@ export default function Achievements() {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Ютуқлар</h1>
-        <Button className="hover:bg-primary hover:opacity-75" asChild>
-          <Link href="/admin/achievements/add">Ютуқ қўшиш</Link>
-        </Button>
-      </div>
-
-      {/* Filters */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div>
-          <Label htmlFor="id">ID</Label>
-          <Input
-            id="id"
-            name="id"
-            value={filters.id}
-            onChange={handleFilterChange}
-            placeholder="ID бўйича фильтрлаш"
-            type="number"
-          />
-        </div>
-        <div>
-          <Label htmlFor="title">Сарлавҳа</Label>
-          <Input
-            id="title"
-            name="title"
-            value={filters.title}
-            onChange={handleFilterChange}
-            placeholder="Сарлавҳа бўйича фильтрлаш"
-          />
-        </div>
-        <div>
-          <Label htmlFor="createdAt">Яратилган сана</Label>
-          <Input
-            id="createdAt"
-            name="createdAt"
-            value={filters.createdAt}
-            onChange={handleFilterChange}
-            placeholder="Яратилган сана бўйича фильтрлаш"
-          />
-        </div>
-        <div>
-          <Label htmlFor="updatedAt">Янгиланган сана</Label>
-          <Input
-            id="updatedAt"
-            name="updatedAt"
-            value={filters.updatedAt}
-            onChange={handleFilterChange}
-            placeholder="Янгиланган сана бўйича фильтрлаш"
-          />
+        <h1 className="text-2xl font-bold">Достижения</h1>
+        <div className="flex gap-2">
+          {selectedAchievements.length > 0 && (
+            <Button
+              variant="destructive"
+              onClick={() =>
+                handleDeleteClick(
+                  achievements.filter((a) => selectedAchievements.includes(a.id))
+                )
+              }
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Удалить выбранные ({selectedAchievements.length})
+            </Button>
+          )}
+          <Button className="hover:bg-primary hover:opacity-75" asChild>
+            <Link href="/admin/achievements/add">Добавить достижение</Link>
+          </Button>
         </div>
       </div>
 
-      {/* Table */}
+      <div className="mb-6">
+        <Label htmlFor="search">Поиск</Label>
+        <Input
+          id="search"
+          value={searchTerm}
+          onChange={handleSearchChange}
+          placeholder="Поиск по всем полям (ID, заголовок, даты...)"
+          className="max-w-md"
+        />
+      </div>
+
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead className="w-[50px]">
+              <Checkbox
+                checked={
+                  selectedAchievements.length === paginatedAchievements.length &&
+                  paginatedAchievements.length > 0
+                }
+                onCheckedChange={handleSelectAll}
+              />
+            </TableHead>
             <TableHead>ID</TableHead>
-            <TableHead>Сарлавҳа</TableHead>
-            <TableHead>Расм</TableHead>
-            <TableHead>Яратилган сана</TableHead>
-            <TableHead>Янгиланган сана</TableHead>
-            <TableHead>Амаллар</TableHead>
+            <TableHead>Заголовок</TableHead>
+            <TableHead>Изображение</TableHead>
+            <TableHead>Дата создания</TableHead>
+            <TableHead>Дата обновления</TableHead>
+            <TableHead>Действия</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {paginatedAchievements.map((achievement) => (
             <TableRow key={achievement.id}>
+              <TableCell onClick={(e) => e.stopPropagation()}>
+                <Checkbox
+                  checked={selectedAchievements.includes(achievement.id)}
+                  onCheckedChange={() => handleSelectAchievement(achievement.id)}
+                />
+              </TableCell>
               <TableCell>{achievement.id}</TableCell>
               <TableCell>{achievement.title}</TableCell>
               <TableCell>
@@ -216,11 +225,11 @@ export default function Achievements() {
               <TableCell>
                 {new Date(achievement.updated_at).toLocaleDateString()}
               </TableCell>
-              <TableCell>
+              <TableCell onClick={(e) => e.stopPropagation()}>
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" asChild>
                     <Link href={`/admin/achievements/${achievement.id}`}>
-                      Ўзгартириш
+                      Редактировать
                     </Link>
                   </Button>
                   <Button
@@ -228,7 +237,7 @@ export default function Achievements() {
                     size="sm"
                     onClick={() => handleDeleteClick(achievement)}
                   >
-                    Ўчириш
+                    Удалить
                   </Button>
                 </div>
               </TableCell>
@@ -237,37 +246,22 @@ export default function Achievements() {
         </TableBody>
       </Table>
 
-      {/* Pagination */}
-      <div className="mt-6">
-        <div className="flex justify-between items-center">
-          <Button
-            variant="outline"
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage((prev) => prev - 1)}
-          >
-            Орқага
-          </Button>
-          <span>
-            Саҳифа {currentPage} / {totalPages}
-          </span>
-          <Button
-            variant="outline"
-            disabled={currentPage === totalPages}
-            onClick={() => setCurrentPage((prev) => prev + 1)}
-          >
-            Кейингиси
-          </Button>
-        </div>
-      </div>
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
 
-      {/* Delete Confirmation Modal */}
       <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Ўчиришни тасдиқланг</DialogTitle>
+            <DialogTitle>Подтверждение удаления</DialogTitle>
             <DialogDescription>
-              Ҳақиқатан ҳам "{achievementToDelete?.title}" ни ўчириб
-              ташламоқчимисиз? Бу амални ортга қайтариб бўлмайди.
+              Вы действительно хотите удалить{" "}
+              {achievementsToDelete.length > 1
+                ? `${achievementsToDelete.length} достижений`
+                : `достижение с ID: ${achievementsToDelete[0]?.id} - Заголовок: ${achievementsToDelete[0]?.title}`}
+              ? Это действие необратимо.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -275,10 +269,10 @@ export default function Achievements() {
               variant="outline"
               onClick={() => setIsDeleteModalOpen(false)}
             >
-              Бекор қилиш
+              Отмена
             </Button>
             <Button variant="destructive" onClick={handleConfirmDelete}>
-              Ўчириш
+              Удалить
             </Button>
           </DialogFooter>
         </DialogContent>

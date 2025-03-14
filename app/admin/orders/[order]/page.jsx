@@ -44,27 +44,27 @@ import { postData } from "@/actions/post";
 import { putData } from "@/actions/put";
 
 const formSchema = z.object({
-  bonus: z.number().min(0, "Bonus cannot be negative"),
-  user_id: z.number().int().min(1, "User ID must be a positive integer"),
+  bonus: z.number().min(0, "Бонус не может быть отрицательным"),
+  user_id: z.number().int().min(1, "ID пользователя должен быть положительным целым числом"),
   order_type: z.enum(["individual", "legal"], {
-    required_error: "Order type is required",
+    required_error: "Тип заказа обязателен",
   }),
   phone: z
     .string()
-    .min(1, "Phone is required")
-    .regex(/^\+?[1-9]\d{1,14}$/, "Invalid phone number format"),
-  name: z.string().min(1, "Name is required"),
+    .min(1, "Телефон обязателен")
+    .regex(/^\+?[1-9]\d{1,14}$/, "Неверный формат номера телефона"),
+  name: z.string().min(1, "Имя обязательно"),
   organization: z.string().optional(),
   inn: z.string().optional(),
   comment: z.string().optional(),
   order_items: z
     .array(
       z.object({
-        product_id: z.number().int().min(1, "Product ID is required"),
-        order_quantity: z.number().int().min(1, "Quantity must be at least 1"),
+        product_id: z.number().int().min(1, "ID продукта обязателен"),
+        order_quantity: z.number().int().min(1, "Количество должно быть не менее 1"),
       })
     )
-    .min(1, "At least one order item is required"),
+    .min(1, "Требуется хотя бы один элемент заказа"),
 });
 
 export default function OrderEvent({ params }) {
@@ -132,7 +132,7 @@ export default function OrderEvent({ params }) {
         }
       } catch (error) {
         console.error("Failed to fetch data", error);
-        toast.error("Failed to load order data.");
+        toast.error("Не удалось загрузить данные заказа.");
       } finally {
         setIsLoading(false);
       }
@@ -194,10 +194,10 @@ export default function OrderEvent({ params }) {
 
       if (result && !result.error) {
         if (isAddMode) {
-          toast.success("Буюртма мувофаққиятли қўшилди");
+          toast.success("Заказ успешно добавлен");
           form.reset();
         } else {
-          toast.info("Буюртма мувофаққиятли янгиланди");
+          toast.info("Заказ успешно обновлен");
         }
         router.push("/admin/orders");
       } else if (result.error) {
@@ -205,7 +205,7 @@ export default function OrderEvent({ params }) {
       }
     } catch (error) {
       console.error("Form submission error:", error);
-      toast.error("Форма юборилмади. Қайта уриниб кўринг.");
+      toast.error("Форма не отправлена. Попробуйте еще раз.");
     } finally {
       setSubmitLoading(false);
     }
@@ -243,41 +243,19 @@ export default function OrderEvent({ params }) {
         onClick={() => window.history.back()}
         className="hover:bg-primary hover:opacity-75"
       >
-        Орқага қайтиш
+        Вернуться назад
       </Button>
       <div className="max-w-3xl mx-auto py-10">
         <h1 className="text-2xl font-bold mb-6">
           {isAddMode
-            ? "Янги буюртма қўшиш"
-            : `Буюртмани таҳрирлаш (ID: ${id || "номаълум"})`}
+            ? "Добавить новый заказ"
+            : `Редактировать заказ (ID: ${id || "неизвестно"})`}
         </h1>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            {/* <FormField
-              control={form.control}
-              name="price"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Жами нарх</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      placeholder="Жами нарх (автоматик ҳисобланади)"
-                      step="0.01"
-                      {...field}
-                      disabled
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Жами нарх маҳсулотлар асосида автоматик ҳисобланади.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            /> */}
             <div>
               <h1>
-                Toal Price : <span>{calculateTotalPrice()}</span>
+                Общая стоимость: <span>{calculateTotalPrice()}</span>
               </h1>
             </div>
 
@@ -290,7 +268,7 @@ export default function OrderEvent({ params }) {
                   <FormControl>
                     <Input
                       type="number"
-                      placeholder="Бонус миқдорини киритинг"
+                      placeholder="Введите количество бонусов"
                       step="0.01"
                       {...field}
                       onChange={(e) =>
@@ -308,7 +286,7 @@ export default function OrderEvent({ params }) {
               name="user_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Фойдаланувчи</FormLabel>
+                  <FormLabel>Пользователь</FormLabel>
                   <Popover>
                     <PopoverTrigger asChild>
                       <FormControl>
@@ -320,7 +298,7 @@ export default function OrderEvent({ params }) {
                           {field.value
                             ? users.find((user) => user.id === field.value)
                                 ?.name
-                            : "Фойдаланувчини танланг"}
+                            : "Выберите пользователя"}
                           <span className="ml-2">▼</span>
                         </Button>
                       </FormControl>
@@ -328,7 +306,7 @@ export default function OrderEvent({ params }) {
                     <PopoverContent className="w-[300px] p-0">
                       <Command>
                         <CommandInput
-                          placeholder="Фойдаланувчиларни қидириш..."
+                          placeholder="Поиск пользователей..."
                           className="h-9"
                           onValueChange={setUserSearch}
                         />
@@ -360,16 +338,16 @@ export default function OrderEvent({ params }) {
               name="order_type"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Буюртма тури</FormLabel>
+                  <FormLabel>Тип заказа</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger className="border">
-                        <SelectValue placeholder="Буюртма турини танланг" />
+                        <SelectValue placeholder="Выберите тип заказа" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="individual">Жисмоний шахс</SelectItem>
-                      <SelectItem value="legal">Юридик шахс</SelectItem>
+                      <SelectItem value="individual">Физическое лицо</SelectItem>
+                      <SelectItem value="legal">Юридическое лицо</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -385,12 +363,12 @@ export default function OrderEvent({ params }) {
                   <FormLabel>Телефон</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="Телефон рақамини киритинг (масалан, +998901234567)"
+                      placeholder="Введите номер телефона (например, +79991234567)"
                       {...field}
                     />
                   </FormControl>
                   <FormDescription>
-                    Халқаро форматдан фойдаланинг (масалан, +998901234567).
+                    Используйте международный формат (например, +79991234567).
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -402,9 +380,9 @@ export default function OrderEvent({ params }) {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Исм</FormLabel>
+                  <FormLabel>Имя</FormLabel>
                   <FormControl>
-                    <Input placeholder="Мижоз исмини киритинг" {...field} />
+                    <Input placeholder="Введите имя клиента" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -418,15 +396,15 @@ export default function OrderEvent({ params }) {
                   name="organization"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Ташкилот</FormLabel>
+                      <FormLabel>Организация</FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="Ташкилот номини киритинг"
+                          placeholder="Введите название организации"
                           {...field}
                         />
                       </FormControl>
                       <FormDescription>
-                        Юридик шахслар учун талаб қилинади.
+                        Требуется для юридических лиц.
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -440,10 +418,10 @@ export default function OrderEvent({ params }) {
                     <FormItem>
                       <FormLabel>ИНН</FormLabel>
                       <FormControl>
-                        <Input placeholder="ИННни киритинг" {...field} />
+                        <Input placeholder="Введите ИНН" {...field} />
                       </FormControl>
                       <FormDescription>
-                        Юридик шахслар учун талаб қилинади.
+                        Требуется для юридических лиц.
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -457,9 +435,9 @@ export default function OrderEvent({ params }) {
               name="comment"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Изоҳ</FormLabel>
+                  <FormLabel>Комментарий</FormLabel>
                   <FormControl>
-                    <Input placeholder="Изоҳ киритинг (ихтиёрий)" {...field} />
+                    <Input placeholder="Введите комментарий (необязательно)" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -467,7 +445,7 @@ export default function OrderEvent({ params }) {
             />
 
             <div className="space-y-4">
-              <h2 className="text-xl font-semibold">Буюртма маҳсулотлари</h2>
+              <h2 className="text-xl font-semibold">Товары заказа</h2>
               {fields.map((item, index) => {
                 const selectedProduct = products.find(
                   (p) =>
@@ -485,7 +463,7 @@ export default function OrderEvent({ params }) {
                       name={`order_items.${index}.product_id`}
                       render={({ field }) => (
                         <FormItem className="flex-1">
-                          <FormLabel>Маҳсулот</FormLabel>
+                          <FormLabel>Продукт</FormLabel>
                           <Popover>
                             <PopoverTrigger asChild>
                               <FormControl>
@@ -498,7 +476,7 @@ export default function OrderEvent({ params }) {
                                     ? products.find(
                                         (product) => product.id === field.value
                                       )?.name
-                                    : "Маҳсулотни танланг"}
+                                    : "Выберите продукт"}
                                   <span className="ml-2">▼</span>
                                 </Button>
                               </FormControl>
@@ -506,7 +484,7 @@ export default function OrderEvent({ params }) {
                             <PopoverContent className="w-[300px] p-0">
                               <Command>
                                 <CommandInput
-                                  placeholder="Маҳсулотларни қидириш..."
+                                  placeholder="Поиск продуктов..."
                                   className="h-9"
                                   onValueChange={(value) =>
                                     handleProductSearchChange(index, value)
@@ -514,7 +492,7 @@ export default function OrderEvent({ params }) {
                                 />
                                 <CommandList>
                                   <CommandEmpty>
-                                    Маҳсулот топилмади.
+                                    Продукт не найден.
                                   </CommandEmpty>
                                   <CommandGroup>
                                     {getFilteredProducts(index).map(
@@ -528,7 +506,7 @@ export default function OrderEvent({ params }) {
                                           }}
                                         >
                                           {product.name} (ID: {product.id}) -{" "}
-                                          {product.price} сўм
+                                          {product.price} сум.
                                         </CommandItem>
                                       )
                                     )}
@@ -547,11 +525,11 @@ export default function OrderEvent({ params }) {
                       name={`order_items.${index}.order_quantity`}
                       render={({ field }) => (
                         <FormItem className="w-32">
-                          <FormLabel>Миқдор</FormLabel>
+                          <FormLabel>Количество</FormLabel>
                           <FormControl>
                             <Input
                               type="number"
-                              placeholder="Миқдор"
+                              placeholder="Количество"
                               {...field}
                               onChange={(e) =>
                                 field.onChange(parseInt(e.target.value) || 1)
@@ -564,16 +542,16 @@ export default function OrderEvent({ params }) {
                     />
 
                     <div className="w-32">
-                      <FormLabel>Нарх</FormLabel>
+                      <FormLabel>Цена</FormLabel>
                       <div className="text-sm">
-                        {productPrice.toLocaleString()} сўм
+                        {productPrice.toLocaleString()} сум.
                       </div>
                     </div>
 
                     <div className="w-32">
-                      <FormLabel>Жами</FormLabel>
+                      <FormLabel>Итого</FormLabel>
                       <div className="text-sm">
-                        {subtotal.toLocaleString()} сўм
+                        {subtotal.toLocaleString()} сум.
                       </div>
                     </div>
 
@@ -595,7 +573,7 @@ export default function OrderEvent({ params }) {
                 onClick={() => append({ product_id: 0, order_quantity: 1 })}
                 disabled={fields.length >= 10}
               >
-                Маҳсулот қўшиш
+                Добавить продукт
               </Button>
             </div>
 
@@ -603,9 +581,9 @@ export default function OrderEvent({ params }) {
               {submitLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : isAddMode ? (
-                "Буюртма қўшиш"
+                "Добавить заказ"
               ) : (
-                "Буюртмани янгилаш"
+                "Обновить заказ"
               )}
             </Button>
           </form>

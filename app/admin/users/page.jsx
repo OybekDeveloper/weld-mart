@@ -19,36 +19,51 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox"; // Added Checkbox import
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getData } from "@/actions/get";
-import { deleteData } from "@/actions/delete"; // Added import
-import { Loader2 } from "lucide-react";
-import { toast } from "sonner"; // Added import for toast notifications
+import { deleteData } from "@/actions/delete";
+import { Loader2, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import Pagination from "../_components/Pagination";
+
+const filterItems = (items, searchTerm) => {
+  if (!searchTerm) return items;
+
+  const lowerSearchTerm = searchTerm.toLowerCase();
+  return items.filter((item) => {
+    const fields = {
+      id: item.id?.toString() || "",
+      name: item.name?.toString() || "",
+      phone: item.phone?.toString() || "",
+      created_at: new Date(item.created_at).toLocaleDateString() || "",
+      updated_at: new Date(item.updated_at).toLocaleDateString() || "",
+    };
+    return Object.values(fields).some((value) =>
+      value.toLowerCase().includes(lowerSearchTerm)
+    );
+  });
+};
 
 export default function Users() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [userToDelete, setUserToDelete] = useState(null);
+  const [usersToDelete, setUsersToDelete] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [filters, setFilters] = useState({
-    id: "",
-    name: "",
-    phone: "",
-    createdAt: "",
-    updatedAt: "",
-  });
+  const [searchTerm, setSearchTerm] = useState("");
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedUsers, setSelectedUsers] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
         const response = await getData("/api/users", "user");
-        setUsers(response || []); // Fallback to empty array if undefined
+        setUsers(response || []);
       } catch (error) {
         console.log(error);
-        toast.error("Фойдаланувчиларни юклашда хатолик юз берди");
+        toast.error("Ошибка при загрузке пользователей");
       } finally {
         setIsLoading(false);
       }
@@ -57,77 +72,70 @@ export default function Users() {
   }, []);
 
   const itemsPerPage = 10;
-
-  // Filter logic
-  const filteredUsers = users
-    .slice()
-    ?.reverse()
-    .filter((user) => {
-      const matchesId =
-        filters.id === "" || user.id.toString().includes(filters.id);
-      const matchesName = user.name
-        .toLowerCase()
-        .includes(filters.name.toLowerCase());
-      const matchesPhone =
-        filters.phone === "" || user.phone.includes(filters.phone);
-      const matchesCreatedAt =
-        filters.createdAt === "" ||
-        new Date(user.created_at)
-          .toLocaleDateString()
-          .includes(filters.createdAt);
-      const matchesUpdatedAt =
-        filters.updatedAt === "" ||
-        new Date(user.updated_at)
-          .toLocaleDateString()
-          .includes(filters.updatedAt);
-
-      return (
-        matchesId &&
-        matchesName &&
-        matchesPhone &&
-        matchesCreatedAt &&
-        matchesUpdatedAt
-      );
-    });
-
-  // Pagination logic
+  const filteredUsers = filterItems(users.slice().reverse(), searchTerm);
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
   const paginatedUsers = filteredUsers.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
-  const handleDeleteClick = (user) => {
-    setUserToDelete(user);
+  const handleDeleteClick = (users) => {
+    setUsersToDelete(Array.isArray(users) ? users : [users]);
     setIsDeleteModalOpen(true);
   };
 
   const handleConfirmDelete = async () => {
-    if (userToDelete?.id) {
-      try {
-        const res = await deleteData(`/api/users/${userToDelete.id}`, "user");
-        if (res.success) {
-          // Remove the deleted user from the state
-          setUsers((prevUsers) =>
-            prevUsers.filter((u) => u.id !== userToDelete.id)
-          );
-          toast.error("Фойдаланувчи мувофаққиятли ўчирилди");
-        } else {
-          toast.error("Фойдаланувчини ўчиришда хатолик юз берди");
-        }
-      } catch (error) {
-        console.log(error);
-        toast.error("Фойдаланувчини ўчиришда хатолик юз берди");
+    if (!usersToDelete.length) return;
+
+    try {
+      const deletePromises = usersToDelete.map((user) =>
+        deleteData(`/api/users/${user.id}`, "user")
+      );
+      const results = await Promise.all(deletePromises);
+      const allSuccessful = results.every((res) => res.success);
+
+      if (allSuccessful) {
+        setUsers((prev) =>
+          prev.filter((u) => !usersToDelete.some((d) => d.id === u.id))
+        );
+        setSelectedUsers([]);
+        toast.success(
+          `Пользовател${usersToDelete.length > 1 ? "и" : "ь"} успешно удален${
+            usersToDelete.length > 1 ? "ы" : ""
+          }`
+        );
+      } else {
+        toast.error("Ошибка при удалении одного или нескольких пользователей");
       }
+    } catch (error) {
+      console.error("Delete error:", error);
+      toast.error("Ошибка при удалении пользователей");
+    } finally {
+      setIsDeleteModalOpen(false);
+      setUsersToDelete([]);
     }
-    setIsDeleteModalOpen(false);
-    setUserToDelete(null);
   };
 
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target;
-    setFilters((prev) => ({ ...prev, [name]: value }));
-    setCurrentPage(1); // Reset to first page when filters change
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(1);
+    setSelectedUsers([]);
+  };
+
+  const handleSelectUser = (userId) => {
+    setSelectedUsers((prev) =>
+      prev.includes(userId)
+        ? prev.filter((id) => id !== userId)
+        : [...prev, userId]
+    );
+  };
+
+  const handleSelectAll = (checked) => {
+    if (checked) {
+      setSelectedUsers(paginatedUsers.map((user) => user.id));
+    } else {
+      setSelectedUsers([]);
+    }
   };
 
   if (isLoading) {
@@ -141,83 +149,68 @@ export default function Users() {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Фойдаланувчилар</h1>
-        <Button className="hover:bg-primary hover:opacity-75" asChild>
-          <Link href="/admin/users/add">Фойдаланувчи қўшиш</Link>
-        </Button>
-      </div>
-
-      {/* Фильтрлар */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
-        <div>
-          <Label htmlFor="id">ID</Label>
-          <Input
-            id="id"
-            name="id"
-            value={filters.id}
-            onChange={handleFilterChange}
-            placeholder="ID бўйича фильтрлаш"
-            type="number"
-          />
-        </div>
-        <div>
-          <Label htmlFor="name">Исми</Label>
-          <Input
-            id="name"
-            name="name"
-            value={filters.name}
-            onChange={handleFilterChange}
-            placeholder="Исми бўйича фильтрлаш"
-          />
-        </div>
-        <div>
-          <Label htmlFor="phone">Телефон</Label>
-          <Input
-            id="phone"
-            name="phone"
-            value={filters.phone}
-            onChange={handleFilterChange}
-            placeholder="Телефон бўйича фильтрлаш"
-          />
-        </div>
-        <div>
-          <Label htmlFor="createdAt">Яратилган санаси</Label>
-          <Input
-            id="createdAt"
-            name="createdAt"
-            value={filters.createdAt}
-            onChange={handleFilterChange}
-            placeholder="Яратилган сана бўйича фильтрлаш"
-          />
-        </div>
-        <div>
-          <Label htmlFor="updatedAt">Янгиланган санаси</Label>
-          <Input
-            id="updatedAt"
-            name="updatedAt"
-            value={filters.updatedAt}
-            onChange={handleFilterChange}
-            placeholder="Янгиланган сана бўйича фильтрлаш"
-          />
+        <h1 className="text-2xl font-bold">Пользователи</h1>
+        <div className="flex gap-2">
+          {selectedUsers.length > 0 && (
+            <Button
+              variant="destructive"
+              onClick={() =>
+                handleDeleteClick(
+                  users.filter((u) => selectedUsers.includes(u.id))
+                )
+              }
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Удалить выбранных ({selectedUsers.length})
+            </Button>
+          )}
+          <Button className="hover:bg-primary hover:opacity-75" asChild>
+            <Link href="/admin/users/add">Добавить пользователя</Link>
+          </Button>
         </div>
       </div>
 
-      {/* Жадвал */}
+      <div className="mb-6">
+        <Label htmlFor="search">Поиск</Label>
+        <Input
+          id="search"
+          value={searchTerm}
+          onChange={handleSearchChange}
+          placeholder="Поиск по всем полям (ID, имя, телефон, даты...)"
+          className="max-w-md"
+        />
+      </div>
+
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead className="w-[50px]">
+              <Checkbox
+                checked={
+                  selectedUsers.length === paginatedUsers.length &&
+                  paginatedUsers.length > 0
+                }
+                onCheckedChange={handleSelectAll}
+              />
+            </TableHead>
             <TableHead>ID</TableHead>
-            <TableHead>Исми</TableHead>
+            <TableHead>Имя</TableHead>
             <TableHead>Телефон</TableHead>
             <TableHead>Бонус</TableHead>
-            <TableHead>Яратилган санаси</TableHead>
-            <TableHead>Янгиланган санаси</TableHead>
-            <TableHead>Амаллар</TableHead>
+            <TableHead>Дата создания</TableHead>
+            <TableHead>Дата обновления</TableHead>
+            <TableHead>Действия</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {paginatedUsers.map((user) => (
             <TableRow key={user.id}>
+              <TableCell onClick={(e) => e.stopPropagation()}>
+                <Checkbox
+                  checked={selectedUsers.includes(user.id)}
+                  onCheckedChange={() => handleSelectUser(user.id)}
+                />
+              </TableCell>
               <TableCell>{user.id}</TableCell>
               <TableCell>{user.name}</TableCell>
               <TableCell>{user.phone}</TableCell>
@@ -228,17 +221,17 @@ export default function Users() {
               <TableCell>
                 {new Date(user.updated_at).toLocaleDateString()}
               </TableCell>
-              <TableCell>
+              <TableCell onClick={(e) => e.stopPropagation()}>
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" asChild>
-                    <Link href={`/admin/users/${user.id}`}>Таҳрирлаш</Link>
+                    <Link href={`/admin/users/${user.id}`}>Редактировать</Link>
                   </Button>
                   <Button
                     variant="destructive"
                     size="sm"
                     onClick={() => handleDeleteClick(user)}
                   >
-                    Ўчириш
+                    Удалить
                   </Button>
                 </div>
               </TableCell>
@@ -247,37 +240,22 @@ export default function Users() {
         </TableBody>
       </Table>
 
-      {/* Саҳифалаш (Пагинация) */}
-      <div className="mt-6">
-        <div className="flex justify-between items-center">
-          <Button
-            variant="outline"
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage((prev) => prev - 1)}
-          >
-            Олдинги
-          </Button>
-          <span>
-            {currentPage}-саҳифа / {totalPages}
-          </span>
-          <Button
-            variant="outline"
-            disabled={currentPage === totalPages}
-            onClick={() => setCurrentPage((prev) => prev + 1)}
-          >
-            Кейингиси
-          </Button>
-        </div>
-      </div>
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
 
-      {/* Ўчиришни тасдиқлаш модали */}
       <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Ўчиришни тасдиқлаш</DialogTitle>
+            <DialogTitle>Подтверждение удаления</DialogTitle>
             <DialogDescription>
-              "{userToDelete?.name}" (ID: {userToDelete?.id}) фойдаланувчисини
-              ўчиришга ишончингиз комилми? Бу амални қайтариб бўлмайди.
+              Вы уверены, что хотите удалить{" "}
+              {usersToDelete.length > 1
+                ? `${usersToDelete.length} пользователей`
+                : `пользователя с ID: ${usersToDelete[0]?.id} - Имя: ${usersToDelete[0]?.name}`}
+              ? Это действие необратимо.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -285,10 +263,10 @@ export default function Users() {
               variant="outline"
               onClick={() => setIsDeleteModalOpen(false)}
             >
-              Бекор қилиш
+              Отмена
             </Button>
             <Button variant="destructive" onClick={handleConfirmDelete}>
-              Ўчириш
+              Удалить
             </Button>
           </DialogFooter>
         </DialogContent>

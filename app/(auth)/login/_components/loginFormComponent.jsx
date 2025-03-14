@@ -21,9 +21,9 @@ export default function LoginFormComponent({ brands, statis }) {
           alt="logo"
         />
         <p className="w-full lg:w-2/3 textNormal2">
-          "WELDMART" компанияси 2222 йилда ташкил этилган булиб. Пайвандлаш
-          машиналари сохасида етакчи компаниялар билан муваффакиятли ишлайди ва
-          бу сохада катта тажрибага эга.
+          Компания "WELDMART" была основана в 2222 году. Успешно работает с
+          ведущими компаниями в сфере Сварочных аппаратов и имеет большой опыт в
+          этой сфере:
         </p>
         <div className="hidden lg:flex gap-5 text-black/70">
           {statis.map((item, idx) => {
@@ -50,7 +50,7 @@ export default function LoginFormComponent({ brands, statis }) {
       </section>
       <section className="w-full lg:w-1/2 space-y-3">
         <section className="w-full bg-primary rounded-md p-7 space-y-5">
-          <h1 className="textNormal5 text-white">Кириш</h1>
+          <h1 className="textNormal5 text-white">Войти</h1>
           <LoginForm />
         </section>
         <div className="mx-auto flex justify-between w-10/12 items-center">

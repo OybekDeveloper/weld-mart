@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox"; // Added Checkbox import
+import { Checkbox } from "@/components/ui/checkbox";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -36,7 +36,6 @@ const filterItems = (items, searchTerm) => {
   return items.filter((item) => {
     const fields = {
       id: item.id?.toString() || "",
-      name: item.name?.toString() || "",
       created_at: new Date(item.created_at).toLocaleDateString() || "",
       updated_at: new Date(item.updated_at).toLocaleDateString() || "",
     };
@@ -46,24 +45,26 @@ const filterItems = (items, searchTerm) => {
   });
 };
 
-export default function Categories() {
+export default function Clients() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [categoriesToDelete, setCategoriesToDelete] = useState([]);
+  const [clientsToDelete, setClientsToDelete] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
-  const [categories, setCategories] = useState([]);
+  const [clients, setClients] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [selectedClients, setSelectedClients] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const response = await getData("/api/categories", "category");
-        setCategories(response.categories || []);
+        const response = await getData("/api/clients", "client");
+        setClients(response || []);
+        console.log(response);
+        
       } catch (error) {
         console.log(error);
-        toast.error("Ошибка при загрузке категорий");
+        toast.error("Ошибка при загрузке клиентов");
       } finally {
         setIsLoading(false);
       }
@@ -72,69 +73,69 @@ export default function Categories() {
   }, []);
 
   const itemsPerPage = 10;
-  const filteredCategories = filterItems(categories.slice().reverse(), searchTerm);
-  const totalPages = Math.ceil(filteredCategories.length / itemsPerPage);
-  const paginatedCategories = filteredCategories.slice(
+  const filteredClients = filterItems(clients.slice().reverse(), searchTerm);
+  const totalPages = Math.ceil(filteredClients.length / itemsPerPage);
+  const paginatedClients = filteredClients.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
-  const handleDeleteClick = (categories) => {
-    setCategoriesToDelete(Array.isArray(categories) ? categories : [categories]);
+  const handleDeleteClick = (clients) => {
+    setClientsToDelete(Array.isArray(clients) ? clients : [clients]);
     setIsDeleteModalOpen(true);
   };
 
   const handleConfirmDelete = async () => {
-    if (!categoriesToDelete.length) return;
+    if (!clientsToDelete.length) return;
 
     try {
-      const deletePromises = categoriesToDelete.map((category) =>
-        deleteData(`/api/categories/${category.id}`, "category")
+      const deletePromises = clientsToDelete.map((client) =>
+        deleteData(`/api/clients/${client.id}`, "client")
       );
       const results = await Promise.all(deletePromises);
       const allSuccessful = results.every((res) => res.success);
 
       if (allSuccessful) {
-        setCategories((prev) =>
-          prev.filter((c) => !categoriesToDelete.some((d) => d.id === c.id))
+        setClients((prev) =>
+          prev.filter((c) => !clientsToDelete.some((d) => d.id === c.id))
         );
-        setSelectedCategories([]);
+        setSelectedClients([]);
         toast.success(
-          `Категори${categoriesToDelete.length > 1 ? "и" : "я"} успешно удален${
-            categoriesToDelete.length > 1 ? "ы" : "а"
+          `Клиент${clientsToDelete.length > 1 ? "ы" : ""} успешно удален${
+            clientsToDelete.length > 1 ? "ы" : ""
           }`
         );
       } else {
-        toast.error("Ошибка при удалении одной или нескольких категорий");
+        toast.error("Ошибка при удалении одного или нескольких клиентов");
       }
     } catch (error) {
-      console.error("Delete error:", error);
-      toast.error("Ошибка при удалении категорий");
+      console.error("Ошибка удаления:", error);
+      toast.error("Ошибка при удалении клиентов");
     } finally {
       setIsDeleteModalOpen(false);
-      setCategoriesToDelete([]);
+      setClientsToDelete([]);
     }
   };
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
     setCurrentPage(1);
-    setSelectedCategories([]);
+    setSelectedClients([]);
   };
 
-  const handleSelectCategory = (categoryId) => {
-    setSelectedCategories((prev) =>
-      prev.includes(categoryId)
-        ? prev.filter((id) => id !== categoryId)
-        : [...prev, categoryId]
+  const handleSelectClient = (clientId) => {
+    setSelectedClients((prev) =>
+      prev.includes(clientId)
+        ? prev.filter((id) => id !== clientId)
+        : [...prev, clientId]
     );
   };
 
   const handleSelectAll = (checked) => {
     if (checked) {
-      setSelectedCategories(paginatedCategories.map((category) => category.id));
+      setSelectedClients(paginatedClients.map((client) => client.id));
     } else {
-      setSelectedCategories([]);
+      setSelectedClients([]);
     }
   };
 
@@ -149,23 +150,23 @@ export default function Categories() {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Категории</h1>
+        <h1 className="text-2xl font-bold">Клиенты</h1>
         <div className="flex gap-2">
-          {selectedCategories.length > 0 && (
+          {selectedClients.length > 0 && (
             <Button
               variant="destructive"
               onClick={() =>
                 handleDeleteClick(
-                  categories.filter((c) => selectedCategories.includes(c.id))
+                  clients.filter((c) => selectedClients.includes(c.id))
                 )
               }
             >
               <Trash2 className="mr-2 h-4 w-4" />
-              Удалить выбранные ({selectedCategories.length})
+              Удалить выбранные ({selectedClients.length})
             </Button>
           )}
           <Button className="hover:bg-primary hover:opacity-75" asChild>
-            <Link href="/admin/categories/add">Добавить категорию</Link>
+            <Link href="/admin/clients/add">Добавить клиента</Link>
           </Button>
         </div>
       </div>
@@ -176,7 +177,7 @@ export default function Categories() {
           id="search"
           value={searchTerm}
           onChange={handleSearchChange}
-          placeholder="Поиск по всем полям (ID, название, даты...)"
+          placeholder="Поиск по ID или датам..."
           className="max-w-md"
         />
       </div>
@@ -187,14 +188,13 @@ export default function Categories() {
             <TableHead>
               <Checkbox
                 checked={
-                  selectedCategories.length === paginatedCategories.length &&
-                  paginatedCategories.length > 0
+                  selectedClients.length === paginatedClients.length &&
+                  paginatedClients.length > 0
                 }
                 onCheckedChange={handleSelectAll}
               />
             </TableHead>
             <TableHead>ID</TableHead>
-            <TableHead>Название</TableHead>
             <TableHead>Изображение</TableHead>
             <TableHead>Дата создания</TableHead>
             <TableHead>Дата обновления</TableHead>
@@ -202,42 +202,41 @@ export default function Categories() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {paginatedCategories.map((category) => (
-            <TableRow key={category.id}>
+          {paginatedClients.map((client) => (
+            <TableRow key={client.id}>
               <TableCell onClick={(e) => e.stopPropagation()}>
                 <Checkbox
-                  checked={selectedCategories.includes(category.id)}
-                  onCheckedChange={() => handleSelectCategory(category.id)}
+                  checked={selectedClients.includes(client.id)}
+                  onCheckedChange={() => handleSelectClient(client.id)}
                 />
               </TableCell>
-              <TableCell>{category.id}</TableCell>
-              <TableCell>{category.name}</TableCell>
+              <TableCell>{client.id}</TableCell>
               <TableCell>
                 <Image
-                  src={category.image}
-                  alt={category.name}
+                  src={client.image}
+                  alt={`Клиент ${client.id}`}
                   width={50}
                   height={50}
                   className="object-cover"
                 />
               </TableCell>
               <TableCell>
-                {new Date(category.created_at).toLocaleDateString()}
+                {new Date(client.created_at).toLocaleDateString()}
               </TableCell>
               <TableCell>
-                {new Date(category.updated_at).toLocaleDateString()}
+                {new Date(client.updated_at).toLocaleDateString()}
               </TableCell>
               <TableCell onClick={(e) => e.stopPropagation()}>
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" asChild>
-                    <Link href={`/admin/categories/${category.id}`}>
+                    <Link href={`/admin/clients/${client.id}`}>
                       Редактировать
                     </Link>
                   </Button>
                   <Button
                     variant="destructive"
                     size="sm"
-                    onClick={() => handleDeleteClick(category)}
+                    onClick={() => handleDeleteClick(client)}
                   >
                     Удалить
                   </Button>
@@ -260,9 +259,9 @@ export default function Categories() {
             <DialogTitle>Подтверждение удаления</DialogTitle>
             <DialogDescription>
               Вы уверены, что хотите удалить{" "}
-              {categoriesToDelete.length > 1
-                ? `${categoriesToDelete.length} категорий`
-                : `категорию (ID: ${categoriesToDelete[0]?.id} - Название: ${categoriesToDelete[0]?.name})`}
+              {clientsToDelete.length > 1
+                ? `${clientsToDelete.length} клиентов`
+                : "этого клиента"}
               ? Это действие необратимо.
             </DialogDescription>
           </DialogHeader>

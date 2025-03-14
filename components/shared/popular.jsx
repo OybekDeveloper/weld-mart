@@ -16,7 +16,7 @@ export default function PopularProducts({ popularProductsData }) {
     <main className="carousel-container space-y-3">
       <section className="max-md:w-11/12 mx-auto flex justify-between items-center gap-5 text-black/80">
         <h1 className="font-medium textNormal4 sm:textNormal4">
-          Оммабоп махсулотлар
+          Популярные продукты
         </h1>
       </section>
       <section className="relative">

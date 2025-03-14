@@ -29,7 +29,7 @@ export default function CardComponent({ product }) {
     const availableStock = product.quantity || 0;
     
     if (currentCount >= availableStock) {
-      setStockMessage("Бу маҳсулот тугади!");
+      setStockMessage("Этот товар закончился!");
       return;
     }
  
@@ -45,7 +45,7 @@ export default function CardComponent({ product }) {
     const availableStock = product.quantity || 0;
     
     if (currentCount >= availableStock) {
-      setStockMessage("Маҳсулот етарли эмас!");
+      setStockMessage("Товара недостаточно!");
       return;
     }
  
@@ -77,15 +77,15 @@ export default function CardComponent({ product }) {
   return (
     <Card className="flex flex-col">
       <CardHeader className="hidden">
-        <CardTitle>Card Title</CardTitle>
-        <CardDescription>CardDescription</CardDescription>
+        <CardTitle>Название карточки</CardTitle>
+        <CardDescription>Описание карточки</CardDescription>
       </CardHeader>
       <CardContent className="p-1 flex-grow">
         <main className="p-0 text-black/80 space-y-1 sm:space-y-2 flex flex-col h-full">
           <div className="relative aspect-[4/3] bg-[#EAEAEA] rounded-md overflow-hidden">
             <CustomImage
               src={product?.images[0] || "/product.svg"}
-              alt="img"
+              alt="изображение"
               property={"true"}
               className={"w-full h-full object-contain hover:scale-[1.2]"}
             />
@@ -146,7 +146,7 @@ export default function CardComponent({ product }) {
                   onClick={handleAddToCart}
                   className="w-full hover:bg-primary hover:opacity-75 btn btn-primary"
                 >
-                  Саватга қўшиш
+                  Добавить в корзину
                 </Button>
               </motion.div>
             ) : (
@@ -195,7 +195,7 @@ export default function CardComponent({ product }) {
         </main>
       </CardContent>
       <CardFooter className="hidden">
-        <p>Card Footer</p>
+        <p>Нижний колонтитул карточки</p>
       </CardFooter>
     </Card>
   );

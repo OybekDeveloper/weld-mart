@@ -5,18 +5,18 @@ import { Plus } from "lucide-react";
 
 export default function CompanyInfo({ statistics }) {
   const statis = [
-    { title: "Махсулотлар", count: statistics?.products },
-    { title: "Хамкорлар", count: statistics?.partners },
-    { title: "Мамнун мижозлар", count: statistics?.clients },
+    { title: "Продукты", count: statistics?.products },
+    { title: "Партнеры", count: statistics?.partners },
+    { title: "Довольные клиенты", count: statistics?.clients },
   ];
 
   return (
     <section className="w-full flex max-lg:flex-col gap-5">
       <div className="w-full flex justify-center flex-col items-center gap-5">
         <h1 className="font-medium textSmall4">
-          "WELDMART" компанияси 2222 йилда ташкил этилган булиб. Пайвандлаш
-          машиналари сохасида етакчи компаниялар билан муваффакиятли ишлайди ва
-          бу сохада катта тажрибага эга.
+          Компания "WELDMART" была основана в 2222 году. Она успешно работает с
+          ведущими компаниями в области сварочных машин и обладает большим
+          опытом в этой сфере.
         </h1>
         <p>
           Lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem
@@ -32,7 +32,7 @@ export default function CompanyInfo({ statistics }) {
           className=""
           width={400}
           height={300}
-          alt="logo"
+          alt="логотип"
         />
         <div className="w-full max-sm:flex-col flex gap-5 text-black/70">
           {statis.map((item, idx) => (

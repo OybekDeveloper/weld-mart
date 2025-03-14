@@ -15,7 +15,7 @@ export function BreadcrumbBarProduct({ productData }) {
     <Breadcrumb className="z-10 relative w-11/12 mx-auto">
       <BreadcrumbList>
         <BreadcrumbItem>
-          <Link href="/">Бош сахифа</Link>
+          <Link href="/">Главная страница</Link>
         </BreadcrumbItem>
         <BreadcrumbSeparator>
           <Slash />

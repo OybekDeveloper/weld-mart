@@ -37,6 +37,14 @@ export default function UserInfo() {
         <Label>Телефон рақами</Label>
         <Input readOnly value={auth?.phone || ""} type="text" />
       </div>
+      <div>
+        <Label>Бонус</Label>
+        <Input
+          readOnly
+          value={`${auth?.bonus?.toLocaleString() || 0} сум`}
+          type="text"
+        />
+      </div>
 
       {/* Logout tugmasi */}
       <Dialog open={open} onOpenChange={setOpen}>

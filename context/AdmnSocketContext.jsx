@@ -13,23 +13,23 @@ export function AdminSocketProvider({ children }) {
   const [reload, setReload] = useState(false);
 
   useEffect(() => {
-    // Create WebSocket connection
+    // Создание подключения WebSocket
     const socket = new WebSocket(wsUrl);
 
-    // When connection opens
+    // Когда соединение открывается
     socket.onopen = () => {
-      console.log("WebSocket connection established");
+      console.log("Установлено соединение WebSocket");
     };
 
-    // When message is received
+    // Когда получено сообщение
     socket.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
         const order = data?.message;
         if (order?.order_type) {
           playSound("sound1");
-          toast.success("Сизда янги буюртма келди!!", {
-            description: `Order #${order?.id || "N/A"}`,
+          toast.success("У вас поступил новый заказ!!", {
+            description: `Заказ #${order?.id || "N/A"}`,
             position: "top-center",
             duration: 5000,
           });
@@ -37,21 +37,21 @@ export function AdminSocketProvider({ children }) {
           setNewOrders((prev) => [...prev, order]);
         }
       } catch (error) {
-        console.error("Error parsing WebSocket message:", error);
+        console.error("Ошибка при разборе сообщения WebSocket:", error);
       }
     };
 
-    // When connection closes
+    // Когда соединение закрывается
     socket.onclose = () => {
-      console.log("WebSocket connection closed");
+      console.log("Соединение WebSocket закрыто");
     };
 
-    // When there's an error
+    // При возникновении ошибки
     socket.onerror = (error) => {
-      console.error("WebSocket error:", error);
+      console.error("Ошибка WebSocket:", error);
     };
 
-    // Cleanup on unmount
+    // Очистка при размонтировании
     return () => {
       socket.close();
     };

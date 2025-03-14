@@ -10,6 +10,8 @@ import {
   Users,
   ShoppingBag,
   ChevronDown,
+  Award, // Added for Achievements
+  UserCog, // Added for Admin
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -25,25 +27,25 @@ export default function Sidebar() {
   const [openMenu, setOpenMenu] = useState(false);
 
   const menuItems = [
-    { icon: LayoutDashboard, label: "Асосий мену", path: "/admin" },
+    { icon: LayoutDashboard, label: "Главная панель", path: "/admin" },
     {
       icon: MenuIcon,
-      label: "Мену",
+      label: "Меню",
       subItems: [
-        { label: "Товарлар", path: "/admin/products" },
+        { label: "Товары", path: "/admin/products" },
         { label: "Каталог", path: "/admin/categories" },
-        { label: "Брандлар", path: "/admin/brands" },
-        { label: "Banners", path: "/admin/banners" },
+        { label: "Бренды", path: "/admin/brands" },
+        { label: "Баннеры", path: "/admin/banners" },
       ],
     },
-    { icon: Newspaper, label: "Янгиликлар", path: "/admin/news" },
-    { icon: Newspaper, label: "Ютуқларимиз", path: "/admin/achievements" },
-    { icon: Mail, label: "Почта рўйхати", path: "/admin/mailing-list" },
+    { icon: Newspaper, label: "Новости", path: "/admin/news" },
+    { icon: Award, label: "Наши достижения", path: "/admin/achievements" }, // Changed to Award
+    { icon: Mail, label: "Список рассылки", path: "/admin/mailing-list" },
     { icon: BarChart, label: "Статистика", path: "/admin/statistics" },
-    { icon: Users, label: "Фойдаланувчилар", path: "/admin/users" },
-    { icon: ShoppingBag, label: "Буюртмалар", path: "/admin/orders" },
-    { icon: ShoppingBag, label: "Admin", path: "/admin/admin" },
-
+    { icon: Users, label: "Пользователи", path: "/admin/users" },
+    { icon: ShoppingBag, label: "Заказы", path: "/admin/orders" },
+    { icon: Users, label: "Клиенты", path: "/admin/clients" }, // Changed to Users
+    { icon: UserCog, label: "Админ", path: "/admin/admin" }, // Changed to UserCog
   ];
 
   return (

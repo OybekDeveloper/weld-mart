@@ -18,16 +18,16 @@ export default async function Cart() {
         data={[
           {
             href: "/",
-            name: "Бош саҳифа",
+            name: "Главная страница",
           },
           {
-            name: "Сават",
+            name: "Корзина",
             href: "/cart",
           },
         ]}
       />
       <h1 className="max-sm:mx-auto w-full font-medium textNormal4 pt-3">
-        Сизнинг харидларингиз
+        Ваши покупки
       </h1>
       <section className="pb-10 max-sm:mx-auto max-lg:flex-col w-full flex justify-start items-start gap-5">
         <ProductList productsData={productsData} />

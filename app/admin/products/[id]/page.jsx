@@ -42,18 +42,21 @@ import { postData } from "@/actions/post";
 import { putData } from "@/actions/put";
 
 const formSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  rating: z.number().min(0).max(5, "Rating must be between 0 and 5"),
-  quantity: z.number().min(0, "Quantity cannot be negative"),
-  description: z.string().min(1, "Description is required"),
-  images: z.any(),
-  price: z.number().min(0, "Price cannot be negative"),
-  info: z.string().min(1, "Info is required"),
-  feature: z.string().min(1, "Feature is required"),
-  guarantee: z.string().min(1, "Guarantee is required"),
-  discount: z.string().min(1, "Discount is required"),
-  category_id: z.string().min(1, "Category is required"),
-  brand_id: z.string().min(1, "Brand is required"),
+  name: z.string().min(1, "Название обязательно"),
+  rating: z.number().min(0).max(5, "Рейтинг должен быть от 0 до 5"),
+  quantity: z.number().min(0, "Количество не может быть отрицательным"),
+  description: z.string().min(1, "Описание обязательно"),
+  images: z
+    .array(z.string().url("Неверный формат URL"))
+    .min(1, "Требуется хотя бы одно изображение")
+    .max(3, "Максимум 3 изображения"),
+  price: z.number().min(0, "Цена не может быть отрицательной"),
+  info: z.string().min(1, "Информация обязательна"),
+  feature: z.string().min(1, "Характеристики обязательны"),
+  guarantee: z.string().min(1, "Гарантия обязательна"),
+  discount: z.string().min(1, "Скидка обязательна"),
+  category_id: z.string().min(1, "Категория обязательна"),
+  brand_id: z.string().min(1, "Бренд обязателен"),
 });
 
 export default function ProductEvent({ params }) {
@@ -63,10 +66,12 @@ export default function ProductEvent({ params }) {
   const [isLoading, setIsLoading] = useState(!isAddMode);
   const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
-  const [files, setFiles] = useState([]); // Array of {file: File or null, url: string or null, preview: string or null}
+  const [imagePreviews, setImagePreviews] = useState([]);
   const [categorySearch, setCategorySearch] = useState("");
   const [brandSearch, setBrandSearch] = useState("");
   const [loading, setLoading] = useState(false);
+  const [currentUrlInput, setCurrentUrlInput] = useState("");
+
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -122,17 +127,17 @@ export default function ProductEvent({ params }) {
             brand_id: String(product.brand_id) || "",
           });
           if (product?.images && product.images.length > 0) {
-            setFiles(
+            setImagePreviews(
               product.images.map((url) => ({
-                file: null,
                 url,
                 preview: url,
+                isUploaded: true,
               }))
             );
           }
         } catch (error) {
           console.error("Failed to fetch product", error);
-          toast.error("Failed to load product data.");
+          toast.error("Не удалось загрузить данные о продукте.");
         } finally {
           setIsLoading(false);
         }
@@ -152,105 +157,110 @@ export default function ProductEvent({ params }) {
         setBrands(brand?.brands || []);
       } catch (error) {
         console.error("Failed to fetch categories or brands:", error);
-        toast.error("Failed to load categories or brands.");
+        toast.error("Не удалось загрузить категории или бренды.");
       }
     };
     fetchData();
   }, []);
 
-  const handleFilesChange = (newFiles) => {
-    if (files.length >= 3) {
-      toast.error("Maximum of 3 images allowed");
+  const uploadImage = async (file) => {
+    const formdata = new FormData();
+    formdata.append("image", file, "product.webp");
+
+    const requestOptions = {
+      method: "POST",
+      body: formdata,
+      redirect: "follow",
+    };
+    const response = await fetch(
+      "http://127.0.0.1:8080/upload",
+      requestOptions
+    );
+    if (!response.ok) {
+      throw new Error(`Image upload failed! status: ${response.status}`);
+    }
+    const result = await response.json();
+    return `${backUrl}${result.path}`;
+  };
+
+  const handleFilesChange = async (newFiles) => {
+    if (imagePreviews.length >= 3) {
+      toast.error("Максимум 3 изображения разрешено");
       return;
     }
     if (newFiles.length > 0) {
-      const file = newFiles[0];
-      const newFileObj = {
-        file,
-        url: null,
-        preview: URL.createObjectURL(file),
-      };
-      setFiles((prev) => [...prev, newFileObj]);
-    }
-  };
-
-  const removeFile = (index) => {
-    const newFiles = [...files];
-    const removedFile = newFiles.splice(index, 1)[0];
-    if (removedFile.preview && !removedFile.url) {
-      URL.revokeObjectURL(removedFile.preview);
-    }
-    setFiles(newFiles);
-  };
-
-  const uploadFiles = async (filesToUpload) => {
-    const uploadedUrls = [];
-    for (const fileObj of filesToUpload) {
-      if (fileObj.file) {
-        const formdata = new FormData();
-        console.log(fileObj);
-
-        formdata.append("image", fileObj?.file, "product.webp");
-
-        const requestOptions = {
-          method: "POST",
-          body: formdata,
-          redirect: "follow",
-        };
-        const response = await fetch(
-          "http://127.0.0.1:8080/upload",
-          requestOptions
-        );
-        if (!response.ok) {
-          throw new Error(`Image upload failed! status: ${response.status}`);
-        }
-        const result = await response.json();
-        uploadedUrls.push(`${backUrl}${result.path}`); // Assuming the response contains a `url` field
-      } else if (fileObj.url) {
-        uploadedUrls.push(fileObj.url); // Preserve existing URLs
+      try {
+        const file = newFiles[0];
+        const preview = URL.createObjectURL(file);
+        const url = await uploadImage(file);
+        const newImage = { url, preview, isUploaded: true };
+        setImagePreviews((prev) => [...prev, newImage]);
+        form.setValue("images", [...form.getValues("images"), url]);
+      } catch (error) {
+        console.error("Image upload failed:", error);
+        toast.error("Не удалось загрузить изображение");
       }
     }
-    return uploadedUrls;
+  };
+
+  const addUrl = () => {
+    if (imagePreviews.length >= 3) {
+      toast.error("Максимум 3 изображения разрешено");
+      return;
+    }
+    if (
+      currentUrlInput &&
+      !form.getValues("images").includes(currentUrlInput)
+    ) {
+      const newImage = {
+        url: currentUrlInput,
+        preview: currentUrlInput,
+        isUploaded: true,
+      };
+      setImagePreviews((prev) => [...prev, newImage]);
+      form.setValue("images", [...form.getValues("images"), currentUrlInput]);
+      setCurrentUrlInput("");
+    }
+  };
+
+  const removeImage = (index) => {
+    const newPreviews = [...imagePreviews];
+    const removed = newPreviews.splice(index, 1)[0];
+    if (!removed.isUploaded) {
+      URL.revokeObjectURL(removed.preview);
+    }
+    setImagePreviews(newPreviews);
+    form.setValue(
+      "images",
+      newPreviews.map((img) => img.url)
+    );
   };
 
   async function onSubmit(values) {
-    if (files.length <= 0) {
-      toast.error("Image not found");
-      console.log("image not found");
-
-      return null;
+    const data ={
+      ...values,
+      brand_id:Number(values.brand_id),
+      category_id:Number(values.category_id),
     }
+    console.log(data);
+    
     try {
       setLoading(true);
-      console.log("Form values:", values);
-      // Step 1: Upload images and get URLs
-      const imageUrls = await uploadFiles(files);
-      console.log("Uploaded image URLs:", imageUrls);
-
-      // Step 2: Combine form values with image URLs
-      const updatedValues = {
-        ...values,
-        category_id: Number(values?.category_id),
-        brand_id: Number(values?.brand_id),
-        images: imageUrls,
-      };
-      console.log("Final values to send:", updatedValues);
-      // Step 3: Send the final request to the API
       let result;
       if (isAddMode) {
-        result = await postData(updatedValues, "/api/products", "product");
+        result = await postData(data, "/api/products", "product");
       } else {
-        result = await putData(updatedValues, `/api/products/${id}`, "product");
+        result = await putData(data, `/api/products/${id}`, "product");
       }
       console.log(result);
-
+      
       if (result && !result.error) {
         if (isAddMode) {
-          toast.success("Маҳсулот мувофаққиятли қўшилди");
+          toast.success("Продукт успешно добавлен");
         } else {
-          toast.info("Маҳсулот мувофаққиятли янгиланди");
+          toast.info("Продукт успешно обновлен");
         }
-        setFiles([]);
+        setImagePreviews([]);
         form.reset();
         router.push("/admin/products");
       } else if (result.error) {
@@ -258,7 +268,7 @@ export default function ProductEvent({ params }) {
       }
     } catch (error) {
       console.error("Form submission error:", error);
-      toast.error("Failed to submit the form. Please try again.");
+      toast.error("Не удалось отправить форму. Пожалуйста, попробуйте снова.");
     } finally {
       setLoading(false);
     }
@@ -278,13 +288,13 @@ export default function ProductEvent({ params }) {
         onClick={() => window.history.back()}
         className="hover:bg-primary hover:opacity-75"
       >
-        Орқага қайтиш
+        Вернуться назад
       </Button>
       <div className="max-w-3xl mx-auto py-10">
         <h1 className="text-2xl font-bold mb-6">
           {isAddMode
-            ? "Янги маҳсулот қўшиш"
-            : `Маҳсулотни таҳрирлаш (ID: ${id || "unknown"})`}
+            ? "Добавить новый продукт"
+            : `Редактировать продукт (ID: ${id || "неизвестно"})`}
         </h1>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -293,9 +303,9 @@ export default function ProductEvent({ params }) {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Номи</FormLabel>
+                  <FormLabel>Название</FormLabel>
                   <FormControl>
-                    <Input placeholder="Номини киритинг" {...field} />
+                    <Input placeholder="Введите название" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -307,7 +317,7 @@ export default function ProductEvent({ params }) {
               name="rating"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Rating</FormLabel>
+                  <FormLabel>Рейтинг</FormLabel>
                   <FormControl>
                     <Rating
                       value={field.value}
@@ -326,11 +336,11 @@ export default function ProductEvent({ params }) {
               name="quantity"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Маҳсулот сони</FormLabel>
+                  <FormLabel>Количество продукта</FormLabel>
                   <FormControl>
                     <Input
                       type="number"
-                      placeholder="Маҳсулот сонини киртинг"
+                      placeholder="Введите количество продукта"
                       {...field}
                       onChange={(e) =>
                         field.onChange(parseInt(e.target.value) || 0)
@@ -347,11 +357,11 @@ export default function ProductEvent({ params }) {
               name="price"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Нархи</FormLabel>
+                  <FormLabel>Цена</FormLabel>
                   <FormControl>
                     <Input
                       type="number"
-                      placeholder="Нархни киритинг"
+                      placeholder="Введите цену"
                       step="0.01"
                       {...field}
                       onChange={(e) =>
@@ -369,9 +379,9 @@ export default function ProductEvent({ params }) {
               name="images"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Расмлар</FormLabel>
+                  <FormLabel>Изображения (максимум 3)</FormLabel>
                   <FormControl>
-                    <div>
+                    <div className="space-y-4">
                       <FileUploader
                         value={[]}
                         onValueChange={handleFilesChange}
@@ -386,24 +396,41 @@ export default function ProductEvent({ params }) {
                             <CloudUpload className="text-gray-500 w-10 h-10" />
                             <p className="mb-1 text-sm text-gray-500">
                               <span className="font-semibold">
-                                Юклаш учун босинг
+                                Нажмите для загрузки
                               </span>{" "}
-                              ёки расмни ушлаб туриб ташланг
+                              или перетащите изображение
                             </p>
                             <p className="text-xs text-gray-500">
-                              SVG, PNG, JPG ёки GIF (1 та расм, 4MB гача)
+                              SVG, PNG, JPG или GIF (до 4MB)
                             </p>
                           </div>
                         </FileInput>
                       </FileUploader>
 
-                      {files.length > 0 && (
-                        <div className="mt-4 grid grid-cols-3 gap-4">
-                          {files.map((fileObj, index) => (
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="https://example.com/image.jpg"
+                          value={currentUrlInput}
+                          onChange={(e) => setCurrentUrlInput(e.target.value)}
+                        />
+                        <Button
+                          type="button"
+                          onClick={addUrl}
+                          disabled={
+                            !currentUrlInput || imagePreviews.length >= 3
+                          }
+                        >
+                          Добавить URL
+                        </Button>
+                      </div>
+
+                      {imagePreviews.length > 0 && (
+                        <div className="grid grid-cols-3 gap-4">
+                          {imagePreviews.map((image, index) => (
                             <div key={index} className="relative">
                               <img
-                                src={fileObj.preview}
-                                alt={`Preview ${index + 1}`}
+                                src={image.preview}
+                                alt={`Изображение ${index + 1}`}
                                 className="w-full h-24 object-cover rounded-md"
                               />
                               <Button
@@ -411,7 +438,7 @@ export default function ProductEvent({ params }) {
                                 variant="destructive"
                                 size="icon"
                                 className="absolute top-1 right-1 h-6 w-6"
-                                onClick={() => removeFile(index)}
+                                onClick={() => removeImage(index)}
                               >
                                 <X className="h-4 w-4" />
                               </Button>
@@ -422,8 +449,8 @@ export default function ProductEvent({ params }) {
                     </div>
                   </FormControl>
                   <FormDescription>
-                    1 дан 3 тагача расм файлларини юкланг (керакли: камида 1
-                    та). Расмларни бирма-бир қўшинг.
+                    Добавьте до 3 изображений через загрузку или URL. Минимум 1
+                    изображение обязательно.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -435,10 +462,10 @@ export default function ProductEvent({ params }) {
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Таснифи</FormLabel>
+                  <FormLabel>Описание</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Таснифи ёзинг"
+                      placeholder="Напишите описание"
                       value={field.value}
                       onChange={field.onChange}
                       rows={5}
@@ -455,14 +482,14 @@ export default function ProductEvent({ params }) {
               name="info"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Тўлиқ маълумот</FormLabel>
+                  <FormLabel>Полная информация</FormLabel>
                   <FormControl>
                     <Editor
                       apiKey="d2fe85lc6waspz8t62gg4fsz7r1z9q1s2r31of6bhr0fvlm5"
                       value={field.value}
                       onEditorChange={field.onChange}
                       init={editorConfig}
-                      placeholder="Тўлиқ маълумот киритинг"
+                      placeholder="Введите полную информацию"
                     />
                   </FormControl>
                   <FormMessage />
@@ -475,14 +502,14 @@ export default function ProductEvent({ params }) {
               name="feature"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Хусусиятлари</FormLabel>
+                  <FormLabel>Характеристики</FormLabel>
                   <FormControl>
                     <Editor
                       apiKey="d2fe85lc6waspz8t62gg4fsz7r1z9q1s2r31of6bhr0fvlm5"
                       value={field.value}
                       onEditorChange={field.onChange}
                       init={editorConfig}
-                      placeholder="Хусусиятларини киритинг"
+                      placeholder="Введите характеристики"
                     />
                   </FormControl>
                   <FormMessage />
@@ -495,9 +522,9 @@ export default function ProductEvent({ params }) {
               name="guarantee"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Кафолати</FormLabel>
+                  <FormLabel>Гарантия</FormLabel>
                   <FormControl>
-                    <Input placeholder="Кафолатини киритинг" {...field} />
+                    <Input placeholder="Введите гарантию" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -509,7 +536,7 @@ export default function ProductEvent({ params }) {
               name="discount"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Чегирма</FormLabel>
+                  <FormLabel>Скидка</FormLabel>
                   <FormControl>
                     <Input placeholder="12%" {...field} />
                   </FormControl>
@@ -534,19 +561,19 @@ export default function ProductEvent({ params }) {
                           {field.value
                             ? categories.find(
                                 (cat) => String(cat.id) === field.value
-                              )?.name || "Категорияни танланг"
-                            : "Категорияни танланг"}
+                              )?.name || "Выберите категорию"
+                            : "Выберите категорию"}
                           <span>▼</span>
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-[200px] p-0">
                         <Command>
                           <CommandInput
-                            placeholder="Қидириш..."
+                            placeholder="Поиск..."
                             onValueChange={setCategorySearch}
                           />
                           <CommandList>
-                            <CommandEmpty>No categories found.</CommandEmpty>
+                            <CommandEmpty>Категории не найдены.</CommandEmpty>
                             <CommandGroup>
                               {categories
                                 .filter((category) =>
@@ -581,7 +608,7 @@ export default function ProductEvent({ params }) {
               name="brand_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Бранд</FormLabel>
+                  <FormLabel>Бренд</FormLabel>
                   <FormControl>
                     <Popover>
                       <PopoverTrigger asChild>
@@ -592,19 +619,19 @@ export default function ProductEvent({ params }) {
                           {field.value
                             ? brands.find(
                                 (brand) => String(brand.id) === field.value
-                              )?.name || "Брандни танланг"
-                            : "Брандни танланг"}
+                              )?.name || "Выберите бренд"
+                            : "Выберите бренд"}
                           <span>▼</span>
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-[200px] p-0">
                         <Command>
                           <CommandInput
-                            placeholder="Қидириш..."
+                            placeholder="Поиск..."
                             onValueChange={setBrandSearch}
                           />
                           <CommandList>
-                            <CommandEmpty>No brands found.</CommandEmpty>
+                            <CommandEmpty>Бренды не найдены.</CommandEmpty>
                             <CommandGroup>
                               {brands
                                 .filter((brand) =>
@@ -639,7 +666,7 @@ export default function ProductEvent({ params }) {
               isLoading={loading}
               className="w-full"
             >
-              {isAddMode ? "Add Product" : "Update Product"}
+              {isAddMode ? "Добавить продукт" : "Обновить продукт"}
             </SubmitButton>
           </form>
         </Form>

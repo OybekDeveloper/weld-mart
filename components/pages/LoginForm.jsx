@@ -33,7 +33,7 @@ export default function LoginForm() {
         return toast.error(response.error);
       } else if (response?.user) {
         login(response.user);
-        toast.success("Сиз тизимга кирдингиз!");
+        toast.success("Вы вошли в систему.");
         form.reset();
         router.push("/");
       }
@@ -53,7 +53,7 @@ export default function LoginForm() {
           <CustomFormField
             fieldType={FormFieldType.PHONE_INPUT}
             control={form.control}
-            label="Телефон рақами"
+            label="Номер телефона"
             name="phone"
             placeholder=""
             inputClass="rounded-md border-[1px]"
@@ -72,7 +72,7 @@ export default function LoginForm() {
             isLoading={isLoading}
             className="w-full sm:w-40 bg-white hover:bg-white text-black"
           >
-            Юборищ
+            Отправлять
           </SubmitButton>
           <div className="sm:hidden w-full text-white flex items-center justify-center gap-2">
             <div className="w-full h-[1.5px] bg-white" />
@@ -81,9 +81,9 @@ export default function LoginForm() {
           </div>
           <div>
             <h1 className="max-sm:hidden text-[13px] text-white font-[400]">
-              Аккаунт мавжуд эмасми?
+            Аккаунт недоступен?
               <Link href={`/register`} className="hover:underline font-bold ">
-                {" Янги аккаунт очиш"}
+                {"Создать новый аккаунт"}
               </Link>
             </h1>
           </div>
@@ -91,7 +91,7 @@ export default function LoginForm() {
             href={`/register`}
             className="hover:underline sm:hidden flex justify-center items-center gap-2 text-white"
           >
-            <h1 className="">Янги аккаунт очиш</h1>
+            <h1 className="">Создать новый аккаунт</h1>
             <ArrowUpRight />
           </Link>
         </div>

@@ -1,18 +1,24 @@
 // Sidebar.jsx
 "use client";
-
+import emblaCarouselAutoplay from "embla-carousel-autoplay";
 import React, { useState, useEffect } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Star } from "lucide-react";
 import {
   Accordion,
   AccordionItem,
   AccordionTrigger,
   AccordionContent,
 } from "@/components/ui/accordion";
-import { cn } from "@/lib/utils";
+import { cn, truncateText } from "@/lib/utils";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+} from "@/components/ui/carousel";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default function Sidebar({
   className,
@@ -21,18 +27,25 @@ export default function Sidebar({
   brandsData,
   product_type,
   id,
+  sidebarBottom = false,
+  allProducts = [],
 }) {
   const pathname = usePathname();
+  console.log(allProducts);
+
   const [activeCategory, setActiveCategory] = useState(null);
   const [defaultValue, setDefaultValue] = useState([]);
 
+  // Filter products with rating of 5 and take first 4
+  const featuredProducts =
+    allProducts?.filter((product) => product?.rating === 5).slice(0, 4) || [];
+
   useEffect(() => {
-    // Check if we're on a category page
     const isCategoryPage = pathname.startsWith("/category/");
     if (isCategoryPage) {
       const currentSlug = pathname.split("/category/")[1];
       setActiveCategory(currentSlug);
-      setDefaultValue(["catalog"]); // Keep catalog open
+      setDefaultValue(["catalog"]);
     } else {
       setActiveCategory(null);
       setDefaultValue([]);
@@ -42,7 +55,7 @@ export default function Sidebar({
   return (
     <aside
       className={cn(
-        "max-lg:hidden font-montserrat lg:border-2 rounded-md sidebar sticky top-[112px] w-[300px] max-h-[calc(100vh-116px)] overflow-auto",
+        "max-lg:hidden font-montserrat lg:border-2 rounded-md sidebar sticky top-[112px] w-[300px] max-h-[calc(100vh-112px)] overflow-auto",
         className
       )}
     >
@@ -61,10 +74,10 @@ export default function Sidebar({
             className="border-b-[1px] py-2 hover:text-primary"
           >
             <Link href="/" className="px-2 font-medium">
-              Бош сахифа
+              Главная страница
             </Link>
           </AccordionItem>
-          {/* Catalog Accordion */}
+          {/* Каталог Accordion */}
           <AccordionItem value="catalog" className="border-none">
             <AccordionTrigger className="pl-2 textSmall4 font-medium">
               Каталог
@@ -102,7 +115,7 @@ export default function Sidebar({
           </AccordionItem>
           <AccordionItem value="brands" className="border-none">
             <AccordionTrigger className="pl-2 textSmall4 font-medium">
-              Ишлаб чиқарувчи
+              Производитель
             </AccordionTrigger>
             <AccordionContent className="relative">
               <main className="pl-4 flex flex-col gap-2">
@@ -139,7 +152,7 @@ export default function Sidebar({
             className="w-full border-b-[1px] py-2 hover:text-primary"
           >
             <Link href="/news" className="w-full px-2 font-medium">
-              Янгиликлар
+              Новости
             </Link>
           </AccordionItem>
           <AccordionItem
@@ -148,7 +161,7 @@ export default function Sidebar({
             className="w-full border-b-[1px] py-2 hover:text-primary"
           >
             <Link href="/contact" className="w-full px-2 font-medium">
-              Контактлар
+              Контакты
             </Link>
           </AccordionItem>
           <AccordionItem
@@ -157,11 +170,93 @@ export default function Sidebar({
             className="w-full border-b-[1px] py-2 hover:text-primary"
           >
             <Link href="/about-us" className="w-full px-2 font-medium">
-              Биз ҳақимизда
+              О нас
             </Link>
           </AccordionItem>
         </Accordion>
       </main>
+      {sidebarBottom && featuredProducts.length > 0 && (
+        <main className="p-2">
+          <div className="mb-2 text-start font-medium px-2">
+            Рекомендуемые продукты
+          </div>
+          <Carousel
+            className="w-full"
+            plugins={[
+              emblaCarouselAutoplay({
+                delay: 3000,
+              }),
+            ]}
+            opts={{
+              loop: true, // Loopni qo'shish
+              align: "center",
+            }}
+          >
+            <CarouselContent>
+              {featuredProducts.map((product, idx) => {
+                let discountSum = null;
+                if (product?.discount) {
+                  discountSum = product?.price * (1 - product?.discount / 100);
+                }
+                return (
+                  <CarouselItem key={product.id || idx}>
+                    <Card className="border-none">
+                      <CardContent className="p-2">
+                        <Link
+                          href={`/category/${product?.category_id}/product/${product.id}`}
+                          className="space-y-2"
+                        >
+                          <Image
+                            src={product.images[0]}
+                            width={150}
+                            height={150}
+                            alt={product.name}
+                            className="mx-auto rounded-md"
+                          />
+                          <div className="text-center">
+                            <h3 className="text-sm font-medium">
+                              {truncateText(product.name, 50)}
+                            </h3>
+                            <div className="textSmall2 font-semibold flex justify-center items-center gap-2">
+                              <div>
+                                <h1
+                                  className={`${
+                                    discountSum && "line-through text-black/20"
+                                  }`}
+                                >
+                                  {product?.price.toLocaleString()} сум
+                                </h1>
+                                {discountSum && (
+                                  <h1>{discountSum.toLocaleString()} сум</h1>
+                                )}
+                              </div>
+                              {product?.discount && (
+                                <span className="font-medium textSmall1 px-2 text-red-500 rounded-md bg-red-100">
+                                  -{product?.discount}%
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex justify-center gap-1 mt-1">
+                              {Array(5)
+                                .fill(0)
+                                .map((_, i) => (
+                                  <Star
+                                    key={i}
+                                    className="w-4 h-4 fill-yellow-400 text-yellow-400"
+                                  />
+                                ))}
+                            </div>
+                          </div>
+                        </Link>
+                      </CardContent>
+                    </Card>
+                  </CarouselItem>
+                );
+              })}
+            </CarouselContent>
+          </Carousel>
+        </main>
+      )}
     </aside>
   );
 }

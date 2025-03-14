@@ -28,7 +28,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useOrderStore, useProductStore } from "@/store";
 
 export default function Header({ categoriesData, brandsData }) {
-  const { auth } = useAuth(); // Contextdan auth ni olish
+  const { auth } = useAuth(); // Получение auth из контекста
   const { products, initializeProducts } = useProductStore();
   const { initializeOrderData } = useOrderStore();
   console.log(auth);
@@ -48,19 +48,19 @@ export default function Header({ categoriesData, brandsData }) {
       {!auth && (
         <>
           <div className="hidden w-full h-8 text-white bg-primary sm:flex justify-center gap-1 items-center font-montserrat">
-            Йетказиб беришга 10% чегирма.
+            Скидка 10% на доставку.
             <Link className="font-medium hover:underline" href={"/"}>
-              Хозироқ буюртма беринг
+              Закажите прямо сейчас
             </Link>{" "}
           </div>
           <Marquee
             pauseOnHover
             className="sm:hidden [--duration:10s] w-full h-8 text-white bg-primary flex justify-center gap-1 items-center font-montserrat"
           >
-            <div className=" w-full h-8 text-white bg-primary flex justify-center gap-1 items-center font-montserrat">
-              Йетказиб беришга 10% чегирма.
+            <div className="w-full h-8 text-white bg-primary flex justify-center gap-1 items-center font-montserrat">
+              Скидка 10% на доставку.
               <Link className="font-medium hover:underline" href={"/"}>
-                Хозироқ буюртма беринг
+                Закажите прямо сейчас
               </Link>{" "}
             </div>
           </Marquee>
@@ -79,10 +79,10 @@ export default function Header({ categoriesData, brandsData }) {
               </SheetTrigger>
               <SheetContent side="left" className="w-full">
                 <SheetHeader className={"hidden"}>
-                  <SheetTitle>Are you absolutely sure?</SheetTitle>
+                  <SheetTitle>Вы абсолютно уверены?</SheetTitle>
                   <SheetDescription>
-                    This action cannot be undone. This will permanently delete
-                    your account and remove your data from our servers.
+                    Это действие нельзя отменить. Это навсегда удалит ваш аккаунт
+                    и удалит ваши данные с наших серверов.
                   </SheetDescription>
                 </SheetHeader>
                 <main className="flex justify-start items-center flex-col">
@@ -90,7 +90,7 @@ export default function Header({ categoriesData, brandsData }) {
                     <Image
                       width={150}
                       height={100}
-                      alt="logo"
+                      alt="логотип"
                       src={"/logo.svg"}
                       loading="eager"
                       className=""
@@ -121,14 +121,14 @@ export default function Header({ categoriesData, brandsData }) {
                 width={100}
                 height={100}
                 className="w-[150px]"
-                alt="logo"
+                alt="логотип"
                 src="/logo.svg"
                 loading="eager"
               />
             </Link>
           </div>
           <SearchComponent variant="desktop" />
-          {/* Desktop Links */}
+          {/* Ссылки для десктопа */}
           <div className="flex gap-5 max-md:hidden">
             <Link href="/cart">
               <ShoppingCart className="text-black" size={32} />
@@ -147,12 +147,12 @@ export default function Header({ categoriesData, brandsData }) {
             ) : (
               <Link href="/login">
                 <Button className="hover:bg-primary hover:opacity-75">
-                  Кириш
+                  Войти
                 </Button>
               </Link>
             )}
           </div>
-          {/* Mobile Links */}
+          {/* Ссылки для мобильных устройств */}
           <div className="flex gap-5 md:hidden">
             <SearchComponent variant="mobile" />
 
@@ -173,7 +173,7 @@ export default function Header({ categoriesData, brandsData }) {
             ) : (
               <Link href="/login">
                 <Button className="hover:bg-primary hover:opacity-75">
-                  Кириш
+                  Войти
                 </Button>
               </Link>
             )}

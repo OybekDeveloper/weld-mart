@@ -26,7 +26,7 @@ export default function NewsGrid({ newsItems }) {
            <DialogContent mark="false" className="w-11/12 sm:max-w-[625px] rounded-md">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
-                Янгилик
+                Новости
                 <span className="text-sm text-muted-foreground">
                   {new Date(item.created_at).toLocaleDateString("ru-RU")}
                 </span>
@@ -36,7 +36,7 @@ export default function NewsGrid({ newsItems }) {
               <div className="relative w-full h-64">
                 <Image
                   src={item.image}
-                  alt="news image"
+                  alt="изображение новости"
                   fill
                   className="object-cover rounded-md"
                 />

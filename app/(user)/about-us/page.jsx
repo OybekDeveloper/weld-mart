@@ -22,15 +22,15 @@ export default async function Aboutus() {
         data={[
           {
             href: "/",
-            name: "Бош саҳифа",
+            name: "Главная страница",
           },
           {
-            name: "Биз хақимизда",
+            name: "О нас",
             href: "/about-us",
           },
         ]}
       />
-      <h1 className="textNormal5 font-medium">Биз хақимизда</h1>
+      <h1 className="textNormal5 font-medium">О нас</h1>
       <CompanyInfo statistics={statistics} />
       <MissionStatement />
       <AchievementsSection achievements={achievements} />

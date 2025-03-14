@@ -8,15 +8,15 @@ export default async function Register() {
   ]);
   const statis = [
     {
-      title: "Махсулотлар",
+      title: "Продуктов",
       count: statistics?.products,
     },
     {
-      title: "Хамкорлар",
+      title: "Партнёров",
       count: statistics?.partners,
     },
     {
-      title: "Мамнун мижозлар",
+      title: "Довольных клиентов",
       count: statistics?.clients,
     },
   ];

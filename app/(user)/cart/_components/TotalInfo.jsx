@@ -32,56 +32,54 @@ import { toast } from "sonner";
 import { motion } from "framer-motion";
 import PhoneInput from "react-phone-number-input";
 import "react-phone-number-input/style.css";
+import { putData } from "@/actions/put";
 
+// Adjusted schema to make maxBonus inclusive
 const individualSchema = (maxBonus) =>
   z.object({
     phone: z
       .string()
-      .min(1, "Телефон талаб қилинади")
-      .regex(/^\+998\d{9}$/, "Нотўғри телефон рақами формати"),
-    name: z.string().min(1, "Исм талаб қилинади"),
+      .min(1, "Телефон обязателен")
+      .regex(/^\+998\d{9}$/, "Неверный формат номера телефона"),
+    name: z.string().min(1, "Имя обязательно"),
     comment: z.string().optional(),
-    bonus:
-      maxBonus > 0
-        ? z
-            .number()
-            .min(0, "Бонус 0 дан кам бўлмаслиги керак")
-            .max(
-              maxBonus,
-              `Бонус ${maxBonus?.toLocaleString()} сум дан ошмаслиги керак`
-            )
-            .max(1000, "Сон 1000 ёки ундан кам бўлиши керак")
-            .optional()
-        : z.number().optional(),
+    bonus: maxBonus > 0
+      ? z
+          .number()
+          .min(0, "Бонус не может быть меньше 0")
+          .max(maxBonus, {
+            message: `Бонус не может превышать ${maxBonus.toLocaleString()} сум`,
+          }) // Inclusive max
+          .optional()
+          .or(z.literal("")) // Allow empty string for optional input
+      : z.number().optional().or(z.literal("")),
     service_mode: z.enum(["delivery", "spot"], {
-      required_error: "Хизмат турини танланг",
+      required_error: "Выберите тип услуги",
     }),
   });
 
 const legalSchema = (maxBonus) =>
   z.object({
-    organization: z.string().min(1, "Ташкилот номини киритинг"),
-    inn: z.string().min(1, "ИНН талаб қилинади"),
+    organization: z.string().min(1, "Введите название организации"),
+    inn: z.string().min(1, "ИНН обязателен"),
     comment: z.string().optional(),
-    bonus:
-      maxBonus > 0
-        ? z
-            .number()
-            .min(0, "Бонус 0 дан кам бўлмаслиги керак")
-            .max(
-              maxBonus,
-              `Бонус ${maxBonus?.toLocaleString()} сум дан ошмаслиги керак`
-            )
-            .max(1000, "Сон 1000 ёки ундан кам бўлиши керак")
-            .optional()
-        : z.number().optional(),
+    bonus: maxBonus > 0
+      ? z
+          .number()
+          .min(0, "Бонус не может быть меньше 0")
+          .max(maxBonus, {
+            message: `Бонус не может превышать ${maxBonus.toLocaleString()} сум`,
+          }) // Inclusive max
+          .optional()
+          .or(z.literal("")) // Allow empty string for optional input
+      : z.number().optional().or(z.literal("")),
     service_mode: z.enum(["delivery", "spot"], {
-      required_error: "Хизмат турини танланг",
+      required_error: "Выберите тип услуги",
     }),
   });
 
 export default function TotalInfo() {
-  const { auth } = useAuth();
+  const { auth, setAuth } = useAuth();
   const { products, resetProduct } = useProductStore();
   const { totalSum, setTotalSum } = useOrderStore();
   const [open, setOpen] = useState(false);
@@ -96,7 +94,7 @@ export default function TotalInfo() {
       phone: "",
       name: "",
       comment: "",
-      bonus: 0,
+      bonus: "", // Default to empty string for optional input
       service_mode: "delivery",
     },
   });
@@ -107,7 +105,7 @@ export default function TotalInfo() {
       organization: "",
       inn: "",
       comment: "",
-      bonus: 0,
+      bonus: "", // Default to empty string for optional input
       service_mode: "delivery",
     },
   });
@@ -116,10 +114,10 @@ export default function TotalInfo() {
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
 
-    ws.onopen = () => console.log("WebSocket connected");
-    ws.onclose = () => console.log("WebSocket disconnected");
+    ws.onopen = () => console.log("WebSocket подключен");
+    ws.onclose = () => console.log("WebSocket отключен");
     ws.onmessage = (event) =>
-      console.log("WebSocket message received:", event.data);
+      console.log("Получено сообщение WebSocket:", event.data);
 
     return () => {
       ws.close();
@@ -161,21 +159,22 @@ export default function TotalInfo() {
       } else {
         wsRef.current.send(JSON.stringify({ message: data }));
       }
-      console.log("Sent to WebSocket:", { message: data });
+      console.log("Отправлено в WebSocket:", { message: data });
     } else {
-      console.error("WebSocket is not connected");
+      console.error("WebSocket не подключен");
     }
   };
 
   const onIndividualSubmit = async (data) => {
     if (products.length === 0) {
-      toast.error("Сават бўш!");
+      toast.error("Корзина пуста!");
       return;
     }
     setIsSubmitting(true);
     const deliverPrice = data.service_mode === "delivery" ? deliveryPrice : 0;
     let indivData = {
       ...data,
+      bonus: data.bonus || 0, // Convert empty string to 0
       order_type: "individual",
       price: +totalSum + +deliverPrice,
       status: "new",
@@ -194,7 +193,24 @@ export default function TotalInfo() {
     try {
       const res = await postData(indivData, "/api/individual-orders", "order");
       if (res.id || res.error?.includes("created")) {
-        toast.success("Буюртма мувофаққиятли яратилди!");
+        if (auth?.phone) {
+          let userBonus = (+auth?.bonus || 0) + (totalSum * 5) / 100;
+          console.log(roundToTwoDecimals(userBonus));
+
+          setAuth({
+            ...auth,
+            bonus: roundToTwoDecimals(userBonus),
+          });
+          await putData(
+            {
+              ...auth,
+              bonus: roundToTwoDecimals(userBonus),
+            },
+            `/api/users/${auth?.id}`,
+            "user"
+          );
+        }
+        toast.success("Заказ успешно создан!");
         sendToWebSocket(res);
         setOpen(false);
         individualForm.reset();
@@ -213,8 +229,8 @@ export default function TotalInfo() {
         ]);
       }
     } catch (error) {
-      console.error("Error creating order:", error);
-      toast.error("Буюртма яратишда хатолик юз берди!");
+      console.error("Ошибка при создании заказа:", error);
+      toast.error("Ошибка при создании заказа!");
     } finally {
       setIsSubmitting(false);
     }
@@ -222,13 +238,14 @@ export default function TotalInfo() {
 
   const onLegalSubmit = async (data) => {
     if (products.length === 0) {
-      toast.error("Сават бўш!");
+      toast.error("Корзина пуста!");
       return;
     }
     setIsSubmitting(true);
     const deliverPrice = data.service_mode === "delivery" ? deliveryPrice : 0;
     let legalData = {
       ...data,
+      bonus: data.bonus || 0, // Convert empty string to 0
       order_type: "legal",
       price: +totalSum + +deliverPrice,
       deliverprice: deliverPrice,
@@ -248,7 +265,24 @@ export default function TotalInfo() {
     try {
       const res = await postData(legalData, "/api/legal-orders", "order");
       if (res.id || res.error?.includes("created")) {
-        toast.success("Буюртма мувофаққиятли яратилди!");
+        if (auth?.phone) {
+          let userBonus = (+auth?.bonus || 0) + (totalSum * 5) / 100;
+          console.log(roundToTwoDecimals(userBonus));
+
+          setAuth({
+            ...auth,
+            bonus: roundToTwoDecimals(userBonus),
+          });
+          await putData(
+            {
+              ...auth,
+              bonus: roundToTwoDecimals(userBonus),
+            },
+            `/api/users/${auth?.id}`,
+            "user"
+          );
+        }
+        toast.success("Заказ успешно создан!");
         resetProduct();
         setOpen(false);
         legalForm.reset();
@@ -267,8 +301,8 @@ export default function TotalInfo() {
         sendToWebSocket(res);
       }
     } catch (error) {
-      console.error("Error creating order:", error);
-      toast.error("Буюртма яратишда хатолик юз берди!");
+      console.error("Ошибка при создании заказа:", error);
+      toast.error("Ошибка при создании заказа!");
     } finally {
       setIsSubmitting(false);
     }
@@ -276,38 +310,44 @@ export default function TotalInfo() {
 
   const OrderDetails = ({ form }) => {
     const serviceMode = form.watch("service_mode");
+    const bonus = form.watch("bonus") || 0; // Handle empty bonus
     const finalPrice =
-      totalSum + (serviceMode === "delivery" ? deliveryPrice : 0);
+      totalSum + (serviceMode === "delivery" ? deliveryPrice : 0) - bonus;
 
     return (
       <div key={serviceMode} className="p-4 bg-gray-50 rounded-lg shadow-sm">
         <h3 className="font-semibold text-lg mb-3 text-gray-800">
-          Буюртма Тавсилотлари
+          Детали заказа
         </h3>
         <div className="space-y-2">
           <p className="text-sm text-gray-600">
-            Маҳсулотлар сони: {products.length}
+            Количество товаров: {products.length}
           </p>
           <div>
-            <p className="text-sm font-medium text-gray-700">Маҳсулотлар:</p>
+            <p className="text-sm font-medium text-gray-700">Товары:</p>
             <ul className="list-disc list-inside text-sm text-gray-600">
               {products.map((product, index) => (
                 <li key={product.id || index}>
-                  {product.name || "Unnamed Product"} - {product.count} шт
+                  {product.name || "Без названия"} - {product.count} шт
                 </li>
               ))}
             </ul>
           </div>
           <p className="text-sm text-gray-600">
-            Жами нарх: {totalSum.toLocaleString()} сум
+            Общая стоимость: {totalSum.toLocaleString()} сум
           </p>
           <p className="text-sm text-gray-600">
-            Етказиб бериш:{" "}
+            Доставка:{" "}
             {(serviceMode === "delivery" ? deliveryPrice : 0).toLocaleString()}{" "}
             сум
           </p>
+          {bonus > 0 && (
+            <p className="text-sm text-gray-600">
+              Бонус: -{bonus.toLocaleString()} сум
+            </p>
+          )}
           <p className="font-bold text-lg text-gray-800">
-            Умумий: {finalPrice.toLocaleString()} сум
+            Итого: {finalPrice.toLocaleString()} сум
           </p>
         </div>
       </div>
@@ -316,23 +356,21 @@ export default function TotalInfo() {
 
   return (
     <main className="w-full lg:w-[60%] h-full border p-6 rounded-lg flex flex-col gap-5 bg-white shadow-md">
-      <h1 className="text-xl font-bold text-gray-800">Буюртмангиз</h1>
+      <h1 className="text-xl font-bold text-gray-800">Ваш заказ</h1>
 
       <div className="flex flex-col gap-3 text-base">
         <div className="flex justify-between font-medium text-gray-700">
-          <span>Жами</span>
-          <span className="font-bold">
-            {totalSum?.toLocaleString()} сум
-          </span>
+          <span>Итого</span>
+          <span className="font-bold">{totalSum?.toLocaleString()} сум</span>
         </div>
         <div className="flex justify-between font-medium text-gray-700">
-          <span>Етакзиб бериш</span>
+          <span>Доставка</span>
           <span>{deliveryPrice.toLocaleString()} сум</span>
         </div>
       </div>
 
       <div className="flex justify-between font-bold text-lg text-gray-800">
-        <span>Умуний</span>
+        <span>Общая сумма</span>
         <span>{(+totalSum + +deliveryPrice).toLocaleString()} сум</span>
       </div>
 
@@ -340,7 +378,7 @@ export default function TotalInfo() {
         <DialogTrigger asChild>
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
             <Button className="h-11 w-full bg-primary hover:bg-primary text-white font-semibold py-3 rounded-lg flex items-center justify-center gap-2 shadow-md">
-              Буюртмангизни тасдиқлаш
+              Подтвердить заказ
               <ArrowRight size={18} />
             </Button>
           </motion.div>
@@ -356,7 +394,7 @@ export default function TotalInfo() {
               transition={{ duration: 0.3 }}
             >
               <DialogTitle className="text-xl font-bold text-gray-800">
-                Буюртма Тасдиқлаш
+                Подтверждение заказа
               </DialogTitle>
             </motion.div>
           </DialogHeader>
@@ -366,13 +404,13 @@ export default function TotalInfo() {
                 value="individual"
                 className="text-sm font-medium py-2 rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm"
               >
-                Жисмоний Шахс
+                Физическое лицо
               </TabsTrigger>
               <TabsTrigger
                 value="legal"
                 className="text-sm font-medium py-2 rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm"
               >
-                Юридик Шахс
+                Юридическое лицо
               </TabsTrigger>
             </TabsList>
 
@@ -421,10 +459,10 @@ export default function TotalInfo() {
                         name="name"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-gray-700">Исм</FormLabel>
+                            <FormLabel className="text-gray-700">Имя</FormLabel>
                             <FormControl>
                               <Input
-                                placeholder="Исмингиз"
+                                placeholder="Ваше имя"
                                 className="border-gray-300 focus:border-primary"
                                 {...field}
                               />
@@ -439,15 +477,15 @@ export default function TotalInfo() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel className="text-gray-700">
-                              Хизмат тури
+                              Тип услуги
                             </FormLabel>
                             <FormControl>
                               <select
                                 {...field}
                                 className="w-full p-2 border border-gray-300 rounded-md focus:border-primary focus:ring-primary"
                               >
-                                <option value="delivery">Етказиб бериш</option>
-                                <option value="spot">Ўзи олиш</option>
+                                <option value="delivery">Доставка</option>
+                                <option value="spot">Самовывоз</option>
                               </select>
                             </FormControl>
                             <FormMessage />
@@ -461,25 +499,21 @@ export default function TotalInfo() {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel className="text-gray-700">
-                                Бонус (Максимум: {maxBonus.toLocaleString()}{" "}
-                                сум)
+                                Бонус (Максимум: {maxBonus.toLocaleString()} сум)
                               </FormLabel>
                               <FormControl>
                                 <Input
                                   type="number"
-                                  placeholder="Бонус суммаси"
+                                  placeholder="Сумма бонуса"
                                   className="border-gray-300 focus:border-primary"
                                   {...field}
-                                  onChange={(e) =>
-                                    field.onChange(
-                                      parseFloat(e.target.value) || ""
-                                    )
-                                  }
-                                  value={
-                                    individualForm?.getValues()?.bonus > 0
-                                      ? individualForm?.getValues()?.bonus
-                                      : ""
-                                  }
+                                  onChange={(e) => {
+                                    const value = e.target.value
+                                      ? parseFloat(e.target.value)
+                                      : "";
+                                    field.onChange(value);
+                                  }}
+                                  value={field.value || ""}
                                 />
                               </FormControl>
                               <FormMessage />
@@ -493,11 +527,11 @@ export default function TotalInfo() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel className="text-gray-700">
-                              Изоҳ (ихтиёрий)
+                              Комментарий (необязательно)
                             </FormLabel>
                             <FormControl>
                               <Input
-                                placeholder="Изоҳ"
+                                placeholder="Комментарий"
                                 className="border-gray-300 focus:border-primary"
                                 {...field}
                               />
@@ -518,7 +552,7 @@ export default function TotalInfo() {
                           {isSubmitting ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
                           ) : (
-                            "Тасдиқлаш"
+                            "Подтвердить"
                           )}
                         </Button>
                       </motion.div>
@@ -552,11 +586,11 @@ export default function TotalInfo() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel className="text-gray-700">
-                              Ташкилот
+                              Организация
                             </FormLabel>
                             <FormControl>
                               <Input
-                                placeholder="Ташкилот номи"
+                                placeholder="Название организации"
                                 className="border-gray-300 focus:border-primary"
                                 {...field}
                               />
@@ -588,15 +622,15 @@ export default function TotalInfo() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel className="text-gray-700">
-                              Хизмат тури
+                              Тип услуги
                             </FormLabel>
                             <FormControl>
                               <select
                                 {...field}
                                 className="w-full p-2 border border-gray-300 rounded-md focus:border-primary focus:ring-primary"
                               >
-                                <option value="delivery">Етказиб бериш</option>
-                                <option value="spot">Ўзи олиш</option>
+                                <option value="delivery">Доставка</option>
+                                <option value="spot">Самовывоз</option>
                               </select>
                             </FormControl>
                             <FormMessage />
@@ -610,25 +644,21 @@ export default function TotalInfo() {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel className="text-gray-700">
-                                Бонус (Максимум: {maxBonus.toLocaleString()}{" "}
-                                сум)
+                                Бонус (Максимум: {maxBonus.toLocaleString()} сум)
                               </FormLabel>
                               <FormControl>
                                 <Input
                                   type="number"
-                                  placeholder="Бонус суммаси"
+                                  placeholder="Сумма бонуса"
                                   className="border-gray-300 focus:border-primary"
                                   {...field}
-                                  onChange={(e) =>
-                                    field.onChange(
-                                      parseFloat(e.target.value) || ""
-                                    )
-                                  }
-                                  value={
-                                    legalForm?.getValues()?.bonus > 0
-                                      ? legalForm?.getValues()?.bonus
-                                      : ""
-                                  }
+                                  onChange={(e) => {
+                                    const value = e.target.value
+                                      ? parseFloat(e.target.value)
+                                      : "";
+                                    field.onChange(value);
+                                  }}
+                                  value={field.value || ""}
                                 />
                               </FormControl>
                               <FormMessage />
@@ -642,11 +672,11 @@ export default function TotalInfo() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel className="text-gray-700">
-                              Изоҳ (ихтиёрий)
+                              Комментарий (необязательно)
                             </FormLabel>
                             <FormControl>
                               <Input
-                                placeholder="Изоҳ"
+                                placeholder="Комментарий"
                                 className="border-gray-300 focus:border-primary"
                                 {...field}
                               />
@@ -667,7 +697,7 @@ export default function TotalInfo() {
                           {isSubmitting ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
                           ) : (
-                            "Тасдиқлаш"
+                            "Подтвердить"
                           )}
                         </Button>
                       </motion.div>
@@ -685,7 +715,7 @@ export default function TotalInfo() {
 
       <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
         <Button className="h-11 w-full bg-blue-700 hover:bg-blue-800 text-white font-medium py-3 rounded-lg shadow-md flex items-center justify-center gap-2">
-          Оркали{" "}
+          Через{" "}
           <Image
             src="/assets/zoodpay.svg"
             alt="zoodpay"

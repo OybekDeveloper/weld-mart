@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { getData } from "@/actions/get"; // Ma'lumot olish uchun
-import { putData } from "@/actions/put"; // Ma'lumotni yangilash uchun
+import { getData } from "@/actions/get"; // Для получения данных
+import { putData } from "@/actions/put"; // Для обновления данных
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -18,13 +18,15 @@ import { Loader2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import Image from "next/image";
 import { useAdminSocket } from "@/context/AdmnSocketContext";
+import { roundToTwoDecimals } from "@/lib/utils";
 
 export default function ViewOrder() {
   const router = useRouter();
-  const { id } = useParams(); // URL dan buyurtma ID sini olish
+  const { id } = useParams(); // Получение ID заказа из URL
   const [order, setOrder] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const { reloadFunc } = useAdminSocket();
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -35,8 +37,15 @@ export default function ViewOrder() {
           throw new Error("Order not found");
         }
         setOrder(orderData);
+        if (orderData?.user_id && orderData?.user_id !== 0) {
+          const userData = await getData(
+            `/api/users/${orderData?.user_id}`,
+            "user"
+          );
+          setUser(userData);
+        }
 
-        // Agar buyurtma statusi "new" bo'lsa, uni "created" ga o'zgartiramiz
+        // Если статус заказа "new", изменяем его на "created"
         if (orderData.status === "new") {
           const updatedOrder = { ...orderData, status: "created" };
           console.log(updatedOrder);
@@ -49,7 +58,7 @@ export default function ViewOrder() {
         }
       } catch (error) {
         console.error("Failed to fetch order:", error);
-        toast.error("Буюртмани юклашда хатолик юз берди.");
+        toast.error("Ошибка при загрузке заказа.");
       } finally {
         setIsLoading(false);
       }
@@ -62,22 +71,42 @@ export default function ViewOrder() {
 
   const handleCompleteOrder = async () => {
     if (order.status === "finished") {
-      toast.info("Буюртма аллақачон якунланган.");
+      toast.info("Заказ уже завершен.");
       return;
     }
 
     try {
       const updatedOrder = { ...order, status: "finished" };
       const res = await putData(updatedOrder, `/api/orders/${id}`, "order");
-
       if (res) {
         setOrder(updatedOrder);
+        if (
+          order?.user_id &&
+          order.user_id !== 0 &&
+          order?.bonus &&
+          order.bonus !== 0
+        ) {
+          let userBonus = (+user?.bonus || 0) - +order?.bonus;
+          await putData(
+            {
+              ...user,
+              bonus: roundToTwoDecimals(userBonus),
+            },
+            `/api/users/${user?.id}`,
+            "user"
+          );
+          await fetch(`/api/revalidate`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ tag: "user" }),
+          });
+        }
         reloadFunc();
-        toast.success(`Буюртма #${id} якунланди!`);
+        toast.success(`Заказ #${id} завершен!`);
       }
     } catch (error) {
       console.error("Failed to complete order:", error);
-      toast.error("Буюртмани якунлашда хатолик юз берди.");
+      toast.error("Ошибка при завершении заказа.");
     }
   };
 
@@ -92,13 +121,13 @@ export default function ViewOrder() {
   if (!order) {
     return (
       <div className="flex flex-col items-center justify-center h-screen">
-        <h2 className="text-2xl font-bold text-red-600">Буюртма топилмади</h2>
+        <h2 className="text-2xl font-bold text-red-600">Заказ не найден</h2>
         <Button
           variant="outline"
           className="mt-4"
           onClick={() => router.push("/admin/orders")}
         >
-          <ArrowLeft className="mr-2 h-4 w-4" /> Орқага қайтиш
+          <ArrowLeft className="mr-2 h-4 w-4" /> Вернуться назад
         </Button>
       </div>
     );
@@ -109,30 +138,29 @@ export default function ViewOrder() {
       case "new":
         return (
           <span className="bg-green-100 text-green-800 px-2 py-1 rounded">
-            Янги заказ
+            Новый заказ
           </span>
         );
       case "created":
         return (
           <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded">
-            Заказ олинди
+            Заказ принят
           </span>
         );
       case "finished":
         return (
           <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded">
-            Заказ топширилди
+            Заказ завершен
           </span>
         );
       default:
         return (
           <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded">
-            Noma'lum
+            Неизвестно
           </span>
         );
     }
   };
-
 
   const {
     order_type,
@@ -156,7 +184,7 @@ export default function ViewOrder() {
         className="mb-6"
         onClick={() => router.push("/admin/orders")}
       >
-        <ArrowLeft className="mr-2 h-4 w-4" /> Орқага қайтиш
+        <ArrowLeft className="mr-2 h-4 w-4" /> Вернуться назад
       </Button>
 
       {/* Order Summary Card */}
@@ -164,34 +192,36 @@ export default function ViewOrder() {
         <CardHeader>
           <div className="flex justify-between items-center">
             <CardTitle className="text-3xl font-bold">
-              Буюртма #{id} -{" "}
-              {order_type === "individual" ? "Жисмоний шахс" : "Юридик шахс"}
+              Заказ #{id} -{" "}
+              {order_type === "individual"
+                ? "Физическое лицо"
+                : "Юридическое лицо"}
             </CardTitle>
             <div className="flex gap-4 items-center">
               <div
                 variant={order_type === "individual" ? "default" : "secondary"}
                 className="text-lg px-4 py-1"
               >
-                {order_type === "individual" ? "Жеке" : "Ташкилот"}
+                {order_type === "individual" ? "Личный" : "Организация"}
               </div>
               <Button
                 variant="success"
                 className="bg-primary text-white"
                 onClick={handleCompleteOrder}
                 disabled={status === "finished"}
-              >Жеке
-                Буюртмани якунлаш
+              >
+                Завершить заказ
               </Button>
             </div>
           </div>
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <p className="text-sm text-gray-500">Фойдаланувчи ID</p>
-            <p className="text-lg font-semibold">{user_id}</p>
+            <p className="text-sm text-gray-500">пользователя</p>
+            <p className="text-lg font-semibold">{user?.name}</p>
           </div>
           <div>
-            <p className="text-sm text-gray-500">Status</p>
+            <p className="text-sm text-gray-500">Статус</p>
             <p className="text-lg font-semibold">{getStatusDisplay(status)}</p>
           </div>
           <div>
@@ -200,7 +230,7 @@ export default function ViewOrder() {
           </div>
           <div>
             <p className="text-sm text-gray-500">
-              {order_type === "individual" ? "Исм" : "Ташкилот"}
+              {order_type === "individual" ? "Имя" : "Организация"}
             </p>
             <p className="text-lg font-semibold">
               {order_type === "individual" ? name : organization || "-"}
@@ -213,20 +243,20 @@ export default function ViewOrder() {
             </div>
           )}
           <div>
-            <p className="text-sm text-gray-500">Жами нарх</p>
+            <p className="text-sm text-gray-500">Общая стоимость</p>
             <p className="text-lg font-semibold">
-              {price.toLocaleString()} сўм
+              {price.toLocaleString()} сум.
             </p>
           </div>
           <div>
             <p className="text-sm text-gray-500">Бонус</p>
             <p className="text-lg font-semibold">
-              {bonus.toLocaleString()} сўм
+              {bonus.toLocaleString()} сум.
             </p>
           </div>
           <div className="col-span-full">
-            <p className="text-sm text-gray-500">Изоҳ</p>
-            <p className="text-lg">{comment || "Изоҳ мавjуд эмас"}</p>
+            <p className="text-sm text-gray-500">Комментарий</p>
+            <p className="text-lg">{comment || "Комментарий отсутствует"}</p>
           </div>
         </CardContent>
       </Card>
@@ -234,27 +264,25 @@ export default function ViewOrder() {
       {/* Order Items Table */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl font-bold">
-            Буюртма маҳсулотлари
-          </CardTitle>
+          <CardTitle className="text-2xl font-bold">Товары заказа</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Расм</TableHead>
+                <TableHead>Изображение</TableHead>
                 <TableHead>ID</TableHead>
-                <TableHead>Номи</TableHead>
-                <TableHead>Миқдор</TableHead>
-                <TableHead>Нарх</TableHead>
-                <TableHead>Жами</TableHead>
+                <TableHead>Название</TableHead>
+                <TableHead>Количество</TableHead>
+                <TableHead>Цена</TableHead>
+                <TableHead>Итого</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {order_items.map((item, idx) => {
                 const product = item.product || {};
                 const productName =
-                  product.name || `Маҳсулот #${item.product_id}`;
+                  product.name || `Продукт #${item.product_id}`;
                 const productImage = product.image || "/product.svg";
 
                 return (
@@ -271,10 +299,10 @@ export default function ViewOrder() {
                     <TableCell>{item.id}</TableCell>
                     <TableCell>{item?.name}</TableCell>
                     <TableCell>{item.order_quantity}</TableCell>
-                    <TableCell>{item?.price.toLocaleString()} сўм</TableCell>
+                    <TableCell>{item?.price.toLocaleString()} сум.</TableCell>
                     <TableCell>
                       {(item?.price * item?.order_quantity).toLocaleString()}{" "}
-                      сўм
+                      сум.
                     </TableCell>
                   </TableRow>
                 );

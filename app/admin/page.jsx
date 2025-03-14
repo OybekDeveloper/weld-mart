@@ -37,15 +37,15 @@ export default function Dashboard() {
         const usersResponse = await getData("/api/users", "user");
         const ordersResponse = await getData("/api/orders", "order");
 
-        // Process Users Data
+        // Обработка данных пользователей
         const users = usersResponse;
         const totalUsers = users.length;
 
-        // Process Orders Data
+        // Обработка данных заказов
         const orders = ordersResponse;
         const totalOrders = orders.length;
 
-        // Helper function to group by date/month
+        // Вспомогательная функция для группировки по дате/месяцу
         const groupByDate = (data, key) =>
           data.reduce((acc, item) => {
             const date = new Date(item.created_at);
@@ -60,18 +60,18 @@ export default function Dashboard() {
             const monthKey = date.toLocaleString("default", {
               month: "short",
               year: "numeric",
-            }); // e.g., "Mar 2025"
+            }); // например, "Мар 2025"
             acc[monthKey] = (acc[monthKey] || 0) + 1;
             return acc;
           }, {});
 
-        // Daily and Monthly Data
+        // Данные по дням и месяцам
         const dailyUsersData = groupByDate(users);
         const dailyOrdersData = groupByDate(orders);
         const monthlyUsersData = groupByMonth(users);
         const monthlyOrdersData = groupByMonth(orders);
 
-        // Convert to chart-friendly format
+        // Преобразование в формат, удобный для графиков
         const dailyUsers = Object.entries(dailyUsersData).map(
           ([date, count]) => ({
             date,
@@ -97,7 +97,7 @@ export default function Dashboard() {
           })
         );
 
-        // Sort by date/month
+        // Сортировка по дате/месяцу
         dailyUsers.sort((a, b) => new Date(a.date) - new Date(b.date));
         dailyOrders.sort((a, b) => new Date(a.date) - new Date(b.date));
         monthlyUsers.sort(
@@ -134,13 +134,13 @@ export default function Dashboard() {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Бош мену</h1>
+      <h1 className="text-2xl font-bold mb-6">Главное меню</h1>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Orders Card - Emphasized */}
+        {/* Карточка заказов - выделена */}
         <Card className="md:col-span-2 shadow-lg hover:shadow-xl transition-shadow duration-300 bg-white">
           <CardHeader className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-t-lg">
             <CardTitle className="text-xl font-semibold">
-              Барча буюртмалар
+              Все заказы
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
@@ -154,17 +154,17 @@ export default function Dashboard() {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="count" fill="#8884d8" name="Кунлик буюртмалар" />
+                <Bar dataKey="count" fill="#8884d8" name="Ежедневные заказы" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
-        {/* Users Card */}
+        {/* Карточка пользователей */}
         <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300 bg-white">
           <CardHeader className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-t-lg">
             <CardTitle className="text-lg font-semibold">
-              Барча фойдаланувчилар
+              Все пользователи
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
@@ -181,18 +181,18 @@ export default function Dashboard() {
                 <Bar
                   dataKey="count"
                   fill="#3b82f6"
-                  name="Кунлик фойдаланувчилар"
+                  name="Ежедневные пользователи"
                 />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
-        {/* Daily Growth Card */}
+        {/* Карточка ежедневного роста */}
         <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300 bg-white">
           <CardHeader className="bg-gradient-to-r from-green-500 to-teal-600 text-white rounded-t-lg">
             <CardTitle className="text-lg font-semibold">
-              Кунлик ўсиш (буюртмалар)
+              Ежедневный рост (заказы)
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
@@ -207,17 +207,17 @@ export default function Dashboard() {
                   type="monotone"
                   dataKey="count"
                   stroke="#34d399"
-                  name="Буюртмалар"
+                  name="Заказы"
                 />
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
-        {/* Monthly Growth Card */}
+        {/* Карточка месячного роста */}
         <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300 bg-white">
           <CardHeader className="bg-gradient-to-r from-yellow-500 to-orange-600 text-white rounded-t-lg">
-            <CardTitle className="text-lg font-semibold">Ойлик ўсиш</CardTitle>
+            <CardTitle className="text-lg font-semibold">Месячный рост</CardTitle>
           </CardHeader>
           <CardContent className="p-6">
             <ResponsiveContainer width="100%" height={200}>
@@ -227,11 +227,11 @@ export default function Dashboard() {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="count" fill="#f59e0b" name="Буюртмалар" />
+                <Bar dataKey="count" fill="#f59e0b" name="Заказы" />
                 <Bar
                   dataKey="count"
                   fill="#3b82f6"
-                  name="Фойдаланувчилар"
+                  name="Пользователи"
                   data={stats.monthlyUsers}
                 />
               </BarChart>

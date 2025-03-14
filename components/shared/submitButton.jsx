@@ -3,7 +3,7 @@ import { Button } from "../ui/button";
 const SubmitButton = ({ isLoading, className, children, disabled }) => {
   return (
     <Button
-      aria-label={`submit btn`}
+      aria-label={`кнопка отправки`}
       type="submit"
       disabled={isLoading || disabled}
       className={`bg-primary hover:bg-primary hover:opacity-75 ${className}`}
@@ -27,9 +27,9 @@ const SubmitButton = ({ isLoading, className, children, disabled }) => {
                 fill="currentFill"
               />
             </svg>
-            <span className="text-black sr-only">Юборилмокда...</span>
+            <span className="text-black sr-only">Отправляется...</span>
           </div>
-          Юборилмокда...
+          Отправляется...
         </div>
       ) : (
         children

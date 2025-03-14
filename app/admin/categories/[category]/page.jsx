@@ -18,24 +18,19 @@ import {
 import { Input } from "@/components/ui/input";
 import { Editor } from "@tinymce/tinymce-react";
 import { getData } from "@/actions/get";
-import { Loader2, CloudUpload, Paperclip, X } from "lucide-react";
-import {
-  FileUploader,
-  FileInput,
-  FileUploaderContent,
-  FileUploaderItem,
-} from "@/components/ui/file-uploader";
+import { Loader2, CloudUpload, X } from "lucide-react";
+import { FileUploader, FileInput } from "@/components/ui/file-uploader";
 import { useRouter } from "next/navigation";
-import { backUrl } from "@/lib/utils"; // Assuming this exists
+import { backUrl } from "@/lib/utils";
 import SubmitButton from "@/components/shared/submitButton";
 import { postData } from "@/actions/post";
 import { putData } from "@/actions/put";
 import { Textarea } from "@/components/ui/textarea";
 
 const formSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  description: z.string().min(1, "Description is required"),
-  image: z.any(), // Stores uploaded URL
+  name: z.string().min(1, "Название обязательно"),
+  description: z.string().min(1, "Описание обязательно"),
+  image: z.string().url("Неверный формат URL").min(1, "Требуется изображение"),
 });
 
 export default function CategoryEvent({ params }) {
@@ -43,8 +38,9 @@ export default function CategoryEvent({ params }) {
   const router = useRouter();
   const isAddMode = id === "add";
   const [isLoading, setIsLoading] = useState(!isAddMode);
-  const [files, setFiles] = useState([]); // State for file uploader
+  const [imagePreview, setImagePreview] = useState(null);
   const [submitLoading, setSubmitLoading] = useState(false);
+  const [currentUrlInput, setCurrentUrlInput] = useState("");
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -55,7 +51,6 @@ export default function CategoryEvent({ params }) {
     },
   });
 
-  // TinyMCE configuration for description
   const editorConfig = {
     height: 300,
     menubar: false,
@@ -65,14 +60,13 @@ export default function CategoryEvent({ params }) {
       "body { font-family:Helvetica,Arial,sans-serif; font-size:14px }",
   };
 
-  // Dropzone configuration
   const dropZoneConfig = {
     accept: {
       "image/*": [".webp", ".svg", ".png", ".jpg", ".jpeg", ".gif"],
     },
-    multiple: false, // Single file only
+    multiple: false,
     maxFiles: 1,
-    maxSize: 4 * 1024 * 1024, // 4MB limit
+    maxSize: 4 * 1024 * 1024,
   };
 
   useEffect(() => {
@@ -87,18 +81,15 @@ export default function CategoryEvent({ params }) {
             image: category?.image || "",
           });
           if (category?.image) {
-            setFiles([
-              {
-                file: null,
-                url: category.image,
-                preview: category.image,
-                name: "Existing Image",
-              },
-            ]);
+            setImagePreview({
+              url: category.image,
+              preview: category.image,
+              isUploaded: true,
+            });
           }
         } catch (error) {
-          console.error("Failed to fetch category", error);
-          toast.error("Failed to load category data.");
+          console.error("Не удалось загрузить категорию", error);
+          toast.error("Не удалось загрузить данные категории.");
         } finally {
           setIsLoading(false);
         }
@@ -109,39 +100,9 @@ export default function CategoryEvent({ params }) {
     }
   }, [id, isAddMode, form]);
 
-  // Handle file upload and set the image URL in the form
-  const handleFileUpload = (uploadedFiles) => {
-    if (uploadedFiles && uploadedFiles.length > 0) {
-      const file = uploadedFiles[0];
-      const newFileObj = {
-        file,
-        url: null,
-        preview: URL.createObjectURL(file),
-        name: file.name,
-      };
-      setFiles([newFileObj]);
-      form.setValue("image", ""); // Clear until upload completes
-    }
-  };
-
-  const removeFile = () => {
-    if (files.length > 0) {
-      const file = files[0];
-      if (file.preview && !file.url) {
-        URL.revokeObjectURL(file.preview);
-      }
-      setFiles([]);
-      form.setValue("image", "");
-    }
-  };
-
-  const uploadFile = async (fileToUpload) => {
-    if (!fileToUpload.file) {
-      return fileToUpload.url; // Return existing URL if no new file
-    }
-
+  const uploadImage = async (file) => {
     const formData = new FormData();
-    formData.append("image", fileToUpload.file, "category");
+    formData.append("image", file, "category");
 
     const requestOptions = {
       method: "POST",
@@ -149,63 +110,71 @@ export default function CategoryEvent({ params }) {
       redirect: "follow",
     };
 
-    const response = await fetch(
-      "http://127.0.0.1:8080/upload",
-      requestOptions
-    );
+    const response = await fetch("http://127.0.0.1:8080/upload", requestOptions);
     if (!response.ok) {
-      throw new Error(`Image upload failed! status: ${response.status}`);
+      throw new Error(`Ошибка загрузки изображения! статус: ${response.status}`);
     }
     const result = await response.json();
-    return `${backUrl}${result.path}`; // Adjust based on your API response
+    return `${backUrl}${result.path}`;
+  };
+
+  const handleFileUpload = async (uploadedFiles) => {
+    if (uploadedFiles && uploadedFiles.length > 0) {
+      try {
+        const file = uploadedFiles[0];
+        const preview = URL.createObjectURL(file);
+        const url = await uploadImage(file);
+        const newImage = { url, preview, isUploaded: true };
+        setImagePreview(newImage);
+        form.setValue("image", url);
+      } catch (error) {
+        console.error("Image upload failed:", error);
+        toast.error("Не удалось загрузить изображение");
+      }
+    }
+  };
+
+  const addUrl = () => {
+    if (currentUrlInput) {
+      const newImage = { url: currentUrlInput, preview: currentUrlInput, isUploaded: true };
+      setImagePreview(newImage);
+      form.setValue("image", currentUrlInput);
+      setCurrentUrlInput("");
+    }
+  };
+
+  const removeImage = () => {
+    if (imagePreview && !imagePreview.isUploaded) {
+      URL.revokeObjectURL(imagePreview.preview);
+    }
+    setImagePreview(null);
+    form.setValue("image", "");
   };
 
   async function onSubmit(values) {
-    if (files.length === 0 && isAddMode) {
-      toast.error("Расм юкланмади");
-      return;
-    }
-
     try {
       setSubmitLoading(true);
-
-      // Upload image if present and get URL
-      let imageUrl = values.image;
-      if (files.length > 0) {
-        imageUrl = await uploadFile(files[0]);
-      }
-
-      // Combine form values with image URL
-      const updatedValues = { ...values, image: imageUrl };
-      console.log("Submitting:", updatedValues);
-
-      // Send request to API
       let result;
       if (isAddMode) {
-        result = await postData(updatedValues, "/api/categories", "category");
+        result = await postData(values, "/api/categories", "category");
       } else {
-        result = await putData(
-          updatedValues,
-          `/api/categories/${id}`,
-          "category"
-        );
+        result = await putData(values, `/api/categories/${id}`, "category");
       }
-      console.log("API response:", result);
 
       if (result && !result.error) {
         if (isAddMode) {
-          toast.success("Категория мувофаққиятли қўшилди");
-          setFiles([]);
+          toast.success("Категория успешно добавлена");
+          setImagePreview(null);
         } else {
-          toast.info("Категория мувофаққиятли янгиланди");
+          toast.info("Категория успешно обновлена");
         }
         router.push("/admin/categories");
       } else if (result.error) {
         toast.error(result.error);
       }
     } catch (error) {
-      console.error("Form submission error:", error);
-      toast.error("Форма юборилмади. Қайта уриниб кўринг.");
+      console.error("Ошибка отправки формы:", error);
+      toast.error("Форма не отправлена. Попробуйте снова.");
     } finally {
       setSubmitLoading(false);
     }
@@ -225,13 +194,13 @@ export default function CategoryEvent({ params }) {
         onClick={() => window.history.back()}
         className="hover:bg-primary hover:opacity-75"
       >
-        Орқага қайтиш
+        Вернуться назад
       </Button>
       <div className="max-w-3xl mx-auto py-10">
         <h1 className="text-2xl font-bold mb-6">
           {isAddMode
-            ? "Янги категория қўшиш"
-            : `Категорияни таҳрирлаш (ID: ${id || "номаълум"})`}
+            ? "Добавить новую категорию"
+            : `Редактировать категорию (ID: ${id || "неизвестно"})`}
         </h1>
 
         <Form {...form}>
@@ -241,9 +210,12 @@ export default function CategoryEvent({ params }) {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Номи</FormLabel>
+                  <FormLabel>Название</FormLabel>
                   <FormControl>
-                    <Input placeholder="Категория номини киритинг" {...field} />
+                    <Input
+                      placeholder="Введите название категории"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -255,10 +227,10 @@ export default function CategoryEvent({ params }) {
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Таснифи</FormLabel>
+                  <FormLabel>Описание</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Таснифи ёзинг"
+                      placeholder="Напишите описание"
                       value={field.value}
                       onChange={field.onChange}
                       rows={5}
@@ -275,56 +247,71 @@ export default function CategoryEvent({ params }) {
               name="image"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Расм</FormLabel>
+                  <FormLabel>Изображение</FormLabel>
                   <FormControl>
-                    <FileUploader
-                      value={files}
-                      onValueChange={handleFileUpload}
-                      dropzoneOptions={dropZoneConfig}
-                      className="relative bg-background rounded-lg p-2"
-                    >
-                      <FileInput
-                        id="imageInput"
-                        className="outline-dashed outline-1 outline-slate-500"
+                    <div className="space-y-4">
+                      <FileUploader
+                        value={[]}
+                        onValueChange={handleFileUpload}
+                        dropzoneOptions={dropZoneConfig}
+                        className="relative bg-background rounded-lg p-2"
                       >
-                        <div className="flex items-center justify-center flex-col p-8 w-full">
-                          <CloudUpload className="text-gray-500 w-10 h-10" />
-                          <p className="mb-1 text-sm text-gray-500 dark:text-gray-400">
-                            <span className="font-semibold">
-                              Юклаш учун босинг
-                            </span>{" "}
-                            ёки расмни суриб келтиринг
-                          </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            SVG, PNG, JPG ёки GIF (макс 4MB)
-                          </p>
+                        <FileInput
+                          id="imageInput"
+                          className="outline-dashed outline-1 outline-slate-500"
+                        >
+                          <div className="flex items-center justify-center flex-col p-8 w-full">
+                            <CloudUpload className="text-gray-500 w-10 h-10" />
+                            <p className="mb-1 text-sm text-gray-500 dark:text-gray-400">
+                              <span className="font-semibold">
+                                Нажмите для загрузки
+                              </span>{" "}
+                              или перетащите изображение
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              SVG, PNG, JPG или GIF (макс. 4MB)
+                            </p>
+                          </div>
+                        </FileInput>
+                      </FileUploader>
+
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="https://example.com/image.jpg"
+                          value={currentUrlInput}
+                          onChange={(e) => setCurrentUrlInput(e.target.value)}
+                        />
+                        <Button
+                          type="button"
+                          onClick={addUrl}
+                          disabled={!currentUrlInput}
+                        >
+                          Добавить URL
+                        </Button>
+                      </div>
+
+                      {imagePreview && (
+                        <div className="relative w-24 h-24">
+                          <img
+                            src={imagePreview.preview}
+                            alt="Предпросмотр"
+                            className="w-full h-full object-cover rounded-md"
+                          />
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="icon"
+                            className="absolute top-1 right-1 h-6 w-6"
+                            onClick={removeImage}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
                         </div>
-                      </FileInput>
-                      <FileUploaderContent>
-                        {files &&
-                          files.length > 0 &&
-                          files.map((file, i) => (
-                            <FileUploaderItem key={i} index={i}>
-                              <Paperclip className="h-4 w-4 stroke-current" />
-                              <span className="max-w-full truncate">
-                                {file.name}
-                              </span>
-                              <Button
-                                type="button"
-                                variant="destructive"
-                                size="icon"
-                                className="h-6 w-6 ml-2"
-                                onClick={removeFile}
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            </FileUploaderItem>
-                          ))}
-                      </FileUploaderContent>
-                    </FileUploader>
+                      )}
+                    </div>
                   </FormControl>
                   <FormDescription>
-                    Юклаш учун расм файлини танланг.
+                    Загрузите одно изображение или укажите URL. Изображение обязательно.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -336,7 +323,7 @@ export default function CategoryEvent({ params }) {
               isLoading={submitLoading}
               disabled={submitLoading}
             >
-              {isAddMode ? "Категория қўшиш" : "Категорияни янгилаш"}
+              {isAddMode ? "Добавить категорию" : "Обновить категорию"}
             </SubmitButton>
           </form>
         </Form>
