@@ -19,11 +19,17 @@ export default function CompanyInfo({ statistics }) {
           опытом в этой сфере.
         </h1>
         <p>
-          Lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem
-          ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum
-          lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem
-          ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum
-          lorem ipsum
+          команда профессионалов в сфере сварочных технологий, которые открыли
+          свою компанию в 2025 году с целью предоставить качественные сварочные
+          материалы и оборудование для клиентов по всей территории Узбекистана.
+          Наша миссия — обеспечить доступ к лучшим продуктам для сварки, будь то
+          для крупных предприятий или небольших мастерских. Мы тщательно
+          отбираем каждый товар, гарантируя, что он отвечает самым высоким
+          стандартам качества. Мы ориентированы на клиента, и каждый заказ — это
+          не просто покупка, а наша возможность показать вам нашу преданность
+          делу. В будущем мы планируем расширять ассортимент и улучшать сервис,
+          чтобы всегда быть на шаг впереди и поддерживать инновации в сфере
+          сварочных технологий.
         </p>
       </div>
       <div className="w-full flex justify-center flex-col items-center gap-5">

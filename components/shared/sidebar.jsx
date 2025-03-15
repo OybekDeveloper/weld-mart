@@ -9,7 +9,7 @@ import {
   AccordionTrigger,
   AccordionContent,
 } from "@/components/ui/accordion";
-import { cn, truncateText } from "@/lib/utils";
+import { cn, socialMedias, truncateText } from "@/lib/utils";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
@@ -29,6 +29,7 @@ export default function Sidebar({
   id,
   sidebarBottom = false,
   allProducts = [],
+  socials = false,
 }) {
   const pathname = usePathname();
   console.log(allProducts);
@@ -55,7 +56,7 @@ export default function Sidebar({
   return (
     <aside
       className={cn(
-        "max-lg:hidden font-montserrat lg:border-2 rounded-md sidebar sticky top-[112px] w-[300px] max-h-[calc(100vh-112px)] overflow-auto",
+        "max-lg:hidden flex-col gap-4 font-montserrat lg:border-2 rounded-md sidebar sticky top-[112px] w-[300px] max-h-[calc(100vh-112px)] overflow-auto",
         className
       )}
     >
@@ -255,6 +256,23 @@ export default function Sidebar({
               })}
             </CarouselContent>
           </Carousel>
+        </main>
+      )}
+      {socials && (
+        <main>
+          <div className="w-full mx-auto flex justify-between px-4 sm:justify-end gap-4 items-end">
+            {socialMedias?.map((social, idx) => (
+              <Link key={idx} target="_blank" href={social.url} className="">
+                <Image
+                  width={100}
+                  height={100}
+                  src={social.icon}
+                  alt={social.name}
+                  className="w-8 h-8"
+                />
+              </Link>
+            ))}
+          </div>
         </main>
       )}
     </aside>

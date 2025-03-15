@@ -6,7 +6,7 @@ import Link from "next/link";
 import React from "react";
 import Image from "next/image";
 import { NumberTicker } from "@/components/magicui/number-ticker";
-import { socialMedias } from "@/lib/utils";
+import { socialMedias, truncateText } from "@/lib/utils";
 
 export default function AboutUs({ statistics }) {
   const statis = [
@@ -59,11 +59,20 @@ export default function AboutUs({ statistics }) {
             большим опытом в этой области.
           </h1>
           <p>
-            Lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem
-            ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum
-            lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem
-            ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum
-            lorem ipsum lorem ipsum
+            {truncateText(
+              `команда профессионалов в сфере сварочных технологий, которые открыли
+            свою компанию в 2025 году с целью предоставить качественные
+            сварочные материалы и оборудование для клиентов по всей территории
+            Узбекистана. Наша миссия — обеспечить доступ к лучшим продуктам для
+            сварки, будь то для крупных предприятий или небольших мастерских. Мы
+            тщательно отбираем каждый товар, гарантируя, что он отвечает самым
+            высоким стандартам качества. Мы ориентированы на клиента, и каждый
+            заказ — это не просто покупка, а наша возможность показать вам нашу
+            преданность делу. В будущем мы планируем расширять ассортимент и
+            улучшать сервис, чтобы всегда быть на шаг впереди и поддерживать
+            инновации в сфере сварочных технологий.`,
+              200
+            )}
           </p>
           <div className="hidden lg:flex gap-5 text-black/70">
             {statis.map((item, idx) => {
@@ -88,7 +97,7 @@ export default function AboutUs({ statistics }) {
           </div>
         </div>
       </section>
-      <section className="space-y-3 px-4 lg:px-0">
+      <section className="space-y-3 md:px-4 lg:px-0">
         <h1 className="textNormal1 font-bold">Свяжитесь с нами</h1>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 w-full gap-10">
           <div className="w-full flex flex-col gap-3 justify-start">

@@ -81,8 +81,8 @@ export default function Header({ categoriesData, brandsData }) {
                 <SheetHeader className={"hidden"}>
                   <SheetTitle>Вы абсолютно уверены?</SheetTitle>
                   <SheetDescription>
-                    Это действие нельзя отменить. Это навсегда удалит ваш аккаунт
-                    и удалит ваши данные с наших серверов.
+                    Это действие нельзя отменить. Это навсегда удалит ваш
+                    аккаунт и удалит ваши данные с наших серверов.
                   </SheetDescription>
                 </SheetHeader>
                 <main className="flex justify-start items-center flex-col">
@@ -97,6 +97,7 @@ export default function Header({ categoriesData, brandsData }) {
                     />
                   </Link>
                   <Sidebar
+                    socials={true}
                     handleClose={() => setOpen(false)}
                     className={
                       "max-lg:flex font-montserrat lg:border-2 rounded-md sidebar sticky top-[112px] w-full max-h-[calc(100vh-116px)] overflow-auto"

@@ -27,7 +27,7 @@ export async function POST(req) {
     <p style="font-size: 16px; color: #555;">${message}</p>
   </div>
   <div style="text-align: center; margin-top: 20px;">
-    <a href="https://weldmart.uz" style="display: inline-block; padding: 10px 20px; font-size: 16px; color: white; background: #B9515C; text-decoration: none; border-radius: 5px;">
+    <a href="https://weldmarket.uz" style="display: inline-block; padding: 10px 20px; font-size: 16px; color: white; background: #B9515C; text-decoration: none; border-radius: 5px;">
       Сайтни кўриш
     </a>
   </div>

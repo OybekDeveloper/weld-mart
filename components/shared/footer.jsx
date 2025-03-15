@@ -105,9 +105,9 @@ export default function Footer() {
               src="/logo.svg"
               loading="eager"
             />
-            <p>Слоган Слоган Слоган Слоган Слоган Слоган Слоган</p>
+            <p className="hidden">Слоган Слоган Слоган Слоган Слоган Слоган Слоган</p>
           </div>
-          <div className="w-full lg:flex justify-center items-center flex-col space-y-3">
+          <div className="max-sm:col-span-2 w-full lg:flex justify-center items-center flex-col space-y-3">
             <h1>СТРАНИЦЫ</h1>
             <ul className="space-y-1">
               <li>
@@ -132,7 +132,7 @@ export default function Footer() {
               </li>
             </ul>
           </div>
-          <div className="w-full lg:flex justify-end items-end lg:text-end flex-col space-y-3">
+          <div className="max-sm:col-span-2 w-full lg:flex justify-end items-end lg:text-end flex-col space-y-3">
             <h1 className="">ПОДДЕРЖКА</h1>
             <ul className="space-y-1">
               <li>
