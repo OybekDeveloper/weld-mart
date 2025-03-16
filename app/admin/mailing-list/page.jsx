@@ -29,6 +29,7 @@ import { deleteData } from "@/actions/delete";
 import { toast } from "sonner";
 import { postData } from "@/actions/post";
 import Pagination from "../_components/Pagination";
+import Todo from "@/components/shared/note/NotePicker";
 
 const filterItems = (items, searchTerm) => {
   if (!searchTerm) return items;
@@ -78,7 +79,10 @@ export default function MailingList() {
   }, []);
 
   const itemsPerPage = 10;
-  const filteredMailingList = filterItems(mailingList.slice().reverse(), searchTerm);
+  const filteredMailingList = filterItems(
+    mailingList.slice().reverse(),
+    searchTerm
+  );
   const totalPages = Math.ceil(filteredMailingList.length / itemsPerPage);
   const paginatedMailingList = filteredMailingList.slice(
     (currentPage - 1) * itemsPerPage,
@@ -181,6 +185,10 @@ export default function MailingList() {
     setSearchTerm(e.target.value);
     setCurrentPage(1);
     setSelectedItems([]);
+  };
+
+  const handleContentChange = (reason) => {
+    setEmailDescription(reason);
   };
 
   const handleSelectItem = (itemId) => {
@@ -358,12 +366,17 @@ export default function MailingList() {
             </div>
             <div className="grid gap-2">
               <Label htmlFor="emailDescription">Описание</Label>
-              <Textarea
+              {/* <Textarea
                 id="emailDescription"
                 value={emailDescription}
                 onChange={(e) => setEmailDescription(e.target.value)}
                 placeholder="Введите описание письма"
                 rows={4}
+              /> */}
+              <Todo
+                name="emailDescription"
+                handleContentChange={handleContentChange}
+                content={emailDescription}
               />
             </div>
           </div>

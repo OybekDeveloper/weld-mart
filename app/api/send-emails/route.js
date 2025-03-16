@@ -24,7 +24,7 @@ export async function POST(req) {
   </div>
   <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);">
     <h2 style="color: #333; text-align: start;">${subject}</h2>
-    <p style="font-size: 16px; color: #555;">${message}</p>
+    ${message}
   </div>
   <div style="text-align: center; margin-top: 20px;">
     <a href="https://weldmarket.uz" style="display: inline-block; padding: 10px 20px; font-size: 16px; color: white; background: #B9515C; text-decoration: none; border-radius: 5px;">

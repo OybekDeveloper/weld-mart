@@ -40,6 +40,7 @@ import SubmitButton from "@/components/shared/submitButton";
 import { useRouter } from "next/navigation";
 import { postData } from "@/actions/post";
 import { putData } from "@/actions/put";
+import Todo from "@/components/shared/note/NotePicker";
 
 const formSchema = z.object({
   name: z.string().min(1, "Название обязательно"),
@@ -76,11 +77,11 @@ export default function ProductEvent({ params }) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
-      rating: 0,
-      quantity: 0,
+      rating: "",
+      quantity: "",
       description: "",
       images: [],
-      price: 0,
+      price: "",
       info: "",
       feature: "",
       guarantee: "",
@@ -123,8 +124,8 @@ export default function ProductEvent({ params }) {
             feature: product.feature || "",
             guarantee: product.guarantee || "",
             discount: product.discount || "",
-            category_id: product.category_id ? String(product.category_id) : "",
-            brand_id: product.brand_id ? String(product.brand_id) : "",
+            category_id: String(product.category_id) || "",
+            brand_id: String(product.brand_id) || "",
           });
           if (product?.images && product.images.length > 0) {
             setImagePreviews(
@@ -151,8 +152,8 @@ export default function ProductEvent({ params }) {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const category = await getData("/api/categories","category");
-        const brand = await getData("/api/brands","brand");
+        const category = await getData("/api/categories", "category");
+        const brand = await getData("/api/brands", "brand");
         setCategories(category?.categories || []);
         setBrands(brand?.brands || []);
       } catch (error) {
@@ -172,10 +173,7 @@ export default function ProductEvent({ params }) {
       body: formdata,
       redirect: "follow",
     };
-    const response = await fetch(
-      `${backUrl}/upload`,
-      requestOptions
-    );
+    const response = await fetch(`${backUrl}/upload`, requestOptions);
     if (!response.ok) {
       throw new Error(`Image upload failed! status: ${response.status}`);
     }
@@ -242,6 +240,7 @@ export default function ProductEvent({ params }) {
       brand_id: Number(values.brand_id),
       category_id: Number(values.category_id),
     };
+    console.log({ data });
 
     try {
       setLoading(true);
@@ -251,6 +250,7 @@ export default function ProductEvent({ params }) {
       } else {
         result = await putData(data, `/api/products/${id}`, "product");
       }
+      console.log(result);
 
       if (result && !result.error) {
         if (isAddMode) {
@@ -258,6 +258,8 @@ export default function ProductEvent({ params }) {
         } else {
           toast.info("Продукт успешно обновлен");
         }
+        console.log(data);
+
         setImagePreviews([]);
         form.reset();
         router.push("/admin/products");
@@ -271,6 +273,11 @@ export default function ProductEvent({ params }) {
       setLoading(false);
     }
   }
+  const handleContentChange = (reason, name) => {
+    form.setValue(name, reason);
+  };
+
+  console.log(form.getValues());
 
   if (isLoading) {
     return (
@@ -482,12 +489,10 @@ export default function ProductEvent({ params }) {
                 <FormItem>
                   <FormLabel>Полная информация</FormLabel>
                   <FormControl>
-                    <Editor
-                      apiKey="d2fe85lc6waspz8t62gg4fsz7r1z9q1s2r31of6bhr0fvlm5"
-                      value={field.value}
-                      onEditorChange={field.onChange}
-                      init={editorConfig}
-                      placeholder="Введите полную информацию"
+                    <Todo
+                      name="info"
+                      handleContentChange={handleContentChange}
+                      content={form.getValues().info}
                     />
                   </FormControl>
                   <FormMessage />
@@ -502,12 +507,10 @@ export default function ProductEvent({ params }) {
                 <FormItem>
                   <FormLabel>Характеристики</FormLabel>
                   <FormControl>
-                    <Editor
-                      apiKey="d2fe85lc6waspz8t62gg4fsz7r1z9q1s2r31of6bhr0fvlm5"
-                      value={field.value}
-                      onEditorChange={field.onChange}
-                      init={editorConfig}
-                      placeholder="Введите характеристики"
+                    <Todo
+                      name="feature"
+                      handleContentChange={handleContentChange}
+                      content={form.getValues().feature}
                     />
                   </FormControl>
                   <FormMessage />
@@ -546,7 +549,6 @@ export default function ProductEvent({ params }) {
             <FormField
               control={form.control}
               name="category_id"
-              value={form?.getValues()?.category_id}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Категория</FormLabel>
@@ -585,7 +587,6 @@ export default function ProductEvent({ params }) {
                                     key={category.id}
                                     value={String(category.id)}
                                     onSelect={(value) => {
-                                      form.setValue("category_id", value);
                                       field.onChange(value);
                                     }}
                                   >
@@ -618,7 +619,7 @@ export default function ProductEvent({ params }) {
                         >
                           {field.value
                             ? brands.find(
-                                (brand) => String(brand.id) === field.value
+                                (brand) => String(brand.id) == field.value
                               )?.name || "Выберите бренд"
                             : "Выберите бренд"}
                           <span>▼</span>
@@ -644,7 +645,6 @@ export default function ProductEvent({ params }) {
                                     key={brand.id}
                                     value={String(brand.id)}
                                     onSelect={(value) => {
-                                      form.setValue("brand_id", value);
                                       field.onChange(value);
                                     }}
                                   >

@@ -110,30 +110,21 @@ export default function MailingListEvent({ params }) {
   );
 
   async function onSubmit(values) {
-    console.log(values);
+    console.log({ values });
 
     try {
       setSubmitLoading(true);
-
+      let data = {
+        email: values.email,
+      };
+      if (values.user_id) {
+        data.user_id = values.user_id;
+      }
       let result;
       if (isAddMode) {
-        result = await postData(
-          {
-            email: values.email,
-            user_id: values.user_id ? values?.user_id : 0, // Изменено на user_id
-          },
-          "/api/rassikas",
-          "rassilka"
-        );
+        result = await postData(data, "/api/rassikas", "rassilka");
       } else {
-        result = await putData(
-          {
-            email: values.email,
-            user_id: values.user_id ? values?.user_id : 0, // Изменено на user_id
-          },
-          `/api/rassikas/${mailingId}`,
-          "rassilka"
-        );
+        result = await putData(data, `/api/rassikas/${mailingId}`, "rassilka");
       }
 
       if (result && !result.error) {
@@ -175,7 +166,9 @@ export default function MailingListEvent({ params }) {
         <h1 className="text-2xl font-bold mb-6">
           {isAddMode
             ? "Добавить новую запись в список рассылки"
-            : `Редактировать запись списка рассылки (ID: ${mailingId || "неизвестно"})`}
+            : `Редактировать запись списка рассылки (ID: ${
+                mailingId || "неизвестно"
+              })`}
         </h1>
 
         <Form {...form}>
@@ -231,9 +224,13 @@ export default function MailingListEvent({ params }) {
                         />
                         <CommandList>
                           {isUsersLoading ? (
-                            <CommandEmpty>Загрузка пользователей...</CommandEmpty>
+                            <CommandEmpty>
+                              Загрузка пользователей...
+                            </CommandEmpty>
                           ) : users.length === 0 ? (
-                            <CommandEmpty>Нет доступных пользователей</CommandEmpty>
+                            <CommandEmpty>
+                              Нет доступных пользователей
+                            </CommandEmpty>
                           ) : (
                             <>
                               <CommandGroup>
@@ -259,7 +256,9 @@ export default function MailingListEvent({ params }) {
                                     }}
                                   >
                                     <div className="flex justify-between w-full">
-                                      <span>{user.name || "Безымянный пользователь"}</span>
+                                      <span>
+                                        {user.name || "Безымянный пользователь"}
+                                      </span>
                                       <span>ID: {user.id}</span>
                                     </div>
                                   </CommandItem>
@@ -267,7 +266,8 @@ export default function MailingListEvent({ params }) {
                               </CommandGroup>
                               {filteredUsers.length === 0 && (
                                 <CommandEmpty>
-                                  Пользователи по запросу "{userSearch}" не найдены
+                                  Пользователи по запросу "{userSearch}" не
+                                  найдены
                                 </CommandEmpty>
                               )}
                             </>

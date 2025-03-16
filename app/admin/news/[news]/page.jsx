@@ -15,7 +15,6 @@ import {
   FormMessage,
   FormDescription,
 } from "@/components/ui/form";
-import { Editor } from "@tinymce/tinymce-react";
 import { getData } from "@/actions/get";
 import { Loader2, CloudUpload, X } from "lucide-react";
 import { FileUploader, FileInput } from "@/components/ui/file-uploader";
@@ -47,15 +46,6 @@ export default function NewsEvent({ params }) {
       image: "",
     },
   });
-
-  const editorConfig = {
-    height: 300,
-    menubar: false,
-    toolbar:
-      "undo redo | formatselect | bold italic underline | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image | code",
-    content_style:
-      "body { font-family:Helvetica,Arial,sans-serif; font-size:14px }",
-  };
 
   const dropZoneConfig = {
     accept: { "image/*": [".svg", ".png", ".jpg", ".jpeg", ".gif"] },
