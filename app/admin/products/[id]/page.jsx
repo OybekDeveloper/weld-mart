@@ -173,7 +173,7 @@ export default function ProductEvent({ params }) {
       redirect: "follow",
     };
     const response = await fetch(
-      "http://127.0.0.1:8080/upload",
+      `${backUrl}/upload`,
       requestOptions
     );
     if (!response.ok) {
