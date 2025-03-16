@@ -11,14 +11,15 @@ import {
 } from "@/components/ui/card";
 import CustomImage from "./customImage";
 import { Star } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, truncateText } from "@/lib/utils";
 import { Button } from "../ui/button";
 import { Minus, Plus } from "lucide-react";
 import { useProductStore } from "@/store";
 import { motion } from "framer-motion";
 
 export default function CardComponent({ product }) {
-  const { products, incrementCount, decrementCount, setProducts } = useProductStore();
+  const { products, incrementCount, decrementCount, setProducts } =
+    useProductStore();
   const findProduct = products?.find((pr) => pr.id === product.id);
   const [stockMessage, setStockMessage] = useState("");
 
@@ -27,12 +28,12 @@ export default function CardComponent({ product }) {
     e.stopPropagation();
     const currentCount = findProduct?.count || 0;
     const availableStock = product.quantity || 0;
-    
+
     if (currentCount >= availableStock) {
       setStockMessage("Этот товар закончился!");
       return;
     }
- 
+
     if (!findProduct) {
       setProducts(product);
     }
@@ -43,13 +44,12 @@ export default function CardComponent({ product }) {
     e.stopPropagation();
     const currentCount = findProduct?.count || 0;
     const availableStock = product.quantity || 0;
-    
+
     if (currentCount >= availableStock) {
       setStockMessage("Товара недостаточно!");
       return;
     }
- 
-    
+
     setStockMessage("");
     incrementCount(product.id);
   };
@@ -66,12 +66,12 @@ export default function CardComponent({ product }) {
     hover: { scale: 1.05 },
     tap: { scale: 0.95 },
     initial: { scale: 0 },
-    animate: { scale: 1 }
+    animate: { scale: 1 },
   };
 
   const countVariants = {
     initial: { scale: 1 },
-    animate: { scale: 1.1, transition: { duration: 0.2 } }
+    animate: { scale: 1.1, transition: { duration: 0.2 } },
   };
 
   return (
@@ -90,7 +90,7 @@ export default function CardComponent({ product }) {
               className={"w-full h-full object-contain hover:scale-[1.2]"}
             />
           </div>
-          <h1 className="textSmall3">{product?.name}</h1>
+          <h1 className="textSmall3">{truncateText(product?.name, 55)}</h1>
           <div className="flex justify-start items-start gap-4 flex-col">
             <div className="flex items-center">
               {Array.from({ length: 5 }, (_, i) => (
@@ -165,7 +165,7 @@ export default function CardComponent({ product }) {
                     <Minus />
                   </Button>
                 </motion.div>
-                
+
                 <motion.span
                   key={findProduct?.count}
                   variants={countVariants}
@@ -175,7 +175,7 @@ export default function CardComponent({ product }) {
                 >
                   {findProduct?.count || 0}
                 </motion.span>
-                
+
                 <motion.div
                   variants={buttonVariants}
                   whileHover="hover"

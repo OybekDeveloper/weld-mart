@@ -247,7 +247,7 @@ export default function TotalInfo() {
       ...data,
       bonus: data.bonus || 0, // Convert empty string to 0
       order_type: "legal",
-      price: +totalSum + +deliverPrice,
+      price: +totalSum,
       deliverprice: deliverPrice,
       status: "new",
       order_items: products.map((pr) => ({
@@ -713,7 +713,7 @@ export default function TotalInfo() {
         </DialogContent>
       </Dialog>
 
-      <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+      {/* <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
         <Button className="h-11 w-full bg-blue-700 hover:bg-blue-800 text-white font-medium py-3 rounded-lg shadow-md flex items-center justify-center gap-2">
           Через{" "}
           <Image
@@ -723,7 +723,7 @@ export default function TotalInfo() {
             height={100}
           />
         </Button>
-      </motion.div>
+      </motion.div> */}
     </main>
   );
 }

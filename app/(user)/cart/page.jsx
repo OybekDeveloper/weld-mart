@@ -9,8 +9,10 @@ import BreadcrumbComponent from "@/components/shared/BreadcrumbComponent";
 
 export default async function Cart() {
   const [productsData] = await Promise.all([
-    getData("/api/products?limit=10&skip=10", "product"),
+    getData("/api/products?limit=10&skip=0", "product"),
   ]);
+
+  
 
   return (
     <Container className="font-montserrat min-h-screen w-11/12 flex-col justify-start items-start space-y-4">
