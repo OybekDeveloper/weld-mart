@@ -40,7 +40,7 @@ export default function CompanyInfo({ statistics }) {
           height={300}
           alt="логотип"
         />
-        <div className="w-full max-sm:flex-col flex gap-5 text-black/70">
+        <div className="w-full max-sm:flex-col justify-center items-center flex gap-5 text-black/70">
           {statis.map((item, idx) => (
             <div
               key={idx}
