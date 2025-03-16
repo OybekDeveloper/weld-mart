@@ -19,6 +19,7 @@ import {
   CarouselItem,
 } from "@/components/ui/carousel";
 import { Card, CardContent } from "@/components/ui/card";
+import CustomImage from "./customImage";
 
 export default function Sidebar({
   className,
@@ -56,7 +57,7 @@ export default function Sidebar({
   return (
     <aside
       className={cn(
-        "max-lg:hidden flex-col gap-4 font-montserrat lg:border-2 rounded-md sidebar sticky top-[112px] w-[300px] max-h-[calc(100vh-112px)] overflow-auto",
+        "max-lg:hidden flex-col gap-4 font-montserrat lg:border-2 rounded-md no-scrollbar sticky top-[112px] w-[300px] max-h-[calc(100vh-112px)] overflow-y-auto",
         className
       )}
     >
@@ -207,13 +208,13 @@ export default function Sidebar({
                           href={`/category/${product?.category_id}/product/${product.id}`}
                           className="space-y-2"
                         >
-                          <Image
-                            src={product.images[0]}
-                            width={150}
-                            height={150}
-                            alt={product.name}
-                            className="mx-auto rounded-md"
-                          />
+                          <div className="relative aspect-[5/3]">
+                            <CustomImage
+                              src={product.images[0]}
+                              alt={product.name}
+                              className="w-full h-full rounded-md object-cover"
+                            />
+                          </div>
                           <div className="text-center">
                             <h3 className="text-sm font-medium">
                               {truncateText(product.name, 50)}

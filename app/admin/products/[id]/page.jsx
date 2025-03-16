@@ -76,11 +76,11 @@ export default function ProductEvent({ params }) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
-      rating: "",
-      quantity: "",
+      rating: 0,
+      quantity: 0,
       description: "",
       images: [],
-      price: "",
+      price: 0,
       info: "",
       feature: "",
       guarantee: "",
@@ -111,7 +111,7 @@ export default function ProductEvent({ params }) {
       const fetchProduct = async () => {
         try {
           setIsLoading(true);
-          const product = await getData(`/api/products/${id}`);
+          const product = await getData(`/api/products/${id}`, "product");
           form.reset({
             name: product.name || "",
             rating: product.rating || 0,
@@ -123,8 +123,8 @@ export default function ProductEvent({ params }) {
             feature: product.feature || "",
             guarantee: product.guarantee || "",
             discount: product.discount || "",
-            category_id: String(product.category_id) || "",
-            brand_id: String(product.brand_id) || "",
+            category_id: product.category_id ? String(product.category_id) : "",
+            brand_id: product.brand_id ? String(product.brand_id) : "",
           });
           if (product?.images && product.images.length > 0) {
             setImagePreviews(
@@ -151,8 +151,8 @@ export default function ProductEvent({ params }) {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const category = await getData("/api/categories");
-        const brand = await getData("/api/brands");
+        const category = await getData("/api/categories","category");
+        const brand = await getData("/api/brands","brand");
         setCategories(category?.categories || []);
         setBrands(brand?.brands || []);
       } catch (error) {
@@ -237,13 +237,12 @@ export default function ProductEvent({ params }) {
   };
 
   async function onSubmit(values) {
-    const data ={
+    const data = {
       ...values,
-      brand_id:Number(values.brand_id),
-      category_id:Number(values.category_id),
-    }
-    console.log(data);
-    
+      brand_id: Number(values.brand_id),
+      category_id: Number(values.category_id),
+    };
+
     try {
       setLoading(true);
       let result;
@@ -252,8 +251,7 @@ export default function ProductEvent({ params }) {
       } else {
         result = await putData(data, `/api/products/${id}`, "product");
       }
-      console.log(result);
-      
+
       if (result && !result.error) {
         if (isAddMode) {
           toast.success("Продукт успешно добавлен");
@@ -548,6 +546,7 @@ export default function ProductEvent({ params }) {
             <FormField
               control={form.control}
               name="category_id"
+              value={form?.getValues()?.category_id}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Категория</FormLabel>
@@ -560,7 +559,7 @@ export default function ProductEvent({ params }) {
                         >
                           {field.value
                             ? categories.find(
-                                (cat) => String(cat.id) === field.value
+                                (cat) => String(cat.id) == field.value
                               )?.name || "Выберите категорию"
                             : "Выберите категорию"}
                           <span>▼</span>
@@ -586,6 +585,7 @@ export default function ProductEvent({ params }) {
                                     key={category.id}
                                     value={String(category.id)}
                                     onSelect={(value) => {
+                                      form.setValue("category_id", value);
                                       field.onChange(value);
                                     }}
                                   >
@@ -644,6 +644,7 @@ export default function ProductEvent({ params }) {
                                     key={brand.id}
                                     value={String(brand.id)}
                                     onSelect={(value) => {
+                                      form.setValue("brand_id", value);
                                       field.onChange(value);
                                     }}
                                   >

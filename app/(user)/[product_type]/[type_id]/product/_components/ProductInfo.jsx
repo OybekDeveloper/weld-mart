@@ -35,7 +35,9 @@ export default function ProductInfo({ productData }) {
   }, [productData]);
 
   if (!productData) {
-    return <div className="text-center py-10">Загрузка данных о продукте...</div>;
+    return (
+      <div className="text-center py-10">Загрузка данных о продукте...</div>
+    );
   }
 
   const {
@@ -159,9 +161,7 @@ export default function ProductInfo({ productData }) {
           <DialogContent className="p-0 ring-0 border-0 shadow-none w-full h-full bg-transparent">
             <DialogHeader>
               <DialogTitle className="hidden">заголовок</DialogTitle>
-              <DialogDescription className="hidden">
-                описание
-              </DialogDescription>
+              <DialogDescription className="hidden">описание</DialogDescription>
             </DialogHeader>
             <AnimatePresence>
               {isOpen && (
@@ -270,11 +270,11 @@ export default function ProductInfo({ productData }) {
         </div>
 
         <div className="h-[1px] w-full bg-thin" />
-
-        <div className="w-full flex gap-4 textSmall3">
-          <h1 className="w-full sm:w-1/3 textNormall3">Количество в наличии</h1>
-          <span className="w-full sm:w-2/3 font-bold">{quantity} шт.</span>
-        </div>
+        {quantity == 0 && (
+          <div className="w-full flex gap-4 textSmall3">
+            <h1 className="w-full sm:w-1/3 font-bold textNormall3 text-red-400">Нет в наличии</h1>
+          </div>
+        )}
 
         {/* Add to Cart & Quantity Control */}
         <div className="flex w-full items-center gap-2">
