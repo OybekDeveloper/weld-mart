@@ -82,7 +82,7 @@ export default function ProductInfo({ productData }) {
   };
 
   let discountSum = null;
-  if (discount) {
+  if (discount && discount != 0 && discount > 0) {
     discountSum = price * (1 - discount / 100);
   }
 
@@ -217,9 +217,7 @@ export default function ProductInfo({ productData }) {
                 )}
               />
             ))}
-            <span className="ml-2 text-sm text-gray-600">
-              {rating.toFixed(1)}/5
-            </span>
+            <span className="ml-2 text-sm text-gray-600">{rating}/5</span>
           </div>
           <div className="text-2xl font-semibold flex justify-start items-center gap-2">
             <div>
@@ -228,7 +226,7 @@ export default function ProductInfo({ productData }) {
               </h1>
               {discountSum && <h1>{discountSum.toLocaleString()} сум</h1>}
             </div>
-            {discount && (
+            {discount && discount != 0 && discount > 0 && (
               <span className="font-medium textSmall3 px-2 text-red-500 rounded-md bg-red-100">
                 -{discount}%
               </span>
@@ -272,7 +270,9 @@ export default function ProductInfo({ productData }) {
         <div className="h-[1px] w-full bg-thin" />
         {quantity == 0 && (
           <div className="w-full flex gap-4 textSmall3">
-            <h1 className="w-full sm:w-1/3 font-bold textNormall3 text-red-400">Нет в наличии</h1>
+            <h1 className="w-full sm:w-1/3 font-bold textNormall3 text-red-400">
+              Нет в наличии
+            </h1>
           </div>
         )}
 

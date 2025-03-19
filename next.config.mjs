@@ -10,6 +10,10 @@ const nextConfig = {
         protocol: "https",
         hostname: "**", // Barcha HTTPS domenlarga ruxsat
       },
+      {
+        protocol: "https",
+        hostname: "weldmarket.uz", // Barcha HTTPS domenlarga ruxsat
+      },
     ],
   },
 };

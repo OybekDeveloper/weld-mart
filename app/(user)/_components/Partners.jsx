@@ -12,7 +12,7 @@ export default function Partners({ partners }) {
       </section>
       <Marquee pauseOnHover className="[--duration:120s]">
         {partnersData?.map((card, index) => (
-          <div key={index} className="relative w-full h-full">
+          <div key={index} className="relative w-full h-full border rounded-xl p-2">
             <Image
               src={card?.image}
               alt="image"

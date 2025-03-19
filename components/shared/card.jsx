@@ -90,7 +90,9 @@ export default function CardComponent({ product }) {
               className={"w-full h-full object-contain hover:scale-[1.2]"}
             />
           </div>
-          <h1 className="textSmall3">{truncateText(product?.name, 55)}</h1>
+          <div className="h-12">
+            <h1 className="textSmall3 line-clamp-2">{product?.name}</h1>
+          </div>
           <div className="flex justify-start items-start gap-4 flex-col">
             <div className="flex items-center">
               {Array.from({ length: 5 }, (_, i) => (
@@ -111,11 +113,14 @@ export default function CardComponent({ product }) {
           </div>
           <p className="font-medium textSmall3">
             {product?.price?.toLocaleString()} сум{" "}
-            {product?.discount && (
-              <span className="font-medium textSmall1 px-2 py-1 text-red-500 rounded-md bg-red-100">
-                -{product?.discount}%
-              </span>
-            )}
+            {product?.discount &&
+              product?.discount != 0 &&
+              product?.discount != "-" &&
+              product?.discount > 0 && (
+                <span className="font-medium textSmall1 px-2 py-1 text-red-500 rounded-md bg-red-100">
+                  -{product?.discount}%
+                </span>
+              )}
           </p>
           {stockMessage && (
             <motion.p

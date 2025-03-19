@@ -40,9 +40,9 @@ export default async function UserRoot() {
         <Banner banners={banners} />
         <InfinityCards brands={brands} />
         <Categories productsData={products?.products} />
-        <News news={news} />
+        {news.length > 0 && <News news={news} />}
         <AboutUs statistics={statistics} />
-        <Partners partners={partners} />
+        {partners?.length > 0 && <Partners partners={partners} />}
       </main>
     </Container>
   );

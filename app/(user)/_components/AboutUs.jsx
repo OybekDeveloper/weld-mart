@@ -26,7 +26,7 @@ export default function AboutUs({ statistics }) {
   return (
     <main className="px-4 lg:px-0 carousel-container space-y-8">
       <section className="flex justify-between items-center gap-5 text-black/80">
-        <h1 className="font-medium textNormal4">О нас</h1>
+        <h1 className="font-medium textNormal3">О нас</h1>
         <Link
           className="textSmall2 flex justify-center items-center gap-1"
           href={"/about-us"}

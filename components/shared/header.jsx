@@ -44,11 +44,11 @@ export default function Header({ categoriesData, brandsData }) {
     return;
   }
   return (
-    <header className="sticky top-0 left-0 w-full bg-white z-[999] mb-1">
+    <header className="shadow-sm sticky top-0 left-0 w-full bg-white z-[999] mb-1">
       {!auth && (
         <>
           <div className="hidden w-full h-8 text-white bg-primary sm:flex justify-center gap-1 items-center font-montserrat">
-            Скидка 10% на доставку.
+            Скидка 5% на доставку.
             <Link className="font-medium hover:underline" href={"/"}>
               Закажите прямо сейчас
             </Link>{" "}
@@ -58,7 +58,7 @@ export default function Header({ categoriesData, brandsData }) {
             className="sm:hidden [--duration:10s] w-full h-8 text-white bg-primary flex justify-center gap-1 items-center font-montserrat"
           >
             <div className="w-full h-8 text-white bg-primary flex justify-center gap-1 items-center font-montserrat">
-              Скидка 10% на доставку.
+              Скидка 5% на доставку.
               <Link className="font-medium hover:underline" href={"/"}>
                 Закажите прямо сейчас
               </Link>{" "}
@@ -71,7 +71,7 @@ export default function Header({ categoriesData, brandsData }) {
         pathname.startsWith("/login") ||
         pathname.startsWith("/register")
       ) && (
-        <Container className="mx-auto h-20 w-11/12 lg:w-10/12 flex justify-between items-center gap-7">
+        <Container className="mx-auto h-20 w-11/12 lg:w-10/12 flex justify-between items-center gap-7 pt-0">
           <div className="w-full flex justify-start items-center gap-2">
             <Sheet open={open} onOpenChange={setOpen}>
               <SheetTrigger asChild>

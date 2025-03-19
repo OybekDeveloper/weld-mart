@@ -25,12 +25,18 @@ export default async function News() {
           {
             name: "Новости",
             href: "/news",
-          }
+          },
         ]}
       />
       <h1 className="textNormal5 font-medium">Блог и новости.</h1>
-      {randomNews && <FeaturedNews news={randomNews} />}
-      <NewsGrid newsItems={news} />
+      {news.length > 0 ? (
+        <>
+          {randomNews && <FeaturedNews news={randomNews} />}
+          <NewsGrid newsItems={news} />
+        </>
+      ) : (
+        <h1>Нет новостей.</h1>
+      )}
     </Container>
   );
 }

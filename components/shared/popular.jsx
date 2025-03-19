@@ -26,7 +26,7 @@ export default function PopularProducts({ popularProductsData }) {
               return (
                 <CarouselItem
                   key={i}
-                  className={`basis-[40%] sm:basis-[25%] md:basis-[30%] lg:basis-[25%] xl:basis-[20%] ${
+                  className={`basis-[60%] sm:basis-[25%] md:basis-[30%] lg:basis-[25%] xl:basis-[20%] ${
                     i == 0 && "ml-8 md::ml-0"
                   }`}
                 >

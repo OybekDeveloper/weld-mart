@@ -33,7 +33,7 @@ export default function Categories({ productsData }) {
               return (
                 <CarouselItem
                   key={i}
-                  className={`basis-[40%] sm:basis-[30%] md:basis-[25%] lg:basis-[30%] xl:basis-[25%] md:mr-4 ${
+                  className={`basis-[60%] sm:basis-[30%] md:basis-[25%] lg:basis-[30%] xl:basis-[25%] md:mr-4 ${
                     i == 0 && "ml-6 lg:ml-4"
                   }`}
                 >

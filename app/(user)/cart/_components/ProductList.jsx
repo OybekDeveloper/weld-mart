@@ -17,7 +17,7 @@ export default function ProductList() {
         <>
           {products?.map((product, idx) => {
             let discountSum = null;
-            if (product?.discount) {
+            if (product?.discount && product?.discount > 0) {
               discountSum = +product?.price * (1 - +product?.discount / 100);
             }
             return (
@@ -52,7 +52,9 @@ export default function ProductList() {
                     <div className="max-sm:flex-col max-sm:gap-1 flex sm:justify-center sm:items-center gap-3">
                       <div className="flex flex-col justify-start items-start textSmall3 font-semibold">
                         <span
-                          className={`${discountSum ? "line-through text-black/20" : ""}`}
+                          className={`${
+                            discountSum ? "line-through text-black/20" : ""
+                          }`}
                         >
                           {product?.price?.toLocaleString()} сум{" "}
                         </span>
@@ -61,7 +63,7 @@ export default function ProductList() {
                           {discountSum && `${discountSum.toLocaleString()} сум`}
                         </span>
                       </div>
-                      {product?.discount && (
+                      {product?.discount && product?.discount > 0 && (
                         <span className="text-center font-medium textSmall2 px-2 py-1 text-red-500 rounded-md bg-red-100">
                           -{product?.discount}%
                         </span>

@@ -8,7 +8,7 @@ export default async function BrandPage({ searchParams, params }) {
   const { type_id, product_type } = await params;
   const resolvedSearchParams = await searchParams;
   const page = parseInt(resolvedSearchParams?.page, 10) || 1;
-  const limit = 4;
+  const limit = 12;
   const skip = (page - 1) * limit; // Correct skip calculation (page 1 = skip 0)
 
   const [categories, products, brands, typeData, allProducts] =

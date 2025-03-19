@@ -106,6 +106,7 @@ export default function Sidebar({
                     <Image
                       src={category.image}
                       width={50}
+                      loading="eager"
                       height={50}
                       alt={category.name}
                     />
@@ -137,6 +138,7 @@ export default function Sidebar({
                     )}
                   >
                     <Image
+                      loading="eager"
                       src={brand.image}
                       width={50}
                       height={50}
@@ -197,7 +199,12 @@ export default function Sidebar({
             <CarouselContent>
               {featuredProducts.map((product, idx) => {
                 let discountSum = null;
-                if (product?.discount) {
+                if (
+                  product?.discount &&
+                  product?.discount != 0 &&
+                  product?.discount != "-" &&
+                  product?.discount > 0
+                ) {
                   discountSum = product?.price * (1 - product?.discount / 100);
                 }
                 return (
@@ -212,6 +219,7 @@ export default function Sidebar({
                             <CustomImage
                               src={product.images[0]}
                               alt={product.name}
+                              loading="eager"
                               className="w-full h-full rounded-md object-cover"
                             />
                           </div>
@@ -232,11 +240,14 @@ export default function Sidebar({
                                   <h1>{discountSum.toLocaleString()} сум</h1>
                                 )}
                               </div>
-                              {product?.discount && (
-                                <span className="font-medium textSmall1 px-2 text-red-500 rounded-md bg-red-100">
-                                  -{product?.discount}%
-                                </span>
-                              )}
+                              {product?.discount &&
+                                product?.discount != 0 &&
+                                product?.discount != "-" &&
+                                product?.discount > 0 && (
+                                  <span className="font-medium textSmall1 px-2 text-red-500 rounded-md bg-red-100">
+                                    -{product?.discount}%
+                                  </span>
+                                )}
                             </div>
                             <div className="flex justify-center gap-1 mt-1">
                               {Array(5)
