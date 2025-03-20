@@ -94,20 +94,23 @@ export default function CategoryList({
           )}
         </div>
       </section>
-
-      <section className="relative grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {sortedProducts.map((item, i) => (
-          <Link
-            key={item?.id}
-            className="relative mt-1"
-            href={`/${
-              product_type == "brand" ? "brand" : "category"
-            }/${categoryId}/product/${item?.id}`}
-          >
-            <CardComponent product={item} />
-          </Link>
-        ))}
-      </section>
+      {sortedProducts.length > 0 && sortedProducts ? (
+        <section className="relative grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {sortedProducts.map((item, i) => (
+            <Link
+              key={item?.id}
+              className="relative mt-1"
+              href={`/${
+                product_type == "brand" ? "brand" : "category"
+              }/${categoryId}/product/${item?.id}`}
+            >
+              <CardComponent product={item} />
+            </Link>
+          ))}
+        </section>
+      ) : (
+        <div>Товар недоступен.</div>
+      )}
 
       <section className="w-full">
         <PaginationComponent

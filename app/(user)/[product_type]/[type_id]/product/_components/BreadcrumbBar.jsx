@@ -21,8 +21,16 @@ export function BreadcrumbBarProduct({ productData }) {
           <Slash />
         </BreadcrumbSeparator>
         <BreadcrumbItem>
-          <Link href={`/category/${productData?.category?.id}`}>
+          <Link href={`/podCategory/${productData?.bottom_category?.id}`}>
             {productData?.category?.name}
+          </Link>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator>
+          <Slash />
+        </BreadcrumbSeparator>
+        <BreadcrumbItem>
+          <Link href={`/podCategory/${productData?.bottom_category?.id}`}>
+            {productData?.bottom_category?.name}
           </Link>
         </BreadcrumbItem>
         <BreadcrumbSeparator>

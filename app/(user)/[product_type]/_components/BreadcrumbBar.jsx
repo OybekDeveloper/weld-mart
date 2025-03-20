@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/breadcrumb";
 import Link from "next/link";
 
-export function BreadcrumbBar({ typeData }) {
+export function BreadcrumbBar({ typeData, product_type }) {
   return (
     <Breadcrumb className="z-10 relative">
       <BreadcrumbList>
@@ -20,13 +20,23 @@ export function BreadcrumbBar({ typeData }) {
         <BreadcrumbSeparator>
           <Slash />
         </BreadcrumbSeparator>
+        {product_type == "podCategory" ? (
+          <>
+            <BreadcrumbItem>{typeData?.category?.name}</BreadcrumbItem>
+            <BreadcrumbSeparator>
+              <Slash />
+            </BreadcrumbSeparator>
+            <BreadcrumbItem>{typeData?.name} </BreadcrumbItem>
+          </>
+        ) : (
+          <BreadcrumbItem>{typeData?.name} </BreadcrumbItem>
+        )}
         {/* <BreadcrumbItem>
           <BreadcrumbLink href="/category">Каталог</BreadcrumbLink>
         </BreadcrumbItem> */}
         {/* <BreadcrumbSeparator>
           <Slash />
         </BreadcrumbSeparator> */}
-        <BreadcrumbItem>{typeData?.name} </BreadcrumbItem>
       </BreadcrumbList>
     </Breadcrumb>
   );

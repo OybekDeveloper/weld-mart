@@ -37,7 +37,7 @@ export default async function UserRoot() {
         sidebarBottom={true}
       />
       <main className="w-full flex-1 lg:max-w-[calc(100vw-340px)] 2xl:max-w-[1100px] lg:pl-5 space-y-5 md:space-y-8 lg:space-y-10">
-        <Banner banners={banners} />
+        {banners.length > 0 && <Banner banners={banners} />}
         <InfinityCards brands={brands} />
         <Categories productsData={products?.products} />
         {news.length > 0 && <News news={news} />}

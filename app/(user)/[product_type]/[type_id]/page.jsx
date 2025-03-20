@@ -16,13 +16,23 @@ export default async function BrandPage({ searchParams, params }) {
       getData("/api/categories", "category"),
       getData(
         `/api/products?limit=${limit}&skip=${skip}&${
-          product_type == "brand" ? "brand_id" : "category_id"
+          product_type == "brand"
+            ? "brand_id"
+            : product_type == "podCategory"
+            ? "bottom_category_id"
+            : "category_id"
         }=${type_id}`,
         "product"
       ),
       getData("/api/brands", "brand"),
       getData(
-        `/api/${product_type == "brand" ? "brands" : "categories"}/${type_id}`,
+        `/api/${
+          product_type == "brand"
+            ? "brands"
+            : product_type == "podCategory"
+            ? "bottomCategories"
+            : "categories"
+        }/${type_id}`,
         product_type
       ),
       getData("/api/products", "product"),
@@ -31,7 +41,7 @@ export default async function BrandPage({ searchParams, params }) {
   return (
     <Container className="font-montserrat w-full flex-col relative flex justify-start items-start gap-3">
       <div className="w-11/12 mx-auto bg-white z-20">
-        <BreadcrumbBar typeData={typeData} />
+        <BreadcrumbBar product_type={product_type} typeData={typeData} />
       </div>
       <div className="relative w-11/12 mx-auto h-full flex justify-start items-start">
         <Sidebar

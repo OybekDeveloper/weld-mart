@@ -22,19 +22,19 @@ export default function UserInfo() {
   const router = useRouter();
 
   const handleLogout = () => {
-    logout(); // `auth` state'ni va cookie'ni tozalash
-    router.push("/"); // Bosh sahifaga yo‘naltirish
+    logout(); // Очистка состояния `auth` и cookies
+    router.push("/"); // Перенаправление на главную страницу
   };
 
   return (
     <section className="w-full space-y-3">
       <h1 className="textNormal5 font-medium">Аккаунт</h1>
       <div>
-        <Label>Исм</Label>
+        <Label>Имя</Label>
         <Input readOnly value={auth?.name || ""} type="text" />
       </div>
       <div>
-        <Label>Телефон рақами</Label>
+        <Label>Номер телефона</Label>
         <Input readOnly value={auth?.phone || ""} type="text" />
       </div>
       <div>
@@ -46,12 +46,12 @@ export default function UserInfo() {
         />
       </div>
 
-      {/* Logout tugmasi */}
+      {/* Кнопка выхода */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger>
           <DialogTitle className="">
             <div className="bg-primary px-4 py-3 rounded-md textSmall3 hover:bg-primary text-white hover:opacity-75 duration-200">
-              Аккаунтдан чиқиш
+              Выйти из аккаунта
             </div>
           </DialogTitle>
           <DialogDescription className="hidden"></DialogDescription>
@@ -59,15 +59,15 @@ export default function UserInfo() {
         <DialogContent>
           <DialogHeader>
             <h2 className="text-lg font-semibold">
-              Ростдан ҳам чиқмоқчимисиз?
+              Вы действительно хотите выйти?
             </h2>
           </DialogHeader>
           <div className="flex justify-end space-x-2">
             <Button variant="outline" onClick={() => setOpen(false)}>
-              Йўқ
+              Нет
             </Button>
             <Button variant="destructive" onClick={handleLogout}>
-              Ҳа
+              Да
             </Button>
           </div>
         </DialogContent>

@@ -82,7 +82,7 @@ export default function CardComponent({ product }) {
       </CardHeader>
       <CardContent className="p-1 flex-grow">
         <main className="p-0 text-black/80 space-y-1 sm:space-y-2 flex flex-col h-full">
-          <div className="relative aspect-[4/3] bg-[#EAEAEA] rounded-md overflow-hidden">
+          <div className="relative aspect-[4/3] bg-transparent border rounded-md overflow-hidden">
             <CustomImage
               src={product?.images[0] || "/product.svg"}
               alt="изображение"

@@ -9,7 +9,7 @@ export default function InfinityCards({ brands }) {
   const brandsData = brands.brands;
   const router = useRouter();
   return (
-    <Marquee pauseOnHover className="[--duration:120s] gap-3">
+    <Marquee pauseOnHover className="[--duration:60s] gap-3">
       {brandsData?.map((card, index) => (
         <div
           onClick={() => router.push(`/brand/${card?.id}`)}

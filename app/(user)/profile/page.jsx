@@ -19,7 +19,7 @@ export default async function Profile() {
         data={[
           {
             href: "/",
-            name: "Бош саҳифа",
+            name: "Главная страница",
           },
           {
             name: "Профиле",

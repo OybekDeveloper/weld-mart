@@ -1,4 +1,3 @@
-// Sidebar.jsx
 "use client";
 import emblaCarouselAutoplay from "embla-carousel-autoplay";
 import React, { useState, useEffect } from "react";
@@ -11,7 +10,7 @@ import {
 } from "@/components/ui/accordion";
 import { cn, socialMedias, truncateText } from "@/lib/utils";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 import {
   Carousel,
@@ -37,7 +36,7 @@ export default function Sidebar({
 
   const [activeCategory, setActiveCategory] = useState(null);
   const [defaultValue, setDefaultValue] = useState([]);
-
+  const router = useRouter();
   // Filter products with rating of 5 and take first 4
   const featuredProducts =
     allProducts?.filter((product) => product?.rating === 5).slice(0, 4) || [];
@@ -71,9 +70,12 @@ export default function Sidebar({
           onValueChange={setDefaultValue}
         >
           <AccordionItem
-            onClick={handleClose}
+            onClick={() => {
+              handleClose();
+              router.push("/");
+            }}
             value="category-3"
-            className="border-b-[1px] py-2 hover:text-primary"
+            className="cursor-pointer border-b-[1px] py-2 hover:text-primary"
           >
             <Link href="/" className="px-2 font-medium">
               Главная страница
@@ -89,29 +91,67 @@ export default function Sidebar({
             >
               <main className="pl-4 flex flex-col gap-2">
                 {categoriesData?.map((category, idx) => (
-                  <Link
-                    href={`/category/${category?.id}`}
+                  <Accordion
                     key={idx}
-                    onClick={() => {
-                      handleClose();
-                      setActiveCategory(category.id);
-                    }}
-                    className={cn(
-                      "w-full flex justify-start items-center gap-1 border-b-[1px] py-2 transition-all duration-150 ease-linear hover:text-primary",
-                      category.id == (activeCategory || id) &&
-                        product_type == "category" &&
-                        "text-primary font-bold"
-                    )}
+                    type="single"
+                    collapsible
+                    className="w-full"
                   >
-                    <Image
-                      src={category.image}
-                      width={50}
-                      loading="eager"
-                      height={50}
-                      alt={category.name}
-                    />
-                    {category.name}
-                  </Link>
+                    <AccordionItem
+                      value={`category-${category.id}`}
+                      className="border-none"
+                    >
+                      <AccordionTrigger
+                        className={cn(
+                          "pl-2 py-2 hover:text-primary font-medium flex justify-between items-center w-full transition-all duration-150 ease-linear",
+                          category.id == (activeCategory || id) &&
+                            product_type == "category" &&
+                            "text-primary font-bold"
+                        )}
+                        onClick={() => {
+                          setActiveCategory(category.id);
+                        }}
+                      >
+                        <div className="flex items-center gap-1">
+                          <Image
+                            src={category.image}
+                            width={50}
+                            loading="eager"
+                            height={50}
+                            alt={category.name}
+                          />
+                          {category.name}
+                        </div>
+                      </AccordionTrigger>
+                      {category.bottom_categories?.length > 0 && (
+                        <AccordionContent className="pl-8">
+                          <div className="flex flex-col gap-2">
+                            {category.bottom_categories.map((subCategory) => (
+                              <Link
+                                key={subCategory.id}
+                                href={`/podCategory/${subCategory.id}`}
+                                onClick={handleClose}
+                                className={`flex justify-start gap-2 items-center hover:text-primary transition-all duration-150 ease-linear border-b-[1px] py-3 ${
+                                  subCategory.id == id &&
+                                  product_type == "podCategory" &&
+                                  "text-primary font-bold"
+                                }`}
+                              >
+                                <Image
+                                  src={subCategory?.image}
+                                  width={50}
+                                  loading="eager"
+                                  height={50}
+                                  alt={category.name}
+                                />
+                                {subCategory.name}
+                              </Link>
+                            ))}
+                          </div>
+                        </AccordionContent>
+                      )}
+                    </AccordionItem>
+                  </Accordion>
                 ))}
               </main>
             </AccordionContent>
@@ -151,27 +191,36 @@ export default function Sidebar({
             </AccordionContent>
           </AccordionItem>
           <AccordionItem
-            onClick={handleClose}
+            onClick={() => {
+              handleClose();
+              router.push("/news");
+            }}
             value="category-3"
-            className="w-full border-b-[1px] py-2 hover:text-primary"
+            className="cursor-pointer w-full border-b-[1px] py-2 hover:text-primary"
           >
             <Link href="/news" className="w-full px-2 font-medium">
               Новости
             </Link>
           </AccordionItem>
           <AccordionItem
-            onClick={handleClose}
+            onClick={() => {
+              handleClose();
+              router.push("/contact");
+            }}
             value="category-3"
-            className="w-full border-b-[1px] py-2 hover:text-primary"
+            className="cursor-pointer w-full border-b-[1px] py-2 hover:text-primary"
           >
             <Link href="/contact" className="w-full px-2 font-medium">
               Контакты
             </Link>
           </AccordionItem>
           <AccordionItem
-            onClick={handleClose}
+            onClick={() => {
+              handleClose();
+              router.push("/about-us");
+            }}
             value="category-3"
-            className="w-full border-b-[1px] py-2 hover:text-primary"
+            className="cursor-pointer w-full border-b-[1px] py-2 hover:text-primary"
           >
             <Link href="/about-us" className="w-full px-2 font-medium">
               О нас
@@ -192,7 +241,7 @@ export default function Sidebar({
               }),
             ]}
             opts={{
-              loop: true, // Loopni qo'shish
+              loop: true,
               align: "center",
             }}
           >

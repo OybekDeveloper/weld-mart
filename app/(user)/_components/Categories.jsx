@@ -20,7 +20,7 @@ export default function Categories({ productsData }) {
         </h1>
         <Link
           className="textSmall2 flex justify-center items-center gap-1"
-          href={"/category/1"}
+          href={"/podCategory/2"}
         >
           Подробнее
           <ChevronRight size={18} />

@@ -15,7 +15,7 @@ import BreadcrumbComponent from "@/components/shared/BreadcrumbComponent";
 
 export default async function OrderPage({ params }) {
   const orderId = params?.order;
-  if (!orderId) return <div>Буюртма топилмади</div>;
+  if (!orderId) return <div>Заказ не найден</div>;
 
   const [orderData] = await Promise.all([
     getData(`/api/orders/${orderId}`, "order"),
@@ -24,12 +24,12 @@ export default async function OrderPage({ params }) {
   if (!orderData) {
     return (
       <div className="flex flex-col items-center justify-center h-screen">
-        <h2 className="text-2xl font-bold text-red-600">Буюртма топилмади</h2>
+        <h2 className="text-2xl font-bold text-red-600">Заказ не найден</h2>
         <Link
           href="/admin/orders"
           className="mt-4 text-blue-500 flex items-center"
         >
-          <ArrowLeft className="mr-2 h-4 w-4" /> Орқага қайтиш
+          <ArrowLeft className="mr-2 h-4 w-4" /> Вернуться назад
         </Link>
       </div>
     );
@@ -46,49 +46,76 @@ export default async function OrderPage({ params }) {
     inn,
     comment,
     order_items,
+    status, // Предполагается, что статус есть в данных заказа
   } = orderData;
 
+  const getStatusDisplay = (status) => {
+    switch (status) {
+      case "new":
+        return (
+          <span className="bg-green-100 text-green-800 px-2 py-1 rounded">
+            Новый заказ
+          </span>
+        );
+      case "created":
+        return (
+          <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded">
+            Заказ принят
+          </span>
+        );
+      case "finished":
+        return (
+          <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded">
+            Заказ завершен
+          </span>
+        );
+      default:
+        return (
+          <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded">
+            Неизвестно
+          </span>
+        );
+    }
+  };
+
   return (
-    <div className="w-10/12 mx-auto">
-      {/* Back Button */}
+    <div className="w-11/12 mx-auto">
+      {/* Кнопка возврата */}
       <BreadcrumbComponent
         data={[
           {
             href: "/",
-            name: "Бош саҳифа",
+            name: "Главная страница",
           },
           {
-            name: "Профиле",
+            name: "Профиль",
             href: "/profile",
           },
-
           {
-            name: `Буюртма #${orderId}`,
+            name: `Заказ #${orderId}`,
             href: `/profile/${orderId}`,
           },
         ]}
       />
 
-      {/* Order Summary Card */}
-      <Card className="mb-8">
-        <CardHeader>
-          <CardTitle className="text-3xl font-bold">
-            Буюртма #{orderId} -{" "}
-            {order_type === "individual" ? "Жисмоний шахс" : "Юридик шахс"}
+      {/* Карточка с общей информацией о заказе */}
+      <Card className="mb-8 pt-6">
+        <CardHeader className="p-0">
+          <CardTitle className="text-2xl md:text-3xl font-bold p-0">
+            Заказ #{orderId} -{" "}
+            {order_type === "individual"
+              ? "Физическое лицо"
+              : "Юридическое лицо"}
           </CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <p className="text-sm text-gray-500">Фойдаланувчи ID</p>
-            <p className="text-lg font-semibold">{user_id}</p>
-          </div>
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6 p-0">
           <div>
             <p className="text-sm text-gray-500">Телефон</p>
             <p className="text-lg font-semibold">{phone || "-"}</p>
           </div>
           <div>
             <p className="text-sm text-gray-500">
-              {order_type === "individual" ? "Исм" : "Ташкилот"}
+              {order_type === "individual" ? "Имя" : "Организация"}
             </p>
             <p className="text-lg font-semibold">
               {order_type === "individual" ? name : organization || "-"}
@@ -101,41 +128,43 @@ export default async function OrderPage({ params }) {
             </div>
           )}
           <div>
-            <p className="text-sm text-gray-500">Жами нарх</p>
+            <p className="text-sm text-gray-500">Общая стоимость</p>
             <p className="text-lg font-semibold">
-              {price.toLocaleString()} сўм
+              {price.toLocaleString()} сум
             </p>
           </div>
           <div>
             <p className="text-sm text-gray-500">Бонус</p>
             <p className="text-lg font-semibold">
-              {bonus.toLocaleString()} сўм
+              {bonus.toLocaleString()} сум
             </p>
           </div>
+          <div>
+            <p className="text-sm text-gray-500">Статус</p>
+            <p className="text-lg font-semibold">{getStatusDisplay(status)}</p>
+          </div>
           <div className="col-span-full">
-            <p className="text-sm text-gray-500">Изоҳ</p>
-            <p className="text-lg">{comment || "Изоҳ мавjуд эмас"}</p>
+            <p className="text-sm text-gray-500">Комментарий</p>
+            <p className="text-lg">{comment || "Комментария нет"}</p>
           </div>
         </CardContent>
       </Card>
 
-      {/* Order Items Table */}
+      {/* Таблица товаров заказа */}
       <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold">
-            Буюртма маҳсулотлари
-          </CardTitle>
+        <CardHeader className="p-0">
+          <CardTitle className="text-2xl font-bold">Товары заказа</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Расм</TableHead>
+                <TableHead>Изображение</TableHead>
                 <TableHead>ID</TableHead>
-                <TableHead>Номи</TableHead>
-                <TableHead>Миқдор</TableHead>
-                <TableHead>Нарх</TableHead>
-                <TableHead>Жами</TableHead>
+                <TableHead>Название</TableHead>
+                <TableHead>Количество</TableHead>
+                <TableHead>Цена</TableHead>
+                <TableHead>Итого</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -146,7 +175,7 @@ export default async function OrderPage({ params }) {
                     <TableCell>
                       <Image
                         src={productImage}
-                        alt={item?.name || `Маҳсулот #${item.product_id}`}
+                        alt={item?.name || `Товар #${item.product_id}`}
                         width={64}
                         height={64}
                         className="rounded-md object-cover"
@@ -155,10 +184,10 @@ export default async function OrderPage({ params }) {
                     <TableCell>{item.id}</TableCell>
                     <TableCell>{item?.name}</TableCell>
                     <TableCell>{item.order_quantity}</TableCell>
-                    <TableCell>{item?.price.toLocaleString()} сўм</TableCell>
+                    <TableCell>{item?.price.toLocaleString()} сум</TableCell>
                     <TableCell>
                       {(item?.price * item?.order_quantity).toLocaleString()}{" "}
-                      сўм
+                      сум
                     </TableCell>
                   </TableRow>
                 );

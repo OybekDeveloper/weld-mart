@@ -34,6 +34,7 @@ export default function Sidebar() {
       subItems: [
         { label: "Товары", path: "/admin/products" },
         { label: "Каталог", path: "/admin/categories" },
+        { label: "Нижняя категория", path: "/admin/bottomCategory" },
         { label: "Бренды", path: "/admin/brands" },
         { label: "Баннеры", path: "/admin/banners" },
       ],

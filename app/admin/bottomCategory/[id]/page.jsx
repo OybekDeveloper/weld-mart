@@ -16,86 +16,117 @@ import {
   FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { getData } from "@/actions/get";
 import { Loader2, CloudUpload, X } from "lucide-react";
 import { FileUploader, FileInput } from "@/components/ui/file-uploader";
 import { useRouter } from "next/navigation";
 import { backUrl } from "@/lib/utils";
-import SubmitButton from "@/components/shared/submitButton";
+import { Textarea } from "@/components/ui/textarea";
 import { postData } from "@/actions/post";
 import { putData } from "@/actions/put";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 
 const formSchema = z.object({
-  title: z.string().min(1, "Заголовок обязателен"),
+  name: z.string().min(1, "Название обязательно"),
   description: z.string().min(1, "Описание обязательно"),
-  image: z.string().url("Неверный формат URL").min(1, "Изображение обязательно"),
+  image: z
+    .string()
+    .url("Неверный формат URL")
+    .min(1, "Изображение обязательно"),
+  category_id: z.string().min(1, "ID категории обязателен"),
 });
 
-export default function AchievementEvent({ params }) {
-  const { id } = use(params);
+export default function BottomCategoryEvent({ params }) {
+  const { id: categoryId } = use(params);
   const router = useRouter();
-  const isAddMode = id === "add";
+  const isAddMode = categoryId === "add";
   const [isLoading, setIsLoading] = useState(!isAddMode);
   const [imagePreview, setImagePreview] = useState(null);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [currentUrlInput, setCurrentUrlInput] = useState("");
+  const [categories, setCategories] = useState([]);
+  const [categorySearch, setCategorySearch] = useState("");
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      title: "",
+      name: "",
       description: "",
       image: "",
+      category_id: "",
     },
   });
 
   const dropZoneConfig = {
-    accept: {
-      "image/*": [".webp", ".svg", ".png", ".jpg", ".jpeg", ".gif"],
-    },
+    accept: { "image/*": [".svg", ".png", ".jpg", ".jpeg", ".gif"] },
     multiple: false,
     maxFiles: 1,
     maxSize: 4 * 1024 * 1024,
   };
 
   useEffect(() => {
-    if (!isAddMode && id) {
-      const fetchAchievement = async () => {
+    const fetchCategories = async () => {
+      try {
+        const response = await getData("/api/categories", "category");
+        setCategories(response.categories || []);
+      } catch (error) {
+        console.error("Failed to fetch categories", error);
+        toast.error("Не удалось загрузить категории");
+      }
+    };
+
+    const fetchBottomCategory = async () => {
+      if (!isAddMode && categoryId) {
         try {
           setIsLoading(true);
-          const achievement = await getData(
-            `/api/achievements/${id}`,
-            "achievement"
+          const category = await getData(
+            `/api/bottomCategories/${categoryId}`,
+            "bottom-category"
           );
           form.reset({
-            title: achievement?.title || "",
-            description: achievement?.description || "",
-            image: achievement?.image || "",
+            name: category?.name || "",
+            description: category?.description || "",
+            image: category?.image || "",
+            category_id: category?.category_id?.toString() || "",
           });
-          if (achievement?.image) {
+          if (category?.image) {
             setImagePreview({
-              url: achievement.image,
-              preview: achievement.image,
+              url: category.image,
+              preview: category.image,
               isUploaded: true,
             });
           }
         } catch (error) {
-          console.error("Не удалось загрузить достижение", error);
-          toast.error("Не удалось загрузить данные о достижении.");
+          console.error("Failed to fetch bottom category", error);
+          toast.error("Не удалось загрузить данные подкатегории.");
         } finally {
           setIsLoading(false);
         }
-      };
-      fetchAchievement();
-    } else {
-      setIsLoading(false);
-    }
-  }, [id, isAddMode, form]);
+      } else {
+        setIsLoading(false);
+      }
+    };
+
+    fetchCategories();
+    fetchBottomCategory();
+  }, [categoryId, isAddMode, form]);
 
   const uploadImage = async (file) => {
     const formData = new FormData();
-    formData.append("image", file, "achievement.webp");
+    formData.append("image", file, "bottom-category.webp");
 
     const requestOptions = {
       method: "POST",
@@ -105,23 +136,23 @@ export default function AchievementEvent({ params }) {
 
     const response = await fetch(`${backUrl}/upload`, requestOptions);
     if (!response.ok) {
-      throw new Error(`Ошибка загрузки изображения! статус: ${response.status}`);
+      throw new Error(`Image upload failed! status: ${response.status}`);
     }
     const result = await response.json();
     return `${backUrl}${result.path}`;
   };
 
-  const handleFileUpload = async (uploadedFiles) => {
-    if (uploadedFiles && uploadedFiles.length > 0) {
+  const handleFileUpload = async (newFiles) => {
+    if (newFiles && newFiles.length > 0) {
       try {
-        const file = uploadedFiles[0];
+        const file = newFiles[0];
         const preview = URL.createObjectURL(file);
         const url = await uploadImage(file);
         const newImage = { url, preview, isUploaded: true };
         setImagePreview(newImage);
         form.setValue("image", url);
       } catch (error) {
-        console.error("Ошибка загрузки изображения:", error);
+        console.error("Image upload failed:", error);
         toast.error("Не удалось загрузить изображение");
       }
     }
@@ -129,7 +160,11 @@ export default function AchievementEvent({ params }) {
 
   const addUrl = () => {
     if (currentUrlInput) {
-      const newImage = { url: currentUrlInput, preview: currentUrlInput, isUploaded: true };
+      const newImage = {
+        url: currentUrlInput,
+        preview: currentUrlInput,
+        isUploaded: true,
+      };
       setImagePreview(newImage);
       form.setValue("image", currentUrlInput);
       setCurrentUrlInput("");
@@ -147,28 +182,38 @@ export default function AchievementEvent({ params }) {
   async function onSubmit(values) {
     try {
       setSubmitLoading(true);
+      console.log(values);
+
       let result;
       if (isAddMode) {
-        result = await postData(values, "/api/achievements", "achievement");
+        result = await postData(
+          { ...values, category_id: Number(values?.category_id) },
+          "/api/bottomCategories",
+          "bottom-category"
+        );
       } else {
-        result = await putData(values, `/api/achievements/${id}`, "achievement");
+        result = await putData(
+          { ...values, category_id: Number(values?.category_id) },
+          `/api/bottomCategories/${categoryId}`,
+          "bottom-category"
+        );
       }
 
-      if (result.error) {
-        toast.error(result.error);
-      } else if (!result.error && result) {
+      if (result && !result.error) {
         if (isAddMode) {
-          toast.success("Достижение успешно добавлено");
+          toast.success("Подкатегория успешно добавлена");
           form.reset();
           setImagePreview(null);
         } else {
-          toast.info("Достижение успешно обновлено");
+          toast.info("Подкатегория успешно обновлена");
         }
-        router.push("/admin/achievements");
+        router.push("/admin/bottomCategory");
+      } else if (result.error) {
+        toast.error(result.error);
       }
     } catch (error) {
-      console.error("Ошибка отправки формы:", error);
-      toast.error("Не удалось отправить форму. Пожалуйста, попробуйте снова.");
+      console.error("Form submission error:", error);
+      toast.error("Ошибка при отправке формы. Попробуйте еще раз.");
     } finally {
       setSubmitLoading(false);
     }
@@ -193,21 +238,21 @@ export default function AchievementEvent({ params }) {
       <div className="max-w-3xl mx-auto py-10">
         <h1 className="text-2xl font-bold mb-6">
           {isAddMode
-            ? "Добавить новое достижение"
-            : `Редактировать достижение (ID: ${id || "неизвестно"})`}
+            ? "Добавить новую подкатегорию"
+            : `Редактировать подкатегорию (ID: ${categoryId || "неизвестно"})`}
         </h1>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             <FormField
               control={form.control}
-              name="title"
+              name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Заголовок</FormLabel>
+                  <FormLabel>Название</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="Введите заголовок достижения"
+                      placeholder="Введите название подкатегории"
                       {...field}
                     />
                   </FormControl>
@@ -224,12 +269,74 @@ export default function AchievementEvent({ params }) {
                   <FormLabel>Описание</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Напишите описание"
+                      placeholder="Введите описание"
                       value={field.value}
                       onChange={field.onChange}
                       rows={5}
                       className="resize-y"
                     />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="category_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Категория</FormLabel>
+                  <FormControl>
+                    <Popover
+                      open={isPopoverOpen}
+                      onOpenChange={setIsPopoverOpen}
+                    >
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="w-full justify-between"
+                        >
+                          {field.value
+                            ? categories.find(
+                                (cat) => String(cat.id) === field.value
+                              )?.name || "Выберите категорию"
+                            : "Выберите категорию"}
+                          <span>▼</span>
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[200px] p-0">
+                        <Command>
+                          <CommandInput
+                            placeholder="Поиск..."
+                            onValueChange={setCategorySearch}
+                          />
+                          <CommandList>
+                            <CommandGroup>
+                              {categories
+                                .filter((category) =>
+                                  category.name
+                                    .toLowerCase()
+                                    .includes(categorySearch.toLowerCase())
+                                )
+                                .map((category) => (
+                                  <CommandItem
+                                    key={category.id}
+                                    value={String(category.id)}
+                                    onSelect={(value) => {
+                                      form.setValue("category_id", value);
+                                      field.onChange(value);
+                                      setIsPopoverOpen(false); // Close the popover
+                                    }}
+                                  >
+                                    {category.name}
+                                  </CommandItem>
+                                ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -260,7 +367,7 @@ export default function AchievementEvent({ params }) {
                               <span className="font-semibold">
                                 Нажмите для загрузки
                               </span>{" "}
-                              или перетащите изображение
+                              или перетащите
                             </p>
                             <p className="text-xs text-gray-500 dark:text-gray-400">
                               SVG, PNG, JPG или GIF (макс. 4MB)
@@ -312,13 +419,15 @@ export default function AchievementEvent({ params }) {
               )}
             />
 
-            <SubmitButton
-              className="w-full"
-              isLoading={submitLoading}
-              disabled={submitLoading}
-            >
-              {isAddMode ? "Добавить достижение" : "Обновить достижение"}
-            </SubmitButton>
+            <Button type="submit" className="w-full" disabled={submitLoading}>
+              {submitLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : isAddMode ? (
+                "Добавить подкатегорию"
+              ) : (
+                "Обновить подкатегорию"
+              )}
+            </Button>
           </form>
         </Form>
       </div>

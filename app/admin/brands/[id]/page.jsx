@@ -26,10 +26,10 @@ import { postData } from "@/actions/post";
 import { putData } from "@/actions/put";
 
 const formSchema = z.object({
-  name: z.string().min(1, "Номи талаб қилинади"),
-  country: z.string().min(1, "Мамлакат талаб қилинади"),
-  description: z.string().min(1, "Таснифи талаб қилинади"),
-  image: z.string().url("URL формати нотўғри").min(1, "Расм талаб қилинади"),
+  name: z.string().min(1, "Название обязательно"),
+  country: z.string().min(1, "Страна обязательна"),
+  description: z.string().min(1, "Описание обязательно"),
+  image: z.string().url("Неверный формат URL").min(1, "Изображение обязательно"),
 });
 
 export default function BrandEvent({ params }) {
@@ -78,8 +78,8 @@ export default function BrandEvent({ params }) {
             });
           }
         } catch (error) {
-          console.error("Failed to fetch brand", error);
-          toast.error("Бренд маълумотларини юклаш муваффақиятсиз бўлди.");
+          console.error("Ошибка при загрузке бренда", error);
+          toast.error("Не удалось загрузить данные бренда.");
         } finally {
           setIsLoading(false);
         }
@@ -102,7 +102,7 @@ export default function BrandEvent({ params }) {
 
     const response = await fetch(`${backUrl}/upload`, requestOptions);
     if (!response.ok) {
-      throw new Error(`Image upload failed! status: ${response.status}`);
+      throw new Error(`Ошибка загрузки изображения! статус: ${response.status}`);
     }
     const result = await response.json();
     return `${backUrl}${result.path}`;
@@ -118,8 +118,8 @@ export default function BrandEvent({ params }) {
         setImagePreview(newImage);
         form.setValue("image", url);
       } catch (error) {
-        console.error("Image upload failed:", error);
-        toast.error("Расмни юклаш муваффақиятсиз бўлди");
+        console.error("Ошибка загрузки изображения:", error);
+        toast.error("Не удалось загрузить изображение");
       }
     }
   };
@@ -153,19 +153,19 @@ export default function BrandEvent({ params }) {
 
       if (result && !result.error) {
         if (isAddMode) {
-          toast.success("Бренд мувофаққиятли қўшилди");
+          toast.success("Бренд успешно добавлен");
           form.reset();
           setImagePreview(null);
         } else {
-          toast.info("Бренд мувофаққиятли янгиланди");
+          toast.info("Бренд успешно обновлен");
         }
         router.push("/admin/brands");
       } else if (result.error) {
         toast.error(result.error);
       }
     } catch (error) {
-      console.error("Form submission error:", error);
-      toast.error("Форма юборилмади. Қайта уриниб кўринг.");
+      console.error("Ошибка отправки формы:", error);
+      toast.error("Форма не отправлена. Попробуйте снова.");
     } finally {
       setSubmitLoading(false);
     }
@@ -185,13 +185,13 @@ export default function BrandEvent({ params }) {
         onClick={() => window.history.back()}
         className="hover:bg-primary hover:opacity-75"
       >
-        Орқага қайтиш
+        Вернуться назад
       </Button>
       <div className="max-w-3xl mx-auto py-10">
         <h1 className="text-2xl font-bold mb-6">
           {isAddMode
-            ? "Янги бренд қўшиш"
-            : `Брендни таҳрирлаш (ID: ${brandId || "номаълум"})`}
+            ? "Добавить новый бренд"
+            : `Редактировать бренд (ID: ${brandId || "неизвестно"})`}
         </h1>
 
         <Form {...form}>
@@ -201,9 +201,9 @@ export default function BrandEvent({ params }) {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Номи</FormLabel>
+                  <FormLabel>Название</FormLabel>
                   <FormControl>
-                    <Input placeholder="Бренд номини киритинг" {...field} />
+                    <Input placeholder="Введите название бренда" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -215,9 +215,9 @@ export default function BrandEvent({ params }) {
               name="country"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Мамлакат</FormLabel>
+                  <FormLabel>Страна</FormLabel>
                   <FormControl>
-                    <Input placeholder="Мамлакатни киритинг" {...field} />
+                    <Input placeholder="Введите страну" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -229,10 +229,10 @@ export default function BrandEvent({ params }) {
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Таснифи</FormLabel>
+                  <FormLabel>Описание</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Таснифи ёзинг"
+                      placeholder="Напишите описание"
                       value={field.value}
                       onChange={field.onChange}
                       rows={5}
@@ -249,7 +249,7 @@ export default function BrandEvent({ params }) {
               name="image"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Расм</FormLabel>
+                  <FormLabel>Изображение</FormLabel>
                   <FormControl>
                     <div className="space-y-4">
                       <FileUploader
@@ -266,12 +266,12 @@ export default function BrandEvent({ params }) {
                             <CloudUpload className="text-gray-500 w-10 h-10" />
                             <p className="mb-1 text-sm text-gray-500 dark:text-gray-400">
                               <span className="font-semibold">
-                                Юклаш учун босинг
+                                Нажмите для загрузки
                               </span>{" "}
-                              ёки судраб туширинг
+                              или перетащите сюда
                             </p>
                             <p className="text-xs text-gray-500 dark:text-gray-400">
-                              SVG, PNG, JPG ёки GIF (макс 4MB)
+                              SVG, PNG, JPG или GIF (макс. 4MB)
                             </p>
                           </div>
                         </FileInput>
@@ -288,7 +288,7 @@ export default function BrandEvent({ params }) {
                           onClick={addUrl}
                           disabled={!currentUrlInput}
                         >
-                          URL қўшиш
+                          Добавить URL
                         </Button>
                       </div>
 
@@ -313,7 +313,7 @@ export default function BrandEvent({ params }) {
                     </div>
                   </FormControl>
                   <FormDescription>
-                    Бир расмни юкланг ёки URL киритинг (мажбурий).
+                    Загрузите одно изображение или введите URL (обязательно).
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -324,9 +324,9 @@ export default function BrandEvent({ params }) {
               {submitLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : isAddMode ? (
-                "Бренд қўшиш"
+                "Добавить бренд"
               ) : (
-                "Брендни янгилаш"
+                "Обновить бренд"
               )}
             </Button>
           </form>

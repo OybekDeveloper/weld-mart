@@ -15,7 +15,6 @@ import {
   FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Editor } from "@tinymce/tinymce-react";
 import { getData } from "@/actions/get";
 import { Rating } from "@/components/ui/rating";
 import { Loader2, CloudUpload, X } from "lucide-react";
@@ -52,11 +51,12 @@ const formSchema = z.object({
     .min(1, "Требуется хотя бы одно изображение")
     .max(3, "Максимум 3 изображения"),
   price: z.number().min(0, "Цена не может быть отрицательной"),
-  info: z.string().min(1, "Информация обязательна"),
-  feature: z.string().min(1, "Характеристики обязательны"),
-  guarantee: z.string().min(1, "Гарантия обязательна"),
-  discount: z.string().min(1, "Скидка обязательна"),
+  info: z.string().min(1, "Информация обязательна").optional(),
+  feature: z.string().min(1, "Характеристики обязательны").optional(),
+  guarantee: z.string().min(1, "Гарантия обязательна").optional(),
+  discount: z.string().min(1, "Скидка обязательна").optional(),
   category_id: z.string().min(1, "Категория обязательна"),
+  bottom_category_id: z.string().min(1, "Подкатегория обязательна"),
   brand_id: z.string().min(1, "Бренд обязателен"),
 });
 
@@ -66,12 +66,18 @@ export default function ProductEvent({ params }) {
   const isAddMode = id === "add";
   const [isLoading, setIsLoading] = useState(!isAddMode);
   const [categories, setCategories] = useState([]);
+  const [allBottomCategories, setAllBottomCategories] = useState([]);
+  const [filteredBottomCategories, setFilteredBottomCategories] = useState([]);
   const [brands, setBrands] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
   const [categorySearch, setCategorySearch] = useState("");
+  const [bottomCategorySearch, setBottomCategorySearch] = useState("");
   const [brandSearch, setBrandSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [currentUrlInput, setCurrentUrlInput] = useState("");
+  const [isCategoryPopoverOpen, setIsCategoryPopoverOpen] = useState(false);
+  const [isBottomCategoryPopoverOpen, setIsBottomCategoryPopoverOpen] = useState(false);
+  const [isBrandPopoverOpen, setIsBrandPopoverOpen] = useState(false);
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -82,23 +88,15 @@ export default function ProductEvent({ params }) {
       description: "",
       images: [],
       price: "",
-      info: "",
-      feature: "",
-      guarantee: "",
-      discount: "",
+      info: "-",
+      feature: "-",
+      guarantee: "-",
+      discount: "0",
       category_id: "",
+      bottom_category_id: "",
       brand_id: "",
     },
   });
-
-  const editorConfig = {
-    height: 300,
-    menubar: false,
-    toolbar:
-      "undo redo | formatselect | bold italic underline | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image | code",
-    content_style:
-      "body { font-family:Helvetica,Arial,sans-serif; font-size:14px }",
-  };
 
   const dropZoneConfig = {
     accept: { "image/*": [".webp", ".svg", ".png", ".jpg", ".jpeg", ".gif"] },
@@ -108,8 +106,22 @@ export default function ProductEvent({ params }) {
   };
 
   useEffect(() => {
-    if (!isAddMode && id !== "add") {
-      const fetchProduct = async () => {
+    const fetchInitialData = async () => {
+      try {
+        const categoryData = await getData("/api/categories", "category");
+        const bottomData = await getData("/api/bottomCategories", "bottom-category");
+        const brandData = await getData("/api/brands", "brand");
+        setCategories(categoryData?.categories || []);
+        setAllBottomCategories(bottomData?.bottom_categories || []);
+        setBrands(brandData?.brands || []);
+      } catch (error) {
+        console.error("Failed to fetch initial data:", error);
+        toast.error("Не удалось загрузить категории, подкатегории или бренды.");
+      }
+    };
+
+    const fetchProduct = async () => {
+      if (!isAddMode && id !== "add") {
         try {
           setIsLoading(true);
           const product = await getData(`/api/products/${id}`, "product");
@@ -125,6 +137,7 @@ export default function ProductEvent({ params }) {
             guarantee: product.guarantee || "",
             discount: product.discount || "",
             category_id: String(product.category_id) || "",
+            bottom_category_id: String(product.bottom_category_id) || "",
             brand_id: String(product.brand_id) || "",
           });
           if (product?.images && product.images.length > 0) {
@@ -142,27 +155,33 @@ export default function ProductEvent({ params }) {
         } finally {
           setIsLoading(false);
         }
-      };
-      fetchProduct();
-    } else {
-      setIsLoading(false);
-    }
-  }, [id, isAddMode, form]);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const category = await getData("/api/categories", "category");
-        const brand = await getData("/api/brands", "brand");
-        setCategories(category?.categories || []);
-        setBrands(brand?.brands || []);
-      } catch (error) {
-        console.error("Failed to fetch categories or brands:", error);
-        toast.error("Не удалось загрузить категории или бренды.");
+      } else {
+        setIsLoading(false);
       }
     };
-    fetchData();
-  }, []);
+
+    fetchInitialData();
+    fetchProduct();
+  }, [id, isAddMode, form]);
+
+  // Filter BottomCategories when Category changes
+  useEffect(() => {
+    const categoryId = form.getValues("category_id");
+    if (categoryId) {
+      const filtered = allBottomCategories.filter(
+        (bc) => String(bc.category_id) === categoryId
+      );
+      setFilteredBottomCategories(filtered);
+      // Reset bottom_category_id if it's not in the filtered list
+      const currentBottomId = form.getValues("bottom_category_id");
+      if (currentBottomId && !filtered.some((bc) => String(bc.id) === currentBottomId)) {
+        form.setValue("bottom_category_id", "");
+      }
+    } else {
+      setFilteredBottomCategories([]);
+      form.setValue("bottom_category_id", "");
+    }
+  }, [form.watch("category_id"), allBottomCategories]);
 
   const uploadImage = async (file) => {
     const formdata = new FormData();
@@ -239,8 +258,8 @@ export default function ProductEvent({ params }) {
       ...values,
       brand_id: Number(values.brand_id),
       category_id: Number(values.category_id),
+      bottom_category_id: Number(values.bottom_category_id),
     };
-    console.log({ data });
 
     try {
       setLoading(true);
@@ -250,7 +269,6 @@ export default function ProductEvent({ params }) {
       } else {
         result = await putData(data, `/api/products/${id}`, "product");
       }
-      console.log(result);
 
       if (result && !result.error) {
         if (isAddMode) {
@@ -258,8 +276,6 @@ export default function ProductEvent({ params }) {
         } else {
           toast.info("Продукт успешно обновлен");
         }
-        console.log(data);
-
         setImagePreviews([]);
         form.reset();
         router.push("/admin/products");
@@ -273,11 +289,10 @@ export default function ProductEvent({ params }) {
       setLoading(false);
     }
   }
+
   const handleContentChange = (reason, name) => {
     form.setValue(name, reason);
   };
-
-  console.log(form.getValues());
 
   if (isLoading) {
     return (
@@ -553,7 +568,10 @@ export default function ProductEvent({ params }) {
                 <FormItem>
                   <FormLabel>Категория</FormLabel>
                   <FormControl>
-                    <Popover>
+                    <Popover
+                      open={isCategoryPopoverOpen}
+                      onOpenChange={setIsCategoryPopoverOpen}
+                    >
                       <PopoverTrigger asChild>
                         <Button
                           variant="outline"
@@ -561,7 +579,7 @@ export default function ProductEvent({ params }) {
                         >
                           {field.value
                             ? categories.find(
-                                (cat) => String(cat.id) == field.value
+                                (cat) => String(cat.id) === field.value
                               )?.name || "Выберите категорию"
                             : "Выберите категорию"}
                           <span>▼</span>
@@ -574,7 +592,6 @@ export default function ProductEvent({ params }) {
                             onValueChange={setCategorySearch}
                           />
                           <CommandList>
-                            <CommandEmpty>Категории не найдены.</CommandEmpty>
                             <CommandGroup>
                               {categories
                                 .filter((category) =>
@@ -588,6 +605,7 @@ export default function ProductEvent({ params }) {
                                     value={String(category.id)}
                                     onSelect={(value) => {
                                       field.onChange(value);
+                                      setIsCategoryPopoverOpen(false);
                                     }}
                                   >
                                     {category.name}
@@ -606,12 +624,80 @@ export default function ProductEvent({ params }) {
 
             <FormField
               control={form.control}
+              name="bottom_category_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Подкатегория</FormLabel>
+                  <FormControl>
+                    <Popover
+                      open={isBottomCategoryPopoverOpen}
+                      onOpenChange={setIsBottomCategoryPopoverOpen}
+                    >
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="w-full justify-between"
+                          disabled={!form.getValues("category_id")}
+                        >
+                          {field.value
+                            ? filteredBottomCategories.find(
+                                (bc) => String(bc.id) === field.value
+                              )?.name || "Выберите подкатегорию"
+                            : "Выберите подкатегорию"}
+                          <span>▼</span>
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[200px] p-0">
+                        <Command>
+                          <CommandInput
+                            placeholder="Поиск..."
+                            onValueChange={setBottomCategorySearch}
+                          />
+                          <CommandList>
+                            <CommandGroup>
+                              {filteredBottomCategories
+                                .filter((bc) =>
+                                  bc.name
+                                    .toLowerCase()
+                                    .includes(bottomCategorySearch.toLowerCase())
+                                )
+                                .map((bc) => (
+                                  <CommandItem
+                                    key={bc.id}
+                                    value={String(bc.id)}
+                                    onSelect={(value) => {
+                                      field.onChange(value);
+                                      setIsBottomCategoryPopoverOpen(false);
+                                    }}
+                                  >
+                                    {bc.name}
+                                  </CommandItem>
+                                ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                  </FormControl>
+                  <FormDescription>
+                    Сначала выберите категорию, чтобы увидеть доступные подкатегории.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
               name="brand_id"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Бренд</FormLabel>
                   <FormControl>
-                    <Popover>
+                    <Popover
+                      open={isBrandPopoverOpen}
+                      onOpenChange={setIsBrandPopoverOpen}
+                    >
                       <PopoverTrigger asChild>
                         <Button
                           variant="outline"
@@ -619,7 +705,7 @@ export default function ProductEvent({ params }) {
                         >
                           {field.value
                             ? brands.find(
-                                (brand) => String(brand.id) == field.value
+                                (brand) => String(brand.id) === field.value
                               )?.name || "Выберите бренд"
                             : "Выберите бренд"}
                           <span>▼</span>
@@ -632,7 +718,6 @@ export default function ProductEvent({ params }) {
                             onValueChange={setBrandSearch}
                           />
                           <CommandList>
-                            <CommandEmpty>Бренды не найдены.</CommandEmpty>
                             <CommandGroup>
                               {brands
                                 .filter((brand) =>
@@ -646,6 +731,7 @@ export default function ProductEvent({ params }) {
                                     value={String(brand.id)}
                                     onSelect={(value) => {
                                       field.onChange(value);
+                                      setIsBrandPopoverOpen(false);
                                     }}
                                   >
                                     {brand.name}

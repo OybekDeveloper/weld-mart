@@ -26,8 +26,8 @@ import { putData } from "@/actions/put";
 import { Input } from "@/components/ui/input";
 
 const formSchema = z.object({
-  text: z.string().min(1, "Таснифи талаб қилинади"),
-  image: z.string().url("URL формати нотўғри").min(1, "Расм талаб қилинади"),
+  text: z.string().min(1, "Требуется описание"),
+  image: z.string().url("Неверный формат URL").min(1, "Требуется изображение"),
 });
 
 export default function NewsEvent({ params }) {
@@ -73,7 +73,7 @@ export default function NewsEvent({ params }) {
           }
         } catch (error) {
           console.error("Failed to fetch news", error);
-          toast.error("Янгилик маълумотларини юклаш муваффақиятсиз бўлди.");
+          toast.error("Не удалось загрузить данные новости.");
         } finally {
           setIsLoading(false);
         }
@@ -113,7 +113,7 @@ export default function NewsEvent({ params }) {
         form.setValue("image", url);
       } catch (error) {
         console.error("Image upload failed:", error);
-        toast.error("Расмни юклаш муваффақиятсиз бўлди");
+        toast.error("Не удалось загрузить изображение");
       }
     }
   };
@@ -147,11 +147,11 @@ export default function NewsEvent({ params }) {
 
       if (result && !result.error) {
         if (isAddMode) {
-          toast.success("Янгилик мувофаққиятли қўшилди");
+          toast.success("Новость успешно добавлена");
           form.reset();
           setImagePreview(null);
         } else {
-          toast.info("Янгилик мувофаққиятли янгиланди");
+          toast.info("Новость успешно обновлена");
         }
         router.push("/admin/news");
       } else if (result.error) {
@@ -159,7 +159,7 @@ export default function NewsEvent({ params }) {
       }
     } catch (error) {
       console.error("Form submission error:", error);
-      toast.error("Форма юборилмади. Қайта уриниб кўринг.");
+      toast.error("Форма не отправлена. Попробуйте снова.");
     } finally {
       setSubmitLoading(false);
     }
@@ -179,13 +179,13 @@ export default function NewsEvent({ params }) {
         onClick={() => window.history.back()}
         className="hover:bg-primary hover:opacity-75"
       >
-        Орқага қайтиш
+        Вернуться назад
       </Button>
       <div className="max-w-3xl mx-auto py-10">
         <h1 className="text-2xl font-bold mb-6">
           {isAddMode
-            ? "Янги янгилик қўшиш"
-            : `Янгиликни таҳрирлаш (ID: ${newsId || "номаълум"})`}
+            ? "Добавить новую новость"
+            : `Редактировать новость (ID: ${newsId || "неизвестно"})`}
         </h1>
 
         <Form {...form}>
@@ -195,10 +195,10 @@ export default function NewsEvent({ params }) {
               name="text"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Таснифи</FormLabel>
+                  <FormLabel>Описание</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Таснифи ёзинг"
+                      placeholder="Введите описание"
                       value={field.value}
                       onChange={field.onChange}
                       rows={5}
@@ -215,7 +215,7 @@ export default function NewsEvent({ params }) {
               name="image"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Расм</FormLabel>
+                  <FormLabel>Изображение</FormLabel>
                   <FormControl>
                     <div className="space-y-4">
                       <FileUploader
@@ -232,12 +232,12 @@ export default function NewsEvent({ params }) {
                             <CloudUpload className="text-gray-500 w-10 h-10" />
                             <p className="mb-1 text-sm text-gray-500 dark:text-gray-400">
                               <span className="font-semibold">
-                                Юклаш учун босинг
+                                Нажмите для загрузки
                               </span>{" "}
-                              ёки тортиб келтиринг
+                              или перетащите
                             </p>
                             <p className="text-xs text-gray-500 dark:text-gray-400">
-                              SVG, PNG, JPG ёки GIF (макс 4MB)
+                              SVG, PNG, JPG или GIF (макс. 4MB)
                             </p>
                           </div>
                         </FileInput>
@@ -254,7 +254,7 @@ export default function NewsEvent({ params }) {
                           onClick={addUrl}
                           disabled={!currentUrlInput}
                         >
-                          URL қўшиш
+                          Добавить URL
                         </Button>
                       </div>
 
@@ -279,7 +279,7 @@ export default function NewsEvent({ params }) {
                     </div>
                   </FormControl>
                   <FormDescription>
-                    Бир расмни юкланг ёки URL киритинг (мажбурий).
+                    Загрузите одно изображение или введите URL (обязательно).
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -290,9 +290,9 @@ export default function NewsEvent({ params }) {
               {submitLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : isAddMode ? (
-                "Янгилик қўшиш"
+                "Добавить новость"
               ) : (
-                "Янгиликни янгилаш"
+                "Обновить новость"
               )}
             </Button>
           </form>

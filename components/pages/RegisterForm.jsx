@@ -152,9 +152,9 @@ export default function RegisterForm() {
 
       {/* ShadCN Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="w-11/12 rounded-md max-h-[80vh] overflow-y-auto">
+        <DialogContent className="w-auto rounded-md max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Фойдаланиш шартлари</DialogTitle>
+            <DialogTitle className="hidden">Фойдаланиш шартлари</DialogTitle>
             <DialogDescription className="hidden">dfasf</DialogDescription>
           </DialogHeader>
           <div className="max-w-4xl mx-auto p-6 bg-white shadow-lg rounded-lg mt-10">
@@ -230,7 +230,7 @@ export default function RegisterForm() {
           </div>
           <DialogFooter>
             <Button variant="secondary" onClick={() => setIsDialogOpen(false)}>
-              Бекор қилиш
+            Отмена
             </Button>
             <Button className="hover:bg-primary" onClick={() => setIsDialogOpen(false)}>ОК</Button>
           </DialogFooter>
