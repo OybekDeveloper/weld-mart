@@ -99,7 +99,7 @@ export default function AboutUs({ statistics }) {
       </section>
       <section className="space-y-3 md:px-4 lg:px-0">
         <h1 className="textNormal1 font-bold">Свяжитесь с нами</h1>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 w-full gap-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 w-full gap-10">
           <div className="w-full flex flex-col gap-3 justify-start">
             <h1 className="textSmall2 md:pl-4">
               У вас есть вопросы или вам нужна помощь? Свяжитесь с нами по
@@ -144,12 +144,19 @@ export default function AboutUs({ statistics }) {
                 </div>
                 <p>weldmartuz@gmail.com</p>
               </div>
-              <div className="flex justify-start items-center gap-2">
+              <Link
+                target="_blank"
+                href="https://www.google.com/maps?q=41.36173881280273,69.24032755414049"
+                className="flex justify-start items-center gap-2 cursor-pointer"
+              >
                 <div>
                   <MapPin />
                 </div>
-                <p>Город Ташкент, Яшнабадский р-н, улица Боткина 1-а</p>
-              </div>
+                <p>
+                  ГОРОД ТАШКЕНТ, АЛМАЗАРСКИЙ РАЙОН, GULSAROY MFY, OLTINSOY
+                  KO'CHASI, 7-AUY
+                </p>
+              </Link>
             </div>
           </div>
         </div>

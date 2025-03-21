@@ -55,7 +55,7 @@ export default function PaginationComponent({ url, currentPage, totalPages, tota
   pages = pages.filter((p) => p === "..." || (p >= 1 && p <= totalPages));
 
   // Hide pagination if total items are too few
-  if (totalPagesCount <= 4) {
+  if (totalPagesCount <= 12) {
     return null;
   }
 

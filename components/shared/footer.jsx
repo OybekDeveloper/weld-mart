@@ -146,7 +146,7 @@ export default function Footer() {
         <div className="w-full h-[1px] bg-black/30" />
         <section className="flex max-sm:flex-col justify-between items-center w-full pb-5 gap-4">
           <h1 className="w-full font-medium text-black/40 max-sm:text-center">
-            weldmart © 2022-2025, Все права защищены
+            weldmart © 2025, Все права защищены
           </h1>
           <div className="w-full mx-auto flex justify-center sm:justify-end gap-4 items-end">
             {socialMedias?.map((social, idx) => (

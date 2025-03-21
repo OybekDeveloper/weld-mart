@@ -56,16 +56,32 @@ export default function Sidebar({
   });
   const [defaultValue, setDefaultValue] = useState(getInitialDefaultValue);
 
-  // Filter products with rating of 5 and take first 4
-  const featuredProducts =
-    allProducts?.filter((product) => product?.rating === 5).slice(0, 4) || [];
+  // Randomly select 4 products with unique brand_ids
+  const featuredProducts = (() => {
+    const productsCopy = [...allProducts];
+    const selectedProducts = [];
+    const usedBrandIds = new Set();
+
+    while (selectedProducts.length < 4 && productsCopy.length > 0) {
+      const randomIndex = Math.floor(Math.random() * productsCopy.length);
+      const product = productsCopy[randomIndex];
+
+      if (!usedBrandIds.has(product.brand_id)) {
+        selectedProducts.push(product);
+        usedBrandIds.add(product.brand_id);
+      }
+
+      productsCopy.splice(randomIndex, 1);
+    }
+
+    return selectedProducts;
+  })();
 
   useEffect(() => {
     const isCategoryPage = pathname.startsWith("/category/");
     const isPodCategoryPage = pathname.startsWith("/podCategory/");
     const isBrandPage = pathname.startsWith("/brand/");
 
-    // Only update activeCategory and defaultValue if necessary
     if (isCategoryPage) {
       const currentSlug = pathname.split("/category/")[1];
       setActiveCategory(currentSlug);
@@ -99,10 +115,10 @@ export default function Sidebar({
     >
       <main className="w-full p-2 z-20">
         <Accordion
-          type="multiple" // Allow multiple sections to be open
+          type="multiple"
           collapsible="true"
           className="w-full"
-          value={defaultValue} // Control which top-level sections are open
+          value={defaultValue}
           onValueChange={setDefaultValue}
         >
           <AccordionItem
@@ -147,7 +163,7 @@ export default function Sidebar({
                         isCategoryActive || isPodCategoryActive
                           ? `category-${category.id}`
                           : undefined
-                      } // Keep nested accordion open if active
+                      }
                     >
                       <AccordionItem
                         value={`category-${category.id}`}

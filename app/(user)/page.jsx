@@ -13,7 +13,6 @@ export default async function UserRoot() {
     categories,
     banners,
     brands,
-    products,
     news,
     statistics,
     partners,
@@ -22,7 +21,6 @@ export default async function UserRoot() {
     getData("/api/categories", "category"),
     getData("/api/banners", "banner"),
     getData("/api/brands", "brand"),
-    getData("/api/products?limit=6&skip=0", "product"),
     getData("/api/news?limit=6&skip=0", "new"),
     getData("/api/statistics", "statistics"),
     getData("/api/clients", "client"),
@@ -39,7 +37,7 @@ export default async function UserRoot() {
       <main className="w-full flex-1 lg:max-w-[calc(100vw-340px)] 2xl:max-w-[1100px] lg:pl-5 space-y-5 md:space-y-8 lg:space-y-10">
         {banners.length > 0 && <Banner banners={banners} />}
         <InfinityCards brands={brands} />
-        <Categories productsData={products?.products} />
+        <Categories productsData={allProducts?.products} />
         {news.length > 0 && <News news={news} />}
         <AboutUs statistics={statistics} />
         {partners?.length > 0 && <Partners partners={partners} />}

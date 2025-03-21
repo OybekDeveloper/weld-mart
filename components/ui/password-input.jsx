@@ -46,10 +46,10 @@ const PasswordInput = React.forwardRef(({ className, ...props }, ref) => {
             showPassword ? "text-white" : "text-white/50"
           }`}
         >
-          {showPassword ? "Беркитиш" : "Коьрсатиш"}
+          {showPassword ? "Скрыть" : "Показать"}
         </h1>
         <span className="sr-only">
-          {showPassword ? "Hide password" : "Show password"}
+          {showPassword ? "Скрыть" : "Скрыть"}
         </span>
       </Button>
     </div>

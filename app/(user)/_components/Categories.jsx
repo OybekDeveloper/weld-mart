@@ -12,6 +12,17 @@ import {
 } from "@/components/ui/carousel";
 
 export default function Categories({ productsData }) {
+  // Filter products with discount > 0 and take up to 10
+  
+  const discountedProducts = productsData
+    ?.filter((product) => product.discount > 0)
+    .slice(0, 10);
+
+  // Only render if there are discounted products
+  if (!discountedProducts || discountedProducts.length === 0) {
+    return null; // or return a fallback UI if desired
+  }
+
   return (
     <main className="carousel-container space-y-3">
       <section className="px-4 lg:px-0 flex justify-between items-center gap-5 text-black/80">
@@ -29,12 +40,12 @@ export default function Categories({ productsData }) {
       <section className="relative">
         <Carousel className="w-full">
           <CarouselContent className="">
-            {productsData?.map((product, i) => {
+            {discountedProducts.map((product, i) => {
               return (
                 <CarouselItem
                   key={i}
                   className={`basis-[60%] sm:basis-[30%] md:basis-[25%] lg:basis-[30%] xl:basis-[25%] md:mr-4 ${
-                    i == 0 && "ml-6 lg:ml-4"
+                    i === 0 && "ml-6 lg:ml-4"
                   }`}
                 >
                   <Link
