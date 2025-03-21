@@ -76,7 +76,8 @@ export default function ProductEvent({ params }) {
   const [loading, setLoading] = useState(false);
   const [currentUrlInput, setCurrentUrlInput] = useState("");
   const [isCategoryPopoverOpen, setIsCategoryPopoverOpen] = useState(false);
-  const [isBottomCategoryPopoverOpen, setIsBottomCategoryPopoverOpen] = useState(false);
+  const [isBottomCategoryPopoverOpen, setIsBottomCategoryPopoverOpen] =
+    useState(false);
   const [isBrandPopoverOpen, setIsBrandPopoverOpen] = useState(false);
 
   const form = useForm({
@@ -109,7 +110,10 @@ export default function ProductEvent({ params }) {
     const fetchInitialData = async () => {
       try {
         const categoryData = await getData("/api/categories", "category");
-        const bottomData = await getData("/api/bottomCategories", "bottom-category");
+        const bottomData = await getData(
+          "/api/bottomCategories",
+          "bottom-category"
+        );
         const brandData = await getData("/api/brands", "brand");
         setCategories(categoryData?.categories || []);
         setAllBottomCategories(bottomData?.bottom_categories || []);
@@ -169,13 +173,13 @@ export default function ProductEvent({ params }) {
     const categoryId = form.getValues("category_id");
     if (categoryId) {
       const filtered = allBottomCategories.filter(
-        (bc) => String(bc.category_id) === categoryId
+        (bc) => String(bc.category_id) == categoryId
       );
       setFilteredBottomCategories(filtered);
       // Reset bottom_category_id if it's not in the filtered list
       const currentBottomId = form.getValues("bottom_category_id");
-      if (currentBottomId && !filtered.some((bc) => String(bc.id) === currentBottomId)) {
-        form.setValue("bottom_category_id", "");
+      if (currentBottomId) {
+        form.setValue("bottom_category_id", currentBottomId);
       }
     } else {
       setFilteredBottomCategories([]);
@@ -269,6 +273,7 @@ export default function ProductEvent({ params }) {
       } else {
         result = await putData(data, `/api/products/${id}`, "product");
       }
+      console.log(result);
 
       if (result && !result.error) {
         if (isAddMode) {
@@ -279,8 +284,8 @@ export default function ProductEvent({ params }) {
         setImagePreviews([]);
         form.reset();
         router.push("/admin/products");
-      } else if (result.error) {
-        toast.error(result.error);
+      } else if (result?.error) {
+        toast.error(result?.error);
       }
     } catch (error) {
       console.error("Form submission error:", error);
@@ -659,7 +664,9 @@ export default function ProductEvent({ params }) {
                                 .filter((bc) =>
                                   bc.name
                                     .toLowerCase()
-                                    .includes(bottomCategorySearch.toLowerCase())
+                                    .includes(
+                                      bottomCategorySearch.toLowerCase()
+                                    )
                                 )
                                 .map((bc) => (
                                   <CommandItem
@@ -680,7 +687,8 @@ export default function ProductEvent({ params }) {
                     </Popover>
                   </FormControl>
                   <FormDescription>
-                    Сначала выберите категорию, чтобы увидеть доступные подкатегории.
+                    Сначала выберите категорию, чтобы увидеть доступные
+                    подкатегории.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

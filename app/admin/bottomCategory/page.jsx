@@ -119,6 +119,11 @@ export default function BottomCategory() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ tag: "category" }),
         });
+        fetch(`/api/revalidate`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tag: "product" }),
+        });
       } else {
         toast.error("Ошибка при удалении одной или нескольких подкатегорий");
       }
