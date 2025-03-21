@@ -32,21 +32,58 @@ export default function Sidebar({
   socials = false,
 }) {
   const pathname = usePathname();
-  console.log(allProducts);
-
-  const [activeCategory, setActiveCategory] = useState(null);
-  const [defaultValue, setDefaultValue] = useState([]);
   const router = useRouter();
+
+  // Initialize defaultValue based on initial pathname
+  const getInitialDefaultValue = () => {
+    if (pathname.startsWith("/category/") || pathname.startsWith("/podCategory/")) {
+      return ["catalog"];
+    } else if (pathname.startsWith("/brand/")) {
+      return ["brands"];
+    }
+    return [];
+  };
+
+  const [activeCategory, setActiveCategory] = useState(() => {
+    if (pathname.startsWith("/category/")) {
+      return pathname.split("/category/")[1];
+    } else if (pathname.startsWith("/podCategory/")) {
+      return pathname.split("/podCategory/")[1];
+    } else if (pathname.startsWith("/brand/")) {
+      return pathname.split("/brand/")[1];
+    }
+    return null;
+  });
+  const [defaultValue, setDefaultValue] = useState(getInitialDefaultValue);
+
   // Filter products with rating of 5 and take first 4
   const featuredProducts =
     allProducts?.filter((product) => product?.rating === 5).slice(0, 4) || [];
 
   useEffect(() => {
     const isCategoryPage = pathname.startsWith("/category/");
+    const isPodCategoryPage = pathname.startsWith("/podCategory/");
+    const isBrandPage = pathname.startsWith("/brand/");
+
+    // Only update activeCategory and defaultValue if necessary
     if (isCategoryPage) {
       const currentSlug = pathname.split("/category/")[1];
       setActiveCategory(currentSlug);
-      setDefaultValue(["catalog"]);
+      if (!defaultValue.includes("catalog")) {
+        setDefaultValue(["catalog"]);
+      }
+    } else if (isPodCategoryPage) {
+      const currentPodSlug = pathname.split("/podCategory/")[1];
+      setActiveCategory(currentPodSlug);
+      if (!defaultValue.includes("catalog")) {
+        setDefaultValue(["catalog"]);
+      }
+    } else if (isBrandPage) {
+      const currentBrandSlug = pathname.split("/brand/")[1];
+      setActiveCategory(currentBrandSlug);
+      if (!defaultValue.includes("brands")) {
+        setDefaultValue(["brands"]);
+      }
     } else {
       setActiveCategory(null);
       setDefaultValue([]);
@@ -62,11 +99,10 @@ export default function Sidebar({
     >
       <main className="w-full p-2 z-20">
         <Accordion
-          type="single"
-          collapsible
+          type="multiple" // Allow multiple sections to be open
+          collapsible="true"
           className="w-full"
-          defaultValue={defaultValue}
-          value={defaultValue}
+          value={defaultValue} // Control which top-level sections are open
           onValueChange={setDefaultValue}
         >
           <AccordionItem
@@ -74,13 +110,14 @@ export default function Sidebar({
               handleClose();
               router.push("/");
             }}
-            value="category-3"
+            value="category-home"
             className="cursor-pointer border-b-[1px] py-2 hover:text-primary"
           >
             <Link href="/" className="px-2 font-medium">
               Главная страница
             </Link>
           </AccordionItem>
+
           {/* Каталог Accordion */}
           <AccordionItem value="catalog" className="border-none">
             <AccordionTrigger className="pl-2 textSmall4 font-medium">
@@ -90,112 +127,134 @@ export default function Sidebar({
               className={`relative data-[open=open]:animate-accordion-down`}
             >
               <main className="pl-4 flex flex-col gap-2">
-                {categoriesData?.map((category, idx) => (
-                  <Accordion
-                    key={idx}
-                    type="single"
-                    collapsible
-                    className="w-full"
-                  >
-                    <AccordionItem
-                      value={`category-${category.id}`}
-                      className="border-none"
+                {categoriesData?.map((category, idx) => {
+                  const isCategoryActive =
+                    category.id == (activeCategory || id) &&
+                    product_type === "category";
+                  const isPodCategoryActive = category.bottom_categories?.some(
+                    (sub) =>
+                      sub.id == (activeCategory || id) &&
+                      product_type === "podCategory"
+                  );
+
+                  return (
+                    <Accordion
+                      key={idx}
+                      type="single"
+                      collapsible="true"
+                      className="w-full"
+                      value={
+                        isCategoryActive || isPodCategoryActive
+                          ? `category-${category.id}`
+                          : undefined
+                      } // Keep nested accordion open if active
                     >
-                      <AccordionTrigger
-                        className={cn(
-                          "pl-2 py-2 hover:text-primary font-medium flex justify-between items-center w-full transition-all duration-150 ease-linear",
-                          category.id == (activeCategory || id) &&
-                            product_type == "category" &&
-                            "text-primary font-bold"
-                        )}
-                        onClick={() => {
-                          setActiveCategory(category.id);
-                        }}
+                      <AccordionItem
+                        value={`category-${category.id}`}
+                        className="border-none"
                       >
-                        <div className="flex items-center gap-1">
-                          <Image
-                            src={category.image}
-                            width={50}
-                            loading="eager"
-                            height={50}
-                            alt={category.name}
-                          />
-                          {category.name}
-                        </div>
-                      </AccordionTrigger>
-                      {category.bottom_categories?.length > 0 && (
-                        <AccordionContent className="pl-8">
-                          <div className="flex flex-col gap-2">
-                            {category.bottom_categories.map((subCategory) => (
-                              <Link
-                                key={subCategory.id}
-                                href={`/podCategory/${subCategory.id}`}
-                                onClick={handleClose}
-                                className={`flex justify-start gap-2 items-center hover:text-primary transition-all duration-150 ease-linear border-b-[1px] py-3 ${
-                                  subCategory.id == id &&
-                                  product_type == "podCategory" &&
-                                  "text-primary font-bold"
-                                }`}
-                              >
-                                <Image
-                                  src={subCategory?.image}
-                                  width={50}
-                                  loading="eager"
-                                  height={50}
-                                  alt={category.name}
-                                />
-                                {subCategory.name}
-                              </Link>
-                            ))}
+                        <AccordionTrigger
+                          className={cn(
+                            "pl-2 py-2 hover:text-primary font-medium flex justify-between items-center w-full transition-all duration-150 ease-linear",
+                            isCategoryActive && "text-primary font-bold"
+                          )}
+                          onClick={() => {
+                            setActiveCategory(category.id);
+                          }}
+                        >
+                          <div className="flex items-center gap-1">
+                            <Image
+                              src={category.image}
+                              width={50}
+                              loading="eager"
+                              height={50}
+                              alt={category.name}
+                            />
+                            {category.name}
                           </div>
-                        </AccordionContent>
-                      )}
-                    </AccordionItem>
-                  </Accordion>
-                ))}
+                        </AccordionTrigger>
+                        {category.bottom_categories?.length > 0 && (
+                          <AccordionContent className="pl-8">
+                            <div className="flex flex-col gap-2">
+                              {category.bottom_categories.map((subCategory) => (
+                                <Link
+                                  key={subCategory.id}
+                                  href={`/podCategory/${subCategory.id}`}
+                                  onClick={handleClose}
+                                  className={cn(
+                                    "flex justify-start gap-2 items-center hover:text-primary transition-all duration-150 ease-linear border-b-[1px] py-3",
+                                    subCategory.id == (activeCategory || id) &&
+                                      product_type === "podCategory" &&
+                                      "text-primary font-bold"
+                                  )}
+                                >
+                                  <Image
+                                    src={subCategory?.image}
+                                    width={50}
+                                    loading="eager"
+                                    height={50}
+                                    alt={subCategory.name}
+                                  />
+                                  {subCategory.name}
+                                </Link>
+                              ))}
+                            </div>
+                          </AccordionContent>
+                        )}
+                      </AccordionItem>
+                    </Accordion>
+                  );
+                })}
               </main>
             </AccordionContent>
           </AccordionItem>
+
+          {/* Производитель (Brands) Accordion */}
           <AccordionItem value="brands" className="border-none">
             <AccordionTrigger className="pl-2 textSmall4 font-medium">
               Производитель
             </AccordionTrigger>
             <AccordionContent className="relative">
               <main className="pl-4 flex flex-col gap-2">
-                {brandsData?.map((brand, idx) => (
-                  <Link
-                    href={`/brand/${brand?.id}`}
-                    key={idx}
-                    onClick={() => {
-                      handleClose();
-                      setActiveCategory(brand.id);
-                    }}
-                    className={cn(
-                      "w-full flex justify-start items-center gap-1 border-b-[1px] py-2 transition-all duration-150 ease-linear hover:text-primary",
-                      brand.id == (activeCategory || id) &&
-                        product_type == "brand" &&
-                        "text-primary font-bold"
-                    )}
-                  >
-                    <Image
-                      loading="eager"
-                      src={brand.image}
-                      width={50}
-                      height={50}
-                      alt={brand.name}
-                    />
-                    {brand.name}
-                  </Link>
-                ))}
+                {brandsData?.map((brand, idx) => {
+                  const isBrandActive =
+                    brand.id == (activeCategory || id) &&
+                    product_type === "brand";
+
+                  return (
+                    <Link
+                      href={`/brand/${brand?.id}`}
+                      key={idx}
+                      onClick={() => {
+                        handleClose();
+                        setActiveCategory(brand.id);
+                      }}
+                      className={cn(
+                        "w-full flex justify-start items-center gap-1 border-b-[1px] py-2 transition-all duration-150 ease-linear hover:text-primary",
+                        isBrandActive && "text-primary font-bold"
+                      )}
+                    >
+                      <Image
+                        loading="eager"
+                        src={brand.image}
+                        width={50}
+                        height={50}
+                        alt={brand.name}
+                      />
+                      {brand.name}
+                    </Link>
+                  );
+                })}
               </main>
             </AccordionContent>
           </AccordionItem>
+
           <AccordionItem
             onClick={() => {
               handleClose();
               router.push("/news");
             }}
-            value="category-3"
+            value="category-news"
             className="cursor-pointer w-full border-b-[1px] py-2 hover:text-primary"
           >
             <Link href="/news" className="w-full px-2 font-medium">
@@ -207,7 +266,7 @@ export default function Sidebar({
               handleClose();
               router.push("/contact");
             }}
-            value="category-3"
+            value="category-contact"
             className="cursor-pointer w-full border-b-[1px] py-2 hover:text-primary"
           >
             <Link href="/contact" className="w-full px-2 font-medium">
@@ -219,7 +278,7 @@ export default function Sidebar({
               handleClose();
               router.push("/about-us");
             }}
-            value="category-3"
+            value="category-about"
             className="cursor-pointer w-full border-b-[1px] py-2 hover:text-primary"
           >
             <Link href="/about-us" className="w-full px-2 font-medium">
@@ -228,6 +287,7 @@ export default function Sidebar({
           </AccordionItem>
         </Accordion>
       </main>
+
       {sidebarBottom && featuredProducts.length > 0 && (
         <main className="p-2">
           <div className="mb-2 text-start font-medium px-2">
@@ -319,6 +379,7 @@ export default function Sidebar({
           </Carousel>
         </main>
       )}
+
       {socials && (
         <main>
           <div className="w-full mx-auto flex justify-between px-4 sm:justify-end gap-4 items-end">

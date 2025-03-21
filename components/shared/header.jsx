@@ -100,11 +100,13 @@ export default function Header({ categoriesData, brandsData }) {
                     socials={true}
                     handleClose={() => setOpen(false)}
                     className={
-                      "max-lg:flex font-montserrat lg:border-2 rounded-md sidebar sticky top-[112px] w-full max-h-[calc(100vh-116px)] overflow-auto"
+                      "max-lg:flex font-montserrat lg:border-2 rounded-md no-scrollbar sticky top-[112px] w-full max-h-[calc(100vh-116px)] overflow-auto"
                     }
                     categoriesData={categoriesData?.categories}
                     product_type={
-                      pathname.startsWith("/brand")
+                      pathname.startsWith("/podCategory")
+                        ? "podCategory"
+                        : pathname.startsWith("/brand")
                         ? "brand"
                         : pathname.startsWith("/category")
                         ? "category"

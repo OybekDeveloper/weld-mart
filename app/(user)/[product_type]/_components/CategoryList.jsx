@@ -115,7 +115,11 @@ export default function CategoryList({
       <section className="w-full">
         <PaginationComponent
           url={`/${
-            product_type == "brand" ? "brand" : "category"
+            product_type == "brand"
+              ? "brand"
+              : product_type == "podCategory"
+              ? "podCategory"
+              : "category"
           }/${categoryId}`}
           currentPage={page}
           totalPages={totalPages}
