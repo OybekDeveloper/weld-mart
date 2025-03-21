@@ -118,7 +118,7 @@ export default function SearchComponent({ variant }) {
                         <h1 className="textNormal3 truncate max-w-40">
                           {item.name}
                         </h1>
-                        <span className="text-gray-600">${item.price}</span>
+                        <span className="text-gray-600">{item.price} сум</span>
                       </div>
                       <div>
                         <div className="flex items-center">
@@ -219,7 +219,7 @@ export default function SearchComponent({ variant }) {
                             <h1 className="textNormal3 truncate max-w-40">
                               {item.name}
                             </h1>
-                            <span className="text-gray-600">${item.price}</span>
+                            <span className="text-gray-600">{item.price} сум</span>
                           </div>
                           <div>
                             <div className="flex items-center">
