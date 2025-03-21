@@ -64,7 +64,7 @@ export default function BottomCategory() {
           "bottom-category"
         );
         console.log(response);
-        
+
         setBottomCategories(response.bottom_categories || []);
       } catch (error) {
         console.log(error);
@@ -114,6 +114,11 @@ export default function BottomCategory() {
             categoriesToDelete.length > 1 ? "и" : "я"
           } успешно удален${categoriesToDelete.length > 1 ? "ы" : "а"}`
         );
+        fetch(`/api/revalidate`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tag: "category" }),
+        });
       } else {
         toast.error("Ошибка при удалении одной или нескольких подкатегорий");
       }
@@ -177,9 +182,7 @@ export default function BottomCategory() {
             </Button>
           )}
           <Button className="hover:bg-primary hover:opacity-75" asChild>
-            <Link href="/admin/bottomCategory/add">
-              Добавить подкатегорию
-            </Link>
+            <Link href="/admin/bottomCategory/add">Добавить подкатегорию</Link>
           </Button>
         </div>
       </div>

@@ -21,7 +21,7 @@ export default function LoginFormComponent({ brands, statis }) {
           alt="logo"
         />
         <p className="w-full lg:w-2/3 textNormal2">
-          Компания "WELDMART" была основана в 2222 году. Успешно работает с
+          Компания "WELDMART" была основана в 2025 году. Успешно работает с
           ведущими компаниями в сфере Сварочных аппаратов и имеет большой опыт в
           этой сфере:
         </p>

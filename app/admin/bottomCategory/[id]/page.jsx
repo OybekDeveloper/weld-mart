@@ -201,6 +201,11 @@ export default function BottomCategoryEvent({ params }) {
 
       if (result && !result.error) {
         if (isAddMode) {
+          fetch(`/api/revalidate`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ tag: "category" }),
+          });
           toast.success("Подкатегория успешно добавлена");
           form.reset();
           setImagePreview(null);

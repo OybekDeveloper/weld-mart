@@ -14,7 +14,7 @@ export default function CompanyInfo({ statistics }) {
     <section className="w-full flex max-lg:flex-col gap-5">
       <div className="w-full flex justify-center flex-col items-center gap-5">
         <h1 className="font-medium textSmall4">
-          Компания "WELDMART" была основана в 2222 году. Она успешно работает с
+          Компания "WELDMART" была основана в 2025 году. Она успешно работает с
           ведущими компаниями в области сварочных машин и обладает большим
           опытом в этой сфере.
         </h1>

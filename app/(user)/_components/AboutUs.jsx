@@ -54,7 +54,7 @@ export default function AboutUs({ statistics }) {
         </div>
         <div className="flex-1 xl:pl-20 px-4 flex justify-center items-center gap-5 flex-col">
           <h1>
-            "WELDMART" была основана в 2222 году. Компания успешно сотрудничает
+            "WELDMART" была основана в 2025 году. Компания успешно сотрудничает
             с ведущими производителями сварочного оборудования и обладает
             большим опытом в этой области.
           </h1>
