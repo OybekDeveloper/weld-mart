@@ -146,7 +146,7 @@ export default function Header({ categoriesData, brandsData }) {
                 )}
               </Link>
             ) : (
-              <Link target="_blank" href="tel:+998954189999">
+              <Link className="flex justify-center items-center" target="_blank" href="tel:+998954189999">
                 <Phone className="text-black" size={28} />
               </Link>
             )}
@@ -166,16 +166,22 @@ export default function Header({ categoriesData, brandsData }) {
           <div className="flex gap-5 md:hidden">
             <SearchComponent variant="mobile" />
 
-            <Link href="/cart">
-              <ShoppingCart className="text-black" size={28} />
-              {products.length > 0 && (
-                <div className="relative">
-                  <span className="text-white textSmall3 absolute -top-10 -right-3 size-5 md:size-6 rounded-full bg-primary flex items-center justify-center">
-                    {products?.length}
-                  </span>
-                </div>
-              )}
-            </Link>
+            {showPrice ? (
+              <Link href="/cart">
+                <ShoppingCart className="text-black" size={28} />
+                {products.length > 0 && (
+                  <div className="relative">
+                    <span className="text-white textSmall3 absolute -top-10 -right-3 size-5 md:size-6 rounded-full bg-primary flex items-center justify-center">
+                      {products?.length}
+                    </span>
+                  </div>
+                )}
+              </Link>
+            ) : (
+              <Link className="flex justify-center items-center" target="_blank" href="tel:+998954189999">
+                <Phone className="text-black" size={24} />
+              </Link>
+            )}
             {auth?.phone ? (
               <Link href="/profile">
                 <CircleUserRound size={28} className="text-black" />

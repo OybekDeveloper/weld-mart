@@ -63,7 +63,8 @@ export default function Sidebar({
   // Randomly select 4 products with unique brand_ids
   const featuredProducts = (() => {
     if (allProducts?.length > 0) {
-      const productsCopy = [...allProducts];
+      let productsCopy = [...allProducts];
+      productsCopy = productsCopy.filter((pr) => pr?.rating == 5);
       const selectedProducts = [];
       const usedBrandIds = new Set();
 
