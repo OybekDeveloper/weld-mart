@@ -29,6 +29,8 @@ import { deleteData } from "@/actions/delete";
 import { toast } from "sonner";
 import { truncateText } from "@/lib/utils";
 import Pagination from "../_components/Pagination";
+import { Switch } from "@/components/ui/switch";
+import { putData } from "@/actions/put";
 
 // General filter function with a single search term
 const filterItems = (items, searchTerm) => {
@@ -58,6 +60,7 @@ export default function Products() {
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedProducts, setSelectedProducts] = useState([]);
+  const [showPrice, setShowPrice] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -87,6 +90,37 @@ export default function Products() {
     setProductsToDelete(Array.isArray(products) ? products : [products]);
     setIsDeleteModalOpen(true);
   };
+
+  const handleShowPrice = async (bool) => {
+    try {
+      const show = await putData(
+        { show: bool },
+        `/api/price-switch`,
+        "price-switch"
+      );
+      console.log(show);
+      if (show?.data) {
+        setShowPrice(bool);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const show = await getData(`/api/price-switch`,"price-switch");
+        if(show){
+          setShowPrice(Boolean(show?.show))
+        }
+        console.log(show);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchData();
+  }, []);
 
   const handleConfirmDelete = async () => {
     if (!productsToDelete.length) return;
@@ -175,15 +209,28 @@ export default function Products() {
       </div>
 
       {/* Single Common Filter */}
-      <div className="mb-6">
-        <Label htmlFor="search">Поиск</Label>
-        <Input
-          id="search"
-          value={searchTerm}
-          onChange={handleSearchChange}
-          placeholder="Поиск по всем полям (ID, название, цена, даты...)"
-          className="max-w-md"
-        />
+      <div className="flex w-full justify-between items-center gap-5">
+        <div className="mb-6">
+          <Label htmlFor="search">Поиск</Label>
+          <Input
+            id="search"
+            value={searchTerm}
+            onChange={handleSearchChange}
+            placeholder="Поиск по всем полям (ID, название, цена, даты...)"
+            className="max-w-md"
+          />
+        </div>
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="show_price"
+            checked={showPrice}
+            onCheckedChange={() => {
+              handleShowPrice(!showPrice);
+            }}
+          />
+
+          <Label htmlFor="airplane-mode">Показать сумму</Label>
+        </div>
       </div>
 
       {/* Table */}

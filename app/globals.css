@@ -23,13 +23,17 @@ body {
   border-radius: 5px;
   padding: 6px;
 }
+.PhoneInputCountry {
+  display: none !important;
+}
 
 .input-phone > *:focus {
   outline: none;
   border: 2px solid #cdc5c5;
 }
-.input-phone select {
-  background: hsl(var(--primary));
+.input-phone >select {
+  display: none !important;
+  height: 0px!important;
 }
 
 /* Default: Scrollbar ko‘rinmaydi */

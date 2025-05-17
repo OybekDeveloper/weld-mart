@@ -9,6 +9,7 @@ const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [auth, setAuthState] = useState(null);
+  const [showPrice, setShowPrice] = useState(false);
   const router = useRouter();
 
   // Custom setAuth function that updates both state and cookies
@@ -41,6 +42,13 @@ export function AuthProvider({ children }) {
     if (storedAuth) {
       fetchData(JSON.parse(storedAuth));
     }
+    const fetchPriceShow = async () => {
+      try {
+        const show = await getData("/api/price-switch", "price-switch");
+        setShowPrice(Boolean(show?.show));
+      } catch (error) {}
+    };
+    fetchPriceShow();
   }, []);
 
   // Login function
@@ -56,7 +64,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ auth, setAuth, login, logout }}>
+    <AuthContext.Provider value={{ showPrice, auth, setAuth, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

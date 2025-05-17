@@ -16,13 +16,14 @@ import { Button } from "../ui/button";
 import { Minus, Plus } from "lucide-react";
 import { useProductStore } from "@/store";
 import { motion } from "framer-motion";
+import { useAuth } from "@/context/AuthContext";
 
 export default function CardComponent({ product }) {
   const { products, incrementCount, decrementCount, setProducts } =
     useProductStore();
   const findProduct = products?.find((pr) => pr.id === product.id);
   const [stockMessage, setStockMessage] = useState("");
-
+  const { showPrice } = useAuth();
   const handleAddToCart = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -111,17 +112,19 @@ export default function CardComponent({ product }) {
               </span>
             </div>
           </div>
-          <p className="font-medium textSmall3">
-            {product?.price?.toLocaleString()} сум{" "}
-            {product?.discount &&
-              product?.discount != 0 &&
-              product?.discount != "-" &&
-              product?.discount > 0 && (
-                <span className="font-medium textSmall1 px-2 py-1 text-red-500 rounded-md bg-red-100">
-                  -{product?.discount}%
-                </span>
-              )}
-          </p>
+          {showPrice && (
+            <p className="font-medium textSmall3">
+              {product?.price?.toLocaleString()} сум{" "}
+              {product?.discount &&
+                product?.discount != 0 &&
+                product?.discount != "-" &&
+                product?.discount > 0 && (
+                  <span className="font-medium textSmall1 px-2 py-1 text-red-500 rounded-md bg-red-100">
+                    -{product?.discount}%
+                  </span>
+                )}
+            </p>
+          )}
           {stockMessage && (
             <motion.p
               initial={{ opacity: 0, y: -10 }}
@@ -131,72 +134,74 @@ export default function CardComponent({ product }) {
               {stockMessage}
             </motion.p>
           )}
-          <div
-            className="mt-auto w-full"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-            }}
-          >
-            {!findProduct?.count ? (
-              <motion.div
-                variants={buttonVariants}
-                initial="initial"
-                animate="animate"
-                whileHover="hover"
-                whileTap="tap"
-                className="w-full"
-              >
-                <Button
-                  onClick={handleAddToCart}
-                  className="w-full hover:bg-primary hover:opacity-75 btn btn-primary"
-                >
-                  Добавить в корзину
-                </Button>
-              </motion.div>
-            ) : (
-              <div className="w-full flex items-center justify-between gap-2 border rounded-md px-2 py-1 bg-thin">
+          {showPrice && (
+            <div
+              className="mt-auto w-full"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+            >
+              {!findProduct?.count ? (
                 <motion.div
                   variants={buttonVariants}
-                  whileHover="hover"
-                  whileTap="tap"
-                >
-                  <Button
-                    onClick={handleDecrement}
-                    variant="outline"
-                    className="p-2 h-auto bg-thin border-none"
-                    disabled={!findProduct?.count}
-                  >
-                    <Minus />
-                  </Button>
-                </motion.div>
-
-                <motion.span
-                  key={findProduct?.count}
-                  variants={countVariants}
                   initial="initial"
                   animate="animate"
-                  className="textNormal2 flex-1 text-center font-medium"
-                >
-                  {findProduct?.count || 0}
-                </motion.span>
-
-                <motion.div
-                  variants={buttonVariants}
                   whileHover="hover"
                   whileTap="tap"
+                  className="w-full"
                 >
                   <Button
-                    onClick={handleIncrement}
-                    variant="outline"
-                    className="p-2 h-auto bg-thin border-none"
+                    onClick={handleAddToCart}
+                    className="w-full hover:bg-primary hover:opacity-75 btn btn-primary"
                   >
-                    <Plus size={16} />
+                    Добавить в корзину
                   </Button>
                 </motion.div>
-              </div>
-            )}
-          </div>
+              ) : (
+                <div className="w-full flex items-center justify-between gap-2 border rounded-md px-2 py-1 bg-thin">
+                  <motion.div
+                    variants={buttonVariants}
+                    whileHover="hover"
+                    whileTap="tap"
+                  >
+                    <Button
+                      onClick={handleDecrement}
+                      variant="outline"
+                      className="p-2 h-auto bg-thin border-none"
+                      disabled={!findProduct?.count}
+                    >
+                      <Minus />
+                    </Button>
+                  </motion.div>
+
+                  <motion.span
+                    key={findProduct?.count}
+                    variants={countVariants}
+                    initial="initial"
+                    animate="animate"
+                    className="textNormal2 flex-1 text-center font-medium"
+                  >
+                    {findProduct?.count || 0}
+                  </motion.span>
+
+                  <motion.div
+                    variants={buttonVariants}
+                    whileHover="hover"
+                    whileTap="tap"
+                  >
+                    <Button
+                      onClick={handleIncrement}
+                      variant="outline"
+                      className="p-2 h-auto bg-thin border-none"
+                    >
+                      <Plus size={16} />
+                    </Button>
+                  </motion.div>
+                </div>
+              )}
+            </div>
+          )}
         </main>
       </CardContent>
       <CardFooter className="hidden">

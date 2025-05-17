@@ -2,6 +2,7 @@
 
 import CustomImage from "@/components/shared/customImage";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/context/AuthContext";
 import { useProductStore } from "@/store";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
@@ -10,7 +11,7 @@ import React from "react";
 export default function ProductList() {
   const { products, incrementCount, decrementCount, deleteProduct } =
     useProductStore();
-
+  const { showPrice } = useAuth();
   return (
     <main className="relative w-full border sidebar rounded-md p-4 max-h-[300px] md:max-h-[400px] overflow-y-auto">
       {products.length > 0 ? (
@@ -49,26 +50,29 @@ export default function ProductList() {
 
                   {/* Цена и управление количеством */}
                   <div className="flex justify-between items-center mt-2">
-                    <div className="max-sm:flex-col max-sm:gap-1 flex sm:justify-center sm:items-center gap-3">
-                      <div className="flex flex-col justify-start items-start textSmall3 font-semibold">
-                        <span
-                          className={`${
-                            discountSum ? "line-through text-black/20" : ""
-                          }`}
-                        >
-                          {product?.price?.toLocaleString()} сум{" "}
-                        </span>
+                    {showPrice && (
+                      <div className="max-sm:flex-col max-sm:gap-1 flex sm:justify-center sm:items-center gap-3">
+                        <div className="flex flex-col justify-start items-start textSmall3 font-semibold">
+                          <span
+                            className={`${
+                              discountSum ? "line-through text-black/20" : ""
+                            }`}
+                          >
+                            {product?.price?.toLocaleString()} сум{" "}
+                          </span>
 
-                        <span>
-                          {discountSum && `${discountSum.toLocaleString()} сум`}
-                        </span>
+                          <span>
+                            {discountSum &&
+                              `${discountSum.toLocaleString()} сум`}
+                          </span>
+                        </div>
+                        {product?.discount && product?.discount > 0 && (
+                          <span className="text-center font-medium textSmall2 px-2 py-1 text-red-500 rounded-md bg-red-100">
+                            -{product?.discount}%
+                          </span>
+                        )}
                       </div>
-                      {product?.discount && product?.discount > 0 && (
-                        <span className="text-center font-medium textSmall2 px-2 py-1 text-red-500 rounded-md bg-red-100">
-                          -{product?.discount}%
-                        </span>
-                      )}
-                    </div>
+                    )}
                     <div className="bg-thin flex items-center gap-2 border rounded-md md:px-2 md:py-1">
                       <Button
                         onClick={() => decrementCount(product?.id)}

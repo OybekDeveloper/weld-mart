@@ -4,7 +4,7 @@ import CustomImage from "@/components/shared/customImage";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useProductStore } from "@/store";
-import { Minus, Plus, Star, X } from "lucide-react";
+import { Minus, Phone, Plus, Star, X } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
 import {
@@ -16,8 +16,11 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { DialogDescription, DialogTitle } from "@radix-ui/react-dialog";
+import { useAuth } from "@/context/AuthContext";
+import Link from "next/link";
 
 export default function ProductInfo({ productData }) {
+  const { showPrice } = useAuth();
   const [mainImage, setMainImage] = useState(null);
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
@@ -219,19 +222,23 @@ export default function ProductInfo({ productData }) {
             ))}
             <span className="ml-2 text-sm text-gray-600">{rating}/5</span>
           </div>
-          <div className="text-2xl font-semibold flex justify-start items-center gap-2">
-            <div>
-              <h1 className={`${discountSum && "line-through text-black/20"}`}>
-                {price.toLocaleString()} сум
-              </h1>
-              {discountSum && <h1>{discountSum.toLocaleString()} сум</h1>}
+          {showPrice && (
+            <div className="text-2xl font-semibold flex justify-start items-center gap-2">
+              <div>
+                <h1
+                  className={`${discountSum && "line-through text-black/20"}`}
+                >
+                  {price.toLocaleString()} сум
+                </h1>
+                {discountSum && <h1>{discountSum.toLocaleString()} сум</h1>}
+              </div>
+              {discount && discount != 0 && discount > 0 && (
+                <span className="font-medium textSmall3 px-2 text-red-500 rounded-md bg-red-100">
+                  -{discount}%
+                </span>
+              )}
             </div>
-            {discount && discount != 0 && discount > 0 && (
-              <span className="font-medium textSmall3 px-2 text-red-500 rounded-md bg-red-100">
-                -{discount}%
-              </span>
-            )}
-          </div>
+          )}
         </div>
 
         {/* Description */}
@@ -277,37 +284,50 @@ export default function ProductInfo({ productData }) {
         )}
 
         {/* Add to Cart & Quantity Control */}
-        <div className="flex w-full items-center gap-2">
-          <button
-            onClick={handleAddToCart}
-            className="textSmall3 w-full bg-primary text-white py-3 sm:py-2 md:px-6 rounded-md hover:bg-primary-dark transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-            disabled={quantity === 0 || !quantity}
-          >
-            Добавить в корзину
-          </button>
+        {showPrice ? (
+          <div className="flex w-full items-center gap-2">
+            <button
+              onClick={handleAddToCart}
+              className="textSmall3 w-full bg-primary text-white py-3 sm:py-2 md:px-6 rounded-md hover:bg-primary-dark transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+              disabled={quantity === 0 || !quantity}
+            >
+              Добавить в корзину
+            </button>
 
-          {findProduct?.count > 0 && (
-            <div className="flex gap-3 items-center bg-thin border rounded-md px-2 py-1">
-              <Button
-                onClick={handleDecrement}
-                variant="outline"
-                className="p-2 h-auto bg-thin border-none"
-              >
-                <Minus />
-              </Button>
-              <span className="textNormal3 w-10 text-center font-medium">
-                {findProduct?.count}
-              </span>
-              <Button
-                onClick={handleIncrement}
-                variant="outline"
-                className="p-2 h-auto bg-thin border-none"
-              >
-                <Plus size={16} />
-              </Button>
-            </div>
-          )}
-        </div>
+            {findProduct?.count > 0 && (
+              <div className="flex gap-3 items-center bg-thin border rounded-md px-2 py-1">
+                <Button
+                  onClick={handleDecrement}
+                  variant="outline"
+                  className="p-2 h-auto bg-thin border-none"
+                >
+                  <Minus />
+                </Button>
+                <span className="textNormal3 w-10 text-center font-medium">
+                  {findProduct?.count}
+                </span>
+                <Button
+                  onClick={handleIncrement}
+                  variant="outline"
+                  className="p-2 h-auto bg-thin border-none"
+                >
+                  <Plus size={16} />
+                </Button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <Link
+            href={"tel:+998954189999"}
+            target="_blank"
+            className="flex w-full items-center gap-2"
+          >
+            <button className="flex justify-center items-center gap-4 textSmall3 w-full bg-primary text-white py-3 sm:py-2 md:px-6 rounded-md hover:bg-primary-dark transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed">
+              <Phone className="text-white" size={24} />
+              Контакт
+            </button>
+          </Link>
+        )}
       </div>
     </section>
   );

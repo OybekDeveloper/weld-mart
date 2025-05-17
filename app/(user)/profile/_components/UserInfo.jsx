@@ -17,7 +17,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 
 export default function UserInfo() {
-  const { auth, logout } = useAuth();
+  const { auth, showPrice, logout } = useAuth();
   const [open, setOpen] = useState(false);
   const router = useRouter();
 
@@ -37,14 +37,16 @@ export default function UserInfo() {
         <Label>Номер телефона</Label>
         <Input readOnly value={auth?.phone || ""} type="text" />
       </div>
-      <div>
-        <Label>Бонус</Label>
-        <Input
-          readOnly
-          value={`${auth?.bonus?.toLocaleString() || 0} сум`}
-          type="text"
-        />
-      </div>
+      {showPrice && (
+        <div>
+          <Label>Бонус</Label>
+          <Input
+            readOnly
+            value={`${auth?.bonus?.toLocaleString() || 0} сум`}
+            type="text"
+          />
+        </div>
+      )}
 
       {/* Кнопка выхода */}
       <Dialog open={open} onOpenChange={setOpen}>

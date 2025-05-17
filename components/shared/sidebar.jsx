@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/carousel";
 import { Card, CardContent } from "@/components/ui/card";
 import CustomImage from "./customImage";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Sidebar({
   className,
@@ -33,10 +34,13 @@ export default function Sidebar({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-
+  const { showPrice } = useAuth();
   // Initialize defaultValue based on initial pathname
   const getInitialDefaultValue = () => {
-    if (pathname.startsWith("/category/") || pathname.startsWith("/podCategory/")) {
+    if (
+      pathname.startsWith("/category/") ||
+      pathname.startsWith("/podCategory/")
+    ) {
       return ["catalog"];
     } else if (pathname.startsWith("/brand/")) {
       return ["brands"];
@@ -58,23 +62,27 @@ export default function Sidebar({
 
   // Randomly select 4 products with unique brand_ids
   const featuredProducts = (() => {
-    const productsCopy = [...allProducts];
-    const selectedProducts = [];
-    const usedBrandIds = new Set();
+    if (allProducts?.length > 0) {
+      const productsCopy = [...allProducts];
+      const selectedProducts = [];
+      const usedBrandIds = new Set();
 
-    while (selectedProducts.length < 4 && productsCopy.length > 0) {
-      const randomIndex = Math.floor(Math.random() * productsCopy.length);
-      const product = productsCopy[randomIndex];
+      while (selectedProducts.length < 4 && productsCopy.length > 0) {
+        const randomIndex = Math.floor(Math.random() * productsCopy.length);
+        const product = productsCopy[randomIndex];
 
-      if (!usedBrandIds.has(product.brand_id)) {
-        selectedProducts.push(product);
-        usedBrandIds.add(product.brand_id);
+        if (!usedBrandIds.has(product.brand_id)) {
+          selectedProducts.push(product);
+          usedBrandIds.add(product.brand_id);
+        }
+
+        productsCopy.splice(randomIndex, 1);
       }
 
-      productsCopy.splice(randomIndex, 1);
+      return selectedProducts;
+    } else {
+      return [];
     }
-
-    return selectedProducts;
   })();
 
   useEffect(() => {
@@ -352,28 +360,31 @@ export default function Sidebar({
                             <h3 className="text-sm font-medium">
                               {truncateText(product.name, 50)}
                             </h3>
-                            <div className="textSmall2 font-semibold flex justify-center items-center gap-2">
-                              <div>
-                                <h1
-                                  className={`${
-                                    discountSum && "line-through text-black/20"
-                                  }`}
-                                >
-                                  {product?.price.toLocaleString()} сум
-                                </h1>
-                                {discountSum && (
-                                  <h1>{discountSum.toLocaleString()} сум</h1>
-                                )}
+                            {showPrice && (
+                              <div className="textSmall2 font-semibold flex justify-center items-center gap-2">
+                                <div>
+                                  <h1
+                                    className={`${
+                                      discountSum &&
+                                      "line-through text-black/20"
+                                    }`}
+                                  >
+                                    {product?.price.toLocaleString()} сум
+                                  </h1>
+                                  {discountSum && (
+                                    <h1>{discountSum.toLocaleString()} сум</h1>
+                                  )}
+                                </div>
+                                {product?.discount &&
+                                  product?.discount != 0 &&
+                                  product?.discount != "-" &&
+                                  product?.discount > 0 && (
+                                    <span className="font-medium textSmall1 px-2 text-red-500 rounded-md bg-red-100">
+                                      -{product?.discount}%
+                                    </span>
+                                  )}
                               </div>
-                              {product?.discount &&
-                                product?.discount != 0 &&
-                                product?.discount != "-" &&
-                                product?.discount > 0 && (
-                                  <span className="font-medium textSmall1 px-2 text-red-500 rounded-md bg-red-100">
-                                    -{product?.discount}%
-                                  </span>
-                                )}
-                            </div>
+                            )}
                             <div className="flex justify-center gap-1 mt-1">
                               {Array(5)
                                 .fill(0)

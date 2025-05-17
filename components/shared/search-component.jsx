@@ -14,6 +14,7 @@ import useDebounce from "@/hooks/useDebounce";
 import { backUrl, cn } from "@/lib/utils";
 import { getData } from "@/actions/get";
 import CustomImage from "./customImage";
+import { useAuth } from "@/context/AuthContext";
 
 export default function SearchComponent({ variant }) {
   const [isFocused, setIsFocused] = useState(false);
@@ -24,7 +25,7 @@ export default function SearchComponent({ variant }) {
   const [error, setError] = useState(null);
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
-
+  const { showPrice } = useAuth();
   // Эффект для вызова API
   useEffect(() => {
     const fetchSearchResults = async () => {
@@ -118,7 +119,11 @@ export default function SearchComponent({ variant }) {
                         <h1 className="textNormal3 truncate max-w-40">
                           {item.name}
                         </h1>
-                        <span className="text-gray-600">{item.price} сум</span>
+                        {showPrice && (
+                          <span className="text-gray-600">
+                            {item.price} сум
+                          </span>
+                        )}
                       </div>
                       <div>
                         <div className="flex items-center">
@@ -219,7 +224,11 @@ export default function SearchComponent({ variant }) {
                             <h1 className="textNormal3 truncate max-w-40">
                               {item.name}
                             </h1>
-                            <span className="text-gray-600">{item.price} сум</span>
+                            {showPrice && (
+                              <span className="text-gray-600">
+                                {item.price} сум
+                              </span>
+                            )}
                           </div>
                           <div>
                             <div className="flex items-center">

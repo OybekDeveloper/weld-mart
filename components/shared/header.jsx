@@ -7,6 +7,7 @@ import {
   CircleUserRound,
   HamIcon,
   Menu,
+  Phone,
   Search,
   ShoppingCart,
 } from "lucide-react";
@@ -28,7 +29,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useOrderStore, useProductStore } from "@/store";
 
 export default function Header({ categoriesData, brandsData }) {
-  const { auth } = useAuth(); // Получение auth из контекста
+  const { auth, showPrice } = useAuth(); // Получение auth из контекста
   const { products, initializeProducts } = useProductStore();
   const { initializeOrderData } = useOrderStore();
   console.log(auth);
@@ -133,16 +134,22 @@ export default function Header({ categoriesData, brandsData }) {
           <SearchComponent variant="desktop" />
           {/* Ссылки для десктопа */}
           <div className="flex gap-5 max-md:hidden">
-            <Link href="/cart">
-              <ShoppingCart className="text-black" size={32} />
-              {products.length > 0 && (
-                <div className="relative">
-                  <span className="text-white textSmall3 absolute -top-10 -right-3 size-5 md:size-6 rounded-full bg-primary flex items-center justify-center">
-                    {products?.length}
-                  </span>
-                </div>
-              )}
-            </Link>
+            {showPrice ? (
+              <Link href="/cart">
+                <ShoppingCart className="text-black" size={32} />
+                {products.length > 0 && (
+                  <div className="relative">
+                    <span className="text-white textSmall3 absolute -top-10 -right-3 size-5 md:size-6 rounded-full bg-primary flex items-center justify-center">
+                      {products?.length}
+                    </span>
+                  </div>
+                )}
+              </Link>
+            ) : (
+              <Link target="_blank" href="tel:+998954189999">
+                <Phone className="text-black" size={28} />
+              </Link>
+            )}
             {auth?.phone ? (
               <Link href="/profile">
                 <CircleUserRound size={32} className="text-black" />

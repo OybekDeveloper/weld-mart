@@ -9,7 +9,7 @@ export default async function ProductPage({ params }) {
   const { id } = await params;
   const [productData, products] = await Promise.all([
     getData(`/api/products/${id}`, "product"),
-    getData(`/api/products?limit=10&skip=10`, "product"),
+    getData(`/api/products?limit=10&skip=0`, "product"),
   ]);
   const popularProductsData = products?.products;
   return (
