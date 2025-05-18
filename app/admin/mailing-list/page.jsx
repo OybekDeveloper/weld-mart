@@ -145,17 +145,27 @@ export default function MailingList() {
     setIsSending(true);
     try {
       const emails = selectedItems.map((item) => item.email);
-      const response = await fetch("/api/send-emails", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_URL}/api/send-emails`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            emails,
+            subject: emailTitle,
+            message: emailDescription,
+          }),
+        }
+      );
+      console.log(
+        JSON.stringify({
           emails,
           subject: emailTitle,
           message: emailDescription,
-        }),
-      });
+        })
+      );
       const hrassikas = await postData(
         { title: emailTitle, body: emailDescription },
         `/api/hrassikas`,
