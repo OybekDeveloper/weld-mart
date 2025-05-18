@@ -146,7 +146,7 @@ export default function MailingList() {
     try {
       const emails = selectedItems.map((item) => item.email);
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_URL}/api/send-emails`,
+         `https://weld-mart.vercel.app/api/send-emails`,
         {
           method: "POST",
           headers: {
